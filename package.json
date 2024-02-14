@@ -1,0 +1,25 @@
+{
+  "dependencies": {
+    "firebase": "^10.8.0",
+    "firebase-tools": "^13.2.1",
+    "firebaseui": "^6.1.0"
+  },
+  "name": "drjim",
+  "version": "1.0.0",
+  "main": "public/index2.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jimbosoft/drjim.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jimbosoft/drjim/issues"
+  },
+  "homepage": "https://github.com/jimbosoft/drjim#readme",
+  "description": ""
+}
