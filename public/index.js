@@ -16,7 +16,10 @@ import {
     uploadString
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js'
 import {
+    connectFirestoreEmulator,
     getFirestore,
+    setDoc,
+    doc,
     collection,
     addDoc
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js'
@@ -40,25 +43,8 @@ const storage = getStorage(app)
 connectAuthEmulator(auth, "http://localhost:9099");
 connectStorageEmulator(storage, '127.0.0.1', 9199)
 const db = getFirestore(app);
+connectFirestoreEmulator(db, 'localhost', 8080)
 
-console.log(window);
-
-/////////////////////////////////////////////////////////////////////////////
-// import * as fui from 'https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.js';
-// // Initialize the FirebaseUI Widget using Firebase.
-// window.firebase = app.firebase
-// var ui = new fui.firebaseui.(auth);
-// //var ui = new fui.auth.AuthUI(auth)
-// // The start method will wait until the DOM is loaded.
-// ui.start('#firebaseui-auth-container', {
-//     signInOptions: [
-//         {
-//             provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
-//             requireDisplayName: false
-//         }
-//     ]
-// });
-////////////////////////////////////////////////////////////////////////////////
 function loginEmailPassword() {
     try {
         signInWithEmailAndPassword(auth, email.value, password.value)
@@ -167,39 +153,39 @@ uploadButton.addEventListener('click', uploadFile)
 
 async function writeToFirestore() {
     try {
-        try {
-            const docRef = await addDoc(collection(db, "users"), {
-                first: "Ada",
-                last: "Lovelace",
-                born: 1815
-            });
-            console.log("Document written with ID: ", docRef.id);
-        } catch (error) {
-            alert(error.message)
-        }
-
         const userId = currentUser.uid;
-        // Create a reference to a collection
-
-        // Create a new document with a unique ID
-        collection("users").doc(userId).set({
-            name: "John Doe",
-            email: "johndoe@example.com",
-            age: 30
-        });
-
-        const usersRef = collection("users");
-        // Add data to an existing document (assuming ID is known)
-        usersRef.doc(userId).set({
-            phone: "+1234567890"
-        });
-
-        // Update specific fields in a document
-        usersRef.doc(userId).update({
-            age: 31
-        });
-
+        const docRef = await setDoc(doc(db, "cities", "LA"), {
+            name: "Los Angeles",
+            state: "CA",
+            country: "USA",
+            capital: false,
+            population: 3900000,
+            regions: ['west_coast', 'socal']
+          });
+        // .then(() => {
+        //     console.log("Document successfully written!");
+        // })
+        // .catch((error) => {
+        //     console.error("Error writing document: ", error);
+        // });
     } catch (error) {
         alert(error.message)
     }
+    // Create a new document with a unique ID
+    // collection("users").doc(userId).set({
+    //     name: "John Doe",
+    //     email: "johndoe@example.com",
+    //     age: 30
+    // });
+
+    // const usersRef = collection("users");
+    // // Add data to an existing document (assuming ID is known)
+    // usersRef.doc(userId).set({
+    //     phone: "+1234567890"
+    // });
+
+    // // Update specific fields in a document
+    // usersRef.doc(userId).update({
+    //     age: 31
+    // });
 }
