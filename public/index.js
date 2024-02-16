@@ -1,6 +1,4 @@
 //
-// This stuff was copied from firebase console, Settings, Apps, Web App, SDK setup and configuration (npm)
-//
 // Import the functions you need from the SDKs you need
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import {
@@ -20,6 +18,8 @@ import {
     getFirestore,
     setDoc,
     doc,
+    getDoc,
+    updateDoc,
     collection,
     addDoc
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js'
@@ -45,24 +45,6 @@ connectStorageEmulator(storage, '127.0.0.1', 9199)
 const db = getFirestore(app);
 connectFirestoreEmulator(db, 'localhost', 8080)
 
-function loginEmailPassword() {
-    try {
-        signInWithEmailAndPassword(auth, email.value, password.value)
-            .then((userCredential) => {
-                // Signed in 
-                const user = userCredential.user;
-                authState.innerHTML = `User ${user.email} is logged in`
-            })
-            .catch((error) => {
-                const errorCode = error.code;
-                const errorMessage = error.message;
-                alert(errorMessage)
-            });
-    } catch (error) {
-        alert(error.message)
-    }
-}
-
 function logout() {
     currentUser = null
     signOut(auth).then(() => {
@@ -70,49 +52,18 @@ function logout() {
     }).catch((error) => {
         alert(error.message)
     });
-
 }
-
-function createAccount() {
-    try {
-        createUserWithEmailAndPassword(auth, email.value, password.value)
-            .then((userCredential) => {
-                // Signed up 
-                const user = userCredential.user;
-                // ...
-            })
-            .catch((error) => {
-                const errorCode = error.code;
-                const errorMessage = error.message;
-                alert(errorMessage)
-            });
-
-    } catch (error) {
-        alert(error.message)
-    }
-}
-
-signupButton.addEventListener('click', createAccount)
-loginButton.addEventListener('click', loginEmailPassword)
 logoutButton.addEventListener('click', logout)
 
 let currentUser = null
 function showApp(user) {
     currentUser = user
     showUser(user)
-    hideError()
-    loginScreen.style.display = 'none'
     appScreen.style.display = 'block'
 }
 
-function hideError() {
-    errorPanel.style.display = 'none'
-    errorPanel.innerHTML = ''
-}
-
 function showLoginScreen() {
-    loginScreen.style.display = 'block'
-    appScreen.style.display = 'none'
+    window.location.href = '/index.html';
 }
 
 function showUser(user) {
@@ -125,11 +76,11 @@ onAuthStateChanged(auth, (user) => {
         // https://firebase.google.com/docs/reference/js/auth.user
         const uid = user.uid;
         const details = JSON.stringify(user, null, '  ');
-        alert(`${details}`)
+        //alert(`${details}`)
         showApp(user)
     } else {
         // User is signed out
-        alert(`signed out`)
+        alert("Please sign in first")
         showLoginScreen()
     }
 });
@@ -139,7 +90,7 @@ function uploadFile() {
         const storageRef = ref(storage, `user/${currentUser.uid}/test.txt`)
         const content = `Hello, World! by ${currentUser.email} on ${new Date().toISOString()}`
         uploadString(storageRef, content).then((snapshot) => {
-            alert('File uploaded')
+            console.log('File uploaded')
         }).catch((error) => {
             alert(error.message)
         });
@@ -148,44 +99,103 @@ function uploadFile() {
         alert(error.message)
     }
 }
+///////////////////////////////////////////////////////
+// Get a reference to the form and submit button
+const form = document.getElementById('company-form');
+const submitButton = document.getElementById('submit-button');
 
-uploadButton.addEventListener('click', uploadFile)
+// Function to create a new company and address section
+function createCompanyAddressSection() {
+    const section = document.createElement('div');
+    section.classList.add('company-address-section');
 
-async function writeToFirestore() {
+    const companyNameLabel = document.createElement('label');
+    companyNameLabel.textContent = 'Company Name:';
+    section.appendChild(companyNameLabel);
+    section.appendChild(document.createElement('br'));
+
+    const companyNameInput = document.createElement('input');
+    companyNameInput.type = 'text';
+    companyNameInput.classList.add('companyName');
+    companyNameInput.name = 'companyName';
+    section.appendChild(companyNameInput);
+    section.appendChild(document.createElement('br'));
+
+    const addressLabel = document.createElement('label');
+    addressLabel.textContent = 'Address:';
+    section.appendChild(addressLabel);
+    section.appendChild(document.createElement('br'));
+
+    const addressInput = document.createElement('input');
+    addressInput.type = 'text';
+    addressInput.classList.add('address');
+    addressInput.name = 'address';
+    section.appendChild(addressInput);
+    section.appendChild(document.createElement('br'));
+    section.appendChild(document.createElement('br'));
+
+    return section;
+}
+
+// Listen for input events on the form
+form.addEventListener('input', (e) => {
+    // If the target of the event is an address input
+    if (e.target.classList.contains('address')) {
+        // Get the parent section of the input
+        const section = e.target.parentElement;
+
+        // If the input is filled in and the section is the last one
+        if (e.target.value && section === form.lastElementChild) {
+            // Create a new address section and append it to the form
+            const newSection = createCompanyAddressSection();
+            form.appendChild(newSection);
+        }
+    }
+});
+
+// Handle the submit button click
+submitButton.addEventListener('click', (e) => {
+    e.preventDefault();
+
+    // Get the form values, exclude empty fields
+    const companyNames = Array.from(form.getElementsByClassName('companyName'), input => input.value.trim()).filter(value => value !== '');;
+    const addresses = Array.from(form.getElementsByClassName('address'), input => input.value.trim()).filter(value => value !== '');
+    // Create an array of company and address objects
+    const companies = companyNames.map((name, i) => ({ name: companyNames[i], address: addresses[i] }));
+
+    writeToFirestore(companies)
+
+    // Clear the form
+    form.innerHTML = '';
+    form.appendChild(createCompanyAddressSection());
+});
+
+async function writeToFirestore(companies) {
     try {
         const userId = currentUser.uid;
-        const docRef = await setDoc(doc(db, "cities", "LA"), {
-            name: "Los Angeles",
-            state: "CA",
-            country: "USA",
-            capital: false,
-            population: 3900000,
-            regions: ['west_coast', 'socal']
-          });
-        // .then(() => {
-        //     console.log("Document successfully written!");
-        // })
-        // .catch((error) => {
-        //     console.error("Error writing document: ", error);
-        // });
+        // Get a reference to the document
+        const docRef = doc(db, userId, "clinics");
+
+        // Get the document
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+            // If the document does not exist, create it with no data
+            await setDoc(docRef, {});
+        }
+
+        for (const company of companies) {
+            //console.log(`${company.name} ${company.address}`);
+            updateDoc(docRef, {
+                clinicName: company.name,
+                clinicAddress: company.address
+            }).then(() => {
+                console.log("Address successfully written!");
+            }).catch((error) => {
+                console.error("Error writing document: ", error);
+            });
+        };
     } catch (error) {
         alert(error.message)
     }
-    // Create a new document with a unique ID
-    // collection("users").doc(userId).set({
-    //     name: "John Doe",
-    //     email: "johndoe@example.com",
-    //     age: 30
-    // });
-
-    // const usersRef = collection("users");
-    // // Add data to an existing document (assuming ID is known)
-    // usersRef.doc(userId).set({
-    //     phone: "+1234567890"
-    // });
-
-    // // Update specific fields in a document
-    // usersRef.doc(userId).update({
-    //     age: 31
-    // });
 }
