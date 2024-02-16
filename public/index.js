@@ -58,7 +58,8 @@ logoutButton.addEventListener('click', logout)
 let currentUser = null
 function showApp(user) {
     currentUser = user
-    showUser(user)
+    showUser(user);
+    initClinics();
     appScreen.style.display = 'block'
 }
 
@@ -67,7 +68,7 @@ function showLoginScreen() {
 }
 
 function showUser(user) {
-    authState.innerHTML = `You're logged in as ${user.email} (uid: ${user.uid}) `
+    authState.innerHTML = `You're logged in as ${user.email} (uid: ${user.uid}) <br> <br>`
 }
 
 onAuthStateChanged(auth, (user) => {
@@ -105,12 +106,19 @@ const form = document.getElementById('company-form');
 const submitButton = document.getElementById('submit-button');
 
 // Function to create a new company and address section
-function createCompanyAddressSection() {
+function createCompanyAddressSection(index, name, address) {
     const section = document.createElement('div');
     section.classList.add('company-address-section');
 
+    const clinicSelector = document.createElement('input');
+    clinicSelector.type = 'radio';
+    clinicSelector.name = 'clinicSelector';
+    clinicSelector.value = index;
+    clinicSelector.classList.add('clinicSelector');
+    section.appendChild(clinicSelector);
+
     const companyNameLabel = document.createElement('label');
-    companyNameLabel.textContent = 'Company Name:';
+    companyNameLabel.textContent = 'Clinic Name:';
     section.appendChild(companyNameLabel);
     section.appendChild(document.createElement('br'));
 
@@ -118,6 +126,9 @@ function createCompanyAddressSection() {
     companyNameInput.type = 'text';
     companyNameInput.classList.add('companyName');
     companyNameInput.name = 'companyName';
+    if (name) {
+        companyNameInput.value = name;
+    }
     section.appendChild(companyNameInput);
     section.appendChild(document.createElement('br'));
 
@@ -130,10 +141,29 @@ function createCompanyAddressSection() {
     addressInput.type = 'text';
     addressInput.classList.add('address');
     addressInput.name = 'address';
+    if (address) {
+        addressInput.value = address;
+    }
     section.appendChild(addressInput);
     section.appendChild(document.createElement('br'));
     section.appendChild(document.createElement('br'));
 
+    const updateButton = document.createElement('button');
+    updateButton.type = 'button';
+    updateButton.style.marginRight = '16px';
+    updateButton.textContent = 'Update';
+    updateButton.classList.add('update');
+    section.appendChild(updateButton);
+
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.textContent = 'Delete';
+    deleteButton.classList.add('delete');
+    section.appendChild(deleteButton);
+    section.appendChild(document.createElement('br'));
+    section.appendChild(document.createElement('br'));
+
+    form.appendChild(section);
     return section;
 }
 
@@ -147,8 +177,9 @@ form.addEventListener('input', (e) => {
         // If the input is filled in and the section is the last one
         if (e.target.value && section === form.lastElementChild) {
             // Create a new address section and append it to the form
-            const newSection = createCompanyAddressSection();
-            form.appendChild(newSection);
+            const currentSections = form.getElementsByClassName('company-address-section');
+            const nextIndex = currentSections.length;
+            const newSection = createCompanyAddressSection(nextIndex, null, null);
         }
     }
 });
@@ -157,20 +188,29 @@ form.addEventListener('input', (e) => {
 submitButton.addEventListener('click', (e) => {
     e.preventDefault();
 
+    const radios = Array.from(form.getElementsByClassName('clinicSelector'));
+    const selectedRadio = radios.find(radio => radio.checked);
+    if (selectedRadio === undefined) {
+        alert('Please select a clinic to continue');
+    }
     // Get the form values, exclude empty fields
     const companyNames = Array.from(form.getElementsByClassName('companyName'), input => input.value.trim()).filter(value => value !== '');;
     const addresses = Array.from(form.getElementsByClassName('address'), input => input.value.trim()).filter(value => value !== '');
     // Create an array of company and address objects
     const companies = companyNames.map((name, i) => ({ name: companyNames[i], address: addresses[i] }));
+    let companiesArray = companies.map(company => ({
+        clinicName: company.name,
+        clinicAddress: company.address
+    }));
 
-    writeToFirestore(companies)
+    writeToFirestore(companiesArray)
 
     // Clear the form
-    form.innerHTML = '';
-    form.appendChild(createCompanyAddressSection());
+    //form.innerHTML = '';
+    //form.appendChild(createCompanyAddressSection());
 });
 
-async function writeToFirestore(companies) {
+async function writeToFirestore(companiesArray) {
     try {
         const userId = currentUser.uid;
         // Get a reference to the document
@@ -184,18 +224,49 @@ async function writeToFirestore(companies) {
             await setDoc(docRef, {});
         }
 
-        for (const company of companies) {
-            //console.log(`${company.name} ${company.address}`);
-            updateDoc(docRef, {
-                clinicName: company.name,
-                clinicAddress: company.address
-            }).then(() => {
-                console.log("Address successfully written!");
-            }).catch((error) => {
+        updateDoc(docRef, { clinics: companiesArray })
+            .then(() => {
+                console.log("Addresses successfully written!");
+            })
+            .catch((error) => {
                 console.error("Error writing document: ", error);
             });
-        };
     } catch (error) {
         alert(error.message)
     }
+}
+
+async function initClinics() {
+    const userId = currentUser.uid;
+    const docRef = doc(db, userId, "clinics");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        populateClinic(docSnap);
+    } else {
+        createCompanyAddressSection(0, null, null)
+
+    }
+}
+
+function populateClinic(docSnap) {
+    const clinics = docSnap.data().clinics;
+
+    // Populate the radio buttons
+    for (const [index, clinic] of clinics.entries()) {
+        createCompanyAddressSection(index, clinic.clinicName, clinic.clinicAddress)
+    }
+
+    // Add event listeners to the update and delete buttons
+    // const updateButtons = document.getElementsByClassName('update');
+    // const deleteButtons = document.getElementsByClassName('delete');
+    // for (let i = 0; i < updateButtons.length; i++) {
+    //     updateButtons[i].addEventListener('click', () => {
+    //         // Perform the update action
+    //         console.log(`Update button clicked for clinic: ${i}`);
+    //     });
+    //     deleteButtons[i].addEventListener('click', () => {
+    //         // Perform the delete action
+    //         console.log(`Delete button clicked for clinic: ${i}`);
+    //     });
+    // }
 }
