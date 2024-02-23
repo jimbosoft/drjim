@@ -41,11 +41,11 @@ connectFirestoreEmulator(db, 'localhost', 8080)
 
 export async function getClinics() {
     const userId = currentUser.uid;
-    const docRef = doc(db, userId, "clinics");
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-        return docSnap.data().clinics;
-    }
+    //const companiesRef = collection(db, userId, "clinics");
+    //if (!companiesRef || companyRef.empty) {
+    //    return null;
+    //}
+    //return companiesRef
     return null;
 }
 ///////////////////////////////////////////////////////////////
