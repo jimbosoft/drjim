@@ -6,30 +6,34 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PRIMS</title>
-  <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css" />
-  <script src="index.js" type="module"></script>
+  <style>
+    .hidden {
+      display: none;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      text-align: center;
+      background-color: darkgrey;
+    }
+  </style>
+  <script src="clinics.js" type="module"></script>
 
 </head>
 
 <body>
 
-  <div id="appScreen">
-    <h1>Dr Jim app 🩻</h1>
-    <form>
-      <div id="authState"></div>
-      <button id="logoutButton" type="button">Log out</button>
-      <!-- <button id="uploadButton" type="button">Upload file</button> -->
-    </form>
-  </div>
   <h2>Clinics:</h2>
-  Please select the clinic to activate <br><br>
-  <div id="company-form">
-    <div class="company-address-section">
-    </div>
-  </div>
+  <div id="company-form"></div>
 
   <button id="submit-button">Submit</button>
-  
+
+  <div id="appScreen" class="footer" style="padding: 30px;">
+    <div id="authState"></div>
+    <button id="logoutButton" type="button">Log out</button>
+  </div>
 
 </body>
 

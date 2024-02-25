@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PRIMS</title>
+    <style>
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            background-color: darkgrey;
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 10px;
+        }
+
+        td,
+        th {
+            padding: 10px;
+            background-color: #f0f0f0;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+    <script src="serviceCode.js" type="module"></script>
+
+</head>
+
+<body>
+
+    <h2>Service codes:</h2>
+    <div id="serviceCodes">
+        <table id="servicesTable">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <button id="submitButton">Submit</button>
+
+    <div id="appScreen" class="footer" style="padding: 30px;">
+        <div id="authState"></div>
+        <button id="logoutButton" type="button">Log out</button>
+    </div>
+
+</body>
+
+</html>
