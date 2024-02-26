@@ -33,14 +33,21 @@ function toggleDropdown() {
 clinicSetup.addEventListener('click', () => {
     window.location.href = '/clinics.html';
 });
+
 serviceCodes.addEventListener('click', () => {
+    let dropdown = document.getElementById('dropdown');
+    let selectedIndex = dropdown.selectedIndex;
+    let selectedOption = dropdown.options[selectedIndex];
+    let selectedId = selectedOption.dataset.id;
+
+    localStorage.setItem('clinicId', selectedId); 
     window.location.href = '/serviceCode.html';
 });
 
 // Get a reference to the dropdown
 var dropdown = document.getElementById('dropdown');
 
-async function initClinics() {
+function initClinics() {
 
     getClinics().then((clinics) => {
         if (clinics) {
@@ -65,9 +72,8 @@ function addHeader(headerTxt) {
 function populateClinic(clinics) {
     for (const [index, clinic] of clinics.entries()) {
         const option = document.createElement('option');
-        const entry = clinic.clinicName;
-        option.textContent = entry
-        //option.href = `clinic.html?clinic=${index}`;
+        option.textContent = clinic.clinicName;
+        option.dataset.id = clinic.id;
         dropdown.appendChild(option);
     }
     dropdown.classList.remove("hidden");

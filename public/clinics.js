@@ -14,7 +14,7 @@ onAuthStateChanged(auth, (user) => {
         //const details = JSON.stringify(user, null, '  ');
         //alert(`${details}`)
         showUser(user)
-        initClinics();
+        populateClinic();
     } else {
         // User is signed out
         if (islogoutButtonPressed()) {
@@ -25,18 +25,6 @@ onAuthStateChanged(auth, (user) => {
         showLoginScreen()
     }
 });
-
-function initClinics() {
-    populateClinic();
-
-    // getClinics().then((clinics) => {
-    //     if (clinics) {
-    //         populateClinic(clinics);
-    //     } else {
-    //         createCompanyAddressSection(0, null, null)
-    //     }
-    // })
-}
 ///////////////////////////////////////////////////////
 // Get a reference to the form and submit button
 const form = document.getElementById('company-form');
@@ -180,9 +168,7 @@ async function writeToFirestore(companiesArray) {
             // Get a reference to the clinics collection under the user document
             const clinicsRef = collection(userRef, "companyDetails");
 
-            // Get a reference to the document
-            const docRef = doc(clinicsRef, company.docId);
-
+            const clinicDetails = company.docId ? doc(clinicsRef, company.docId) : doc(clinicsRef);
             // Data to add
             const data = {
                 clinicName: company.clinicName,
@@ -190,9 +176,9 @@ async function writeToFirestore(companiesArray) {
             };
 
             // Create or update the document
-            await setDoc(docRef, data, { merge: true });
+            await setDoc(clinicDetails, data, { merge: true });
 
-            const codeRef = collection(docRef, "serviceCodes");
+            const codeRef = collection(clinicDetails, "serviceCodes");
             const codeDocRef = doc(codeRef);
             await setDoc(codeDocRef, {});
         }
@@ -201,23 +187,14 @@ async function writeToFirestore(companiesArray) {
     }
 }
 
-async function populateClinic() {
+function populateClinic() {
 
-    const userId = currentUser.uid;
-    const clinicsRef = collection(db, "users", userId, "companyDetails");
-
-    // Get all the documents in the collection
-    const querySnapshot = await getDocs(clinicsRef);
-
-    if (querySnapshot.empty) {
+    getClinics().then((clinics) => {
+        if (clinics) {
+            for (const [index, clinic] of clinics.entries()) {
+                createCompanyAddressSection(index, clinic.id, clinic.clinicName, clinic.clinicAddress);
+            }
+        }
         createCompanyAddressSection(0, null, null, null)
-        return;
-    }
-    // Iterate over each document
-    querySnapshot.docs.forEach((doc, index) => {
-        // Get the data of the document
-        const data = doc.data();
-        createCompanyAddressSection(index, doc.id, data.clinicName, data.clinicAddress)
     });
-    createCompanyAddressSection(0, null, null)
 }

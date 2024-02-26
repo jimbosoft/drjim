@@ -1,12 +1,12 @@
 import { auth, setUser, currentUser, db, getClinics } from './firebase.js';
-import { 
-    islogoutButtonPressed, 
-    resetlogoutButtonPressed, 
-    showLoginScreen, 
+import {
+    islogoutButtonPressed,
+    resetlogoutButtonPressed,
+    showLoginScreen,
     showUser
 } from './footer.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-import { updateDoc, setDoc, getDoc, doc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { getServiceCodes, setServiceCodes } from './firebase.js';
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -26,14 +26,10 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-submitButton.addEventListener('click', () => {
-    window.location.href = '/dashboard.html';
-});
-
 let table = document.getElementById('servicesTable');
 let tableBody = table.getElementsByTagName('tbody')[0];
 
-table.addEventListener('input', function() {
+table.addEventListener('input', function () {
     // Get the last row in the table
     let lastRow = tableBody.rows[tableBody.rows.length - 1];
 
@@ -42,11 +38,11 @@ table.addEventListener('input', function() {
 
     // If all cells are filled, add a new row
     if (allCellsFilled) {
-        insertBlankRow(tableBody)
+        insertServiceCodeRow(tableBody)
     }
 });
 
-table.addEventListener('click', function(event) {
+table.addEventListener('click', function (event) {
     // Check if the clicked element is a delete button
     if (event.target.tagName === 'BUTTON' && event.target.textContent === 'Delete') {
         // Get the row that the delete button is in
@@ -57,44 +53,56 @@ table.addEventListener('click', function(event) {
     }
 });
 
-function populateServiceCodes() {
+async function populateServiceCodes() {
     let data = [
-        { code: 'EPC', description: 'EPC Items' },
-        { code: 'UVB', description: 'Ultraviolet Phototherapy' },
+        { id: 'EPC', description: 'EPC Items' },
+        { id: 'UVB', description: 'Ultraviolet Phototherapy' },
         // more data...
     ];
+    let clinicId = localStorage.getItem('clinicId');
+    let oldData = await getServiceCodes(currentUser.uid, clinicId);
+    if (oldData) {
+        data = oldData;
+    }
     let tableBody = document.getElementById('servicesTable').getElementsByTagName('tbody')[0];
 
     data.forEach(item => {
-        let row = tableBody.insertRow();
-
-        let cell1 = row.insertCell();
-        cell1.textContent = item.code;
-        cell1.contentEditable = "true";
-
-        let cell2 = row.insertCell();
-        cell2.textContent = item.description;
-        cell2.contentEditable = "true";
-
-        let cell3 = row.insertCell();
-        let deleteButton = document.createElement('button');
-        deleteButton.textContent = 'Delete';
-        cell3.appendChild(deleteButton);    
+        insertServiceCodeRow(tableBody, item.id, item.description);
     });
-    insertBlankRow(tableBody);
+    insertServiceCodeRow(tableBody, "", "");
 }
 
-function insertBlankRow(tableBody) {
+function insertServiceCodeRow(tableBody, code, description) {
     let row = tableBody.insertRow();
 
     let cell1 = row.insertCell();
     cell1.contentEditable = "true";
+    cell1.textContent = code;
 
     let cell2 = row.insertCell();
     cell2.contentEditable = "true";
+    cell2.textContent = description;
 
     let cell3 = row.insertCell();
     let deleteButton = document.createElement('button');
     deleteButton.textContent = 'Delete';
-    cell3.appendChild(deleteButton);    
+    cell3.appendChild(deleteButton);
 }
+
+// Handle the submit button click
+submitButton.addEventListener('click', async (e) => {
+    e.preventDefault();
+
+    let serviceCodes = Array.from(tableBody.rows)
+        .filter(row => row.cells[0].textContent.trim() !== "" && row.cells[1].textContent.trim() !== "")
+        .map(row => ({
+            id: row.cells[0].textContent,
+            description: row.cells[1].textContent
+        }));
+
+    let clinicId = localStorage.getItem('clinicId');
+    const userId = currentUser.uid;
+    await setServiceCodes(userId, clinicId, serviceCodes)
+
+    window.location.href = '/dashboard.html';
+});

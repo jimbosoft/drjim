@@ -30,7 +30,7 @@ import {
     getFirestore,
     setDoc,
     doc,
-    getDoc,
+    getDocs,
     updateDoc,
     collection,
     addDoc
@@ -41,12 +41,39 @@ connectFirestoreEmulator(db, 'localhost', 8080)
 
 export async function getClinics() {
     const userId = currentUser.uid;
-    //const companiesRef = collection(db, userId, "clinics");
-    //if (!companiesRef || companyRef.empty) {
-    //    return null;
-    //}
-    //return companiesRef
-    return null;
+    const clinicsRef = collection(db, "users", userId, "companyDetails");
+
+    // Get all the documents in the collection
+    const querySnapshot = await getDocs(clinicsRef);
+
+    if (querySnapshot.empty) {
+        return null;
+    }
+    const listRef = await querySnapshot.docs
+    // listRef.forEach((doc, index) => {
+    //     // Get the data of the document
+    //     const data = doc.data();
+    //     console.log(`Clinic ${index + 1}: ${data.id} ${data.clinicName} at ${data.clinicAddress}`);
+    // });
+    return Array.from(querySnapshot.docs, doc => ({ id: doc.id, ...doc.data() }));
+}
+
+export async function getServiceCodes(userId, docId){
+    const serviceCodesRef = collection(db, "users", userId, "companyDetails", docId, "serviceCodes");
+    const querySnapshot = await getDocs(serviceCodesRef);
+    if (querySnapshot.empty) {
+        return null;
+    }
+    return Array.from(querySnapshot.docs, doc => ({ id: doc.id, ...doc.data() }));
+}
+
+export async function setServiceCodes(userId, clinicId, serviceCodes){
+    const serviceCodesRef = collection(db, "users", userId, "companyDetails", clinicId, "serviceCodes");
+    await Promise.all(serviceCodes.map(serviceCode => 
+        setDoc(doc(db, "users", userId, "companyDetails", clinicId, "serviceCodes", serviceCode.id), {
+            description: serviceCode.description
+        })
+    ));
 }
 ///////////////////////////////////////////////////////////////
 // import {
