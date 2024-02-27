@@ -17,6 +17,17 @@
       width: 100%;
       text-align: center;
       background-color: darkgrey;
+      height: 60px;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      padding-bottom: 140px;
+    }
+
+    #submit-button {
+      margin-right: 40px;
     }
   </style>
   <script src="clinics.js" type="module"></script>
@@ -27,8 +38,10 @@
 
   <h2>Clinics:</h2>
   <div id="company-form"></div>
-
-  <button id="submit-button">Submit</button>
+  <div id="button-container">
+    <button id="submitButton" style>Submit</button>
+    <button id="cancelButton">Cancel</button>
+  </div>
 
   <div id="appScreen" class="footer" style="padding: 30px;">
     <div id="authState"></div>

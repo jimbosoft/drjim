@@ -31,49 +31,105 @@ import {
     setDoc,
     doc,
     getDocs,
-    updateDoc,
+    deleteDoc,
     collection,
-    addDoc
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js'
 
 export const db = getFirestore(app);
 connectFirestoreEmulator(db, 'localhost', 8080)
 
 export async function getClinics() {
-    const userId = currentUser.uid;
-    const clinicsRef = collection(db, "users", userId, "companyDetails");
+    try {
+        const userId = currentUser.uid;
+        const clinicsRef = collection(db, "users", userId, "companyDetails");
 
-    // Get all the documents in the collection
-    const querySnapshot = await getDocs(clinicsRef);
+        // Get all the documents in the collection
+        const querySnapshot = await getDocs(clinicsRef);
 
-    if (querySnapshot.empty) {
-        return null;
+        if (querySnapshot.empty) {
+            return {data: [], error: "" };
+        }
+        const listRef = await querySnapshot.docs
+        return { data: Array.from(querySnapshot.docs, doc => ({ id: doc.id, ...doc.data() })), error: "" };
+    } catch (error) {
+        return { data: null, error: error.message };
     }
-    const listRef = await querySnapshot.docs
-    // listRef.forEach((doc, index) => {
-    //     // Get the data of the document
-    //     const data = doc.data();
-    //     console.log(`Clinic ${index + 1}: ${data.id} ${data.clinicName} at ${data.clinicAddress}`);
-    // });
-    return Array.from(querySnapshot.docs, doc => ({ id: doc.id, ...doc.data() }));
+}
+//
+// Remove the clinic no longer in the list 
+// and update the clinic details that are in the list
+//
+export async function setClinics(userId, clinicList) {
+    try {
+        const clinicsRef = collection(db, "users", userId, "companyDetails");
+
+        // Fetch all documents in the companyDetails collection
+        const snapshot = await getDocs(clinicsRef);
+        const docsInFirestore = snapshot.docs.map(doc => doc.id);
+
+        // Find the documents that are not in the clinicList
+        const docsToRemove = docsInFirestore.filter(docId => !clinicList.some(clinic => clinic.id === docId));
+
+        // Delete the documents that are not in the clinicList
+        await Promise.all(docsToRemove.map(docId => deleteDoc(doc(clinicsRef, docId))));
+
+        // Update the documents that are in the clinicList
+        await Promise.all(clinicList.map(clinic => {
+            const clinicDetails = clinic.id ? doc(clinicsRef, clinic.id) : doc(clinicsRef);
+
+            return setDoc(clinicDetails, {
+                name: clinic.name,
+                address: clinic.address
+            }, { merge: true });
+        }));
+
+        return "";
+    } catch (error) {
+        return error.message;
+    }
 }
 
-export async function getServiceCodes(userId, docId){
-    const serviceCodesRef = collection(db, "users", userId, "companyDetails", docId, "serviceCodes");
-    const querySnapshot = await getDocs(serviceCodesRef);
-    if (querySnapshot.empty) {
-        return null;
+export async function getServiceCodes(userId, docId) {
+    try {
+        const serviceCodesRef = collection(db, "users", userId, "companyDetails", docId, "serviceCodes");
+        const querySnapshot = await getDocs(serviceCodesRef);
+        if (querySnapshot.empty) {
+            return { data: null, error: "" };
+        }
+        return { data: Array.from(querySnapshot.docs, doc => ({ id: doc.id, ...doc.data() })), error: "" };
+    } catch (error) {
+        return { data: null, error: error.message };
     }
-    return Array.from(querySnapshot.docs, doc => ({ id: doc.id, ...doc.data() }));
 }
+//
+// Remove the service code no longer in the list 
+// and update the service codes that are in the list
+//
+export async function setServiceCodes(userId, clinicId, serviceCodes) {
+    try {
+        const serviceCodesRef = collection(db, "users", userId, "companyDetails", clinicId, "serviceCodes");
 
-export async function setServiceCodes(userId, clinicId, serviceCodes){
-    const serviceCodesRef = collection(db, "users", userId, "companyDetails", clinicId, "serviceCodes");
-    await Promise.all(serviceCodes.map(serviceCode => 
-        setDoc(doc(db, "users", userId, "companyDetails", clinicId, "serviceCodes", serviceCode.id), {
-            description: serviceCode.description
-        })
-    ));
+        // Fetch all documents in the serviceCodes collection
+        const snapshot = await getDocs(serviceCodesRef);
+        const docsInFirestore = snapshot.docs.map(doc => doc.id);
+
+        // Find the documents that are not in the serviceCodes array
+        const docsToRemove = docsInFirestore.filter(docId => !serviceCodes.some(serviceCode => serviceCode.id === docId));
+
+        // Delete the documents that are not in the serviceCodes array
+        await Promise.all(docsToRemove.map(docId => deleteDoc(doc(serviceCodesRef, docId))));
+
+        // Update the documents that are in the serviceCodes array
+        await Promise.all(serviceCodes.map(serviceCode =>
+            setDoc(doc(serviceCodesRef, serviceCode.id), {
+                description: serviceCode.description
+            })
+        ));
+
+        return "";
+    } catch (error) {
+        return error.message;
+    }
 }
 ///////////////////////////////////////////////////////////////
 // import {

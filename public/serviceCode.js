@@ -60,9 +60,12 @@ async function populateServiceCodes() {
         // more data...
     ];
     let clinicId = localStorage.getItem('clinicId');
-    let oldData = await getServiceCodes(currentUser.uid, clinicId);
-    if (oldData) {
-        data = oldData;
+    const result = await getServiceCodes(currentUser.uid, clinicId);
+    if (result.error) {
+        alert(`Error getting service codes: ${result.error}`);
+    }
+    if (result.data) {
+        data = result.data;
     }
     let tableBody = document.getElementById('servicesTable').getElementsByTagName('tbody')[0];
 
@@ -102,7 +105,19 @@ submitButton.addEventListener('click', async (e) => {
 
     let clinicId = localStorage.getItem('clinicId');
     const userId = currentUser.uid;
-    await setServiceCodes(userId, clinicId, serviceCodes)
-
-    window.location.href = '/dashboard.html';
+    const errorMsg = await setServiceCodes(userId, clinicId, serviceCodes)
+    if (errorMsg) {
+        alert(`Error setting service codes: ${errorMsg}`);
+    } else {
+        entryComplete();
+    }   
 });
+
+cancelButton.addEventListener('click', async (e) => {
+    e.preventDefault();
+    entryComplete();
+});
+
+function entryComplete() {
+    window.location.href = '/dashboard.html';
+}
