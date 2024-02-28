@@ -4,17 +4,19 @@
 <head>
   <meta charset="UTF-8">
   <title>Sample FirebaseUI App</title>
-  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+  <script type="module" src="./firebase.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <!-- *******************************************************************************************
        * TODO(DEVELOPER): Paste the initialization snippet from:
        * Firebase Console > Overview > Add Firebase to your web app. *
        ***************************************************************************************** -->
-  <script src="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.js"></script>
   <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css" />
 
-  <script type="text/javascript">
-    const firebaseConfig = {
+ <script type="module">
+     import {env} from './firebase.js';
+     const firebaseConfig = {
       apiKey: "AIzaSyAmDuJ0yEyvQDVVApiYcqAgp7yaOJkudgA",
       authDomain: "drjim-f2087.firebaseapp.com",
       projectId: "drjim-f2087",
@@ -24,8 +26,9 @@
       measurementId: "G-EE0ZDV3F0X"
     };
     // Initialize Firebase
+    
     firebase.initializeApp(firebaseConfig);
-    // FirebaseUI config.
+     // FirebaseUI config.
     var uiConfig = {
       signInSuccessUrl: 'dashboard.html',
       signInOptions: [
@@ -47,10 +50,11 @@
         window.location.assign('<your-privacy-policy-url>');
       }
     };
-
     // Initialize the FirebaseUI Widget using Firebase.
     const auth = firebase.auth();
-    auth.useEmulator('http://localhost:9099');
+    if (env === "local"){
+     auth.useEmulator('http://localhost:9099');
+    }
     var ui = new firebaseui.auth.AuthUI(auth);
     // Assuming firebase has been initialized already
     // The start method will wait until the DOM is loaded.

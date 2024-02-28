@@ -1,10 +1,7 @@
 //
 // Import the functions you need from the SDKs you need
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-import {
-    getAuth, connectAuthEmulator, createUserWithEmailAndPassword,
-    signInWithEmailAndPassword, onAuthStateChanged, signOut
-} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+// Initialize Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyAmDuJ0yEyvQDVVApiYcqAgp7yaOJkudgA",
     authDomain: "drjim-f2087.firebaseapp.com",
@@ -14,11 +11,34 @@ const firebaseConfig = {
     appId: "1:13689300459:web:f71baf9ca9eb861cdda5ae",
     measurementId: "G-EE0ZDV3F0X"
 };
-
-// Initialize Firebase
 export const app = initializeApp(firebaseConfig);
+//window.app = app;
+
+import { getRemoteConfig, fetchAndActivate, getValue, getString} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-remote-config.js'
+
+const remoteConfig = getRemoteConfig(app);
+remoteConfig.settings.minimumFetchIntervalMillis = 1;
+remoteConfig.defaultConfig = {
+    "env": "local"
+};
+
+//const rcDefaultsFile = await fetch('remote_config_defaults.json');
+//const rcDefaultsJson = await rcDefaultsFile.json();
+//remoteConfig.defaultConfig = rcDefaultsJson;
+await fetchAndActivate(remoteConfig);
+export const env = getString(remoteConfig, "env");
+
+import {
+    getAuth, connectAuthEmulator, createUserWithEmailAndPassword,
+    signInWithEmailAndPassword, onAuthStateChanged, signOut
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+
 export const auth = getAuth(app);
-connectAuthEmulator(auth, "http://localhost:9099");
+//window.auth = auth;
+
+if (env === "local") {
+    connectAuthEmulator(auth, "http://localhost:9099");
+}
 export let currentUser = null
 export function setUser(user) {
     currentUser = user
@@ -36,7 +56,9 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js'
 
 export const db = getFirestore(app);
-connectFirestoreEmulator(db, 'localhost', 8080)
+if (env === "local") {
+    connectFirestoreEmulator(db, 'localhost', 8080)
+}
 
 export async function getClinics() {
     try {
@@ -47,7 +69,7 @@ export async function getClinics() {
         const querySnapshot = await getDocs(clinicsRef);
 
         if (querySnapshot.empty) {
-            return {data: [], error: "" };
+            return { data: [], error: "" };
         }
         const listRef = await querySnapshot.docs
         return { data: Array.from(querySnapshot.docs, doc => ({ id: doc.id, ...doc.data() })), error: "" };

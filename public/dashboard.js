@@ -44,7 +44,7 @@ function initClinics() {
             alert(result.error);
         }
         const clinics = result.data;
-        if (clinics) {
+        if (clinics && clinics.length > 0) {
             addHeader("Please select clinic");
             populateClinic(clinics);
         } else {

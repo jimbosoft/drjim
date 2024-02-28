@@ -1,6 +1,5 @@
 
 import { auth, setUser } from './firebase.js';
-import { signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
 let logoutButtonPressed = false;
 export function islogoutButtonPressed() {
@@ -13,11 +12,11 @@ export function showUser(user) {
     authState.innerHTML = `You're logged in as ${user.email} (uid: ${user.uid}) <br> <br>`
 }
 export function showLoginScreen() {
-    window.location.href = '/index.html';
+     window.location.href = '/index.html';
 }
 export function logout() {
     setUser(null)
-    signOut(auth).then(() => {
+    auth.signOut().then(() => {
         showLoginScreen()
     }).catch((error) => {
         alert(error.message)
