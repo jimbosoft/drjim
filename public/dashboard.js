@@ -6,8 +6,6 @@ import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/fi
 onAuthStateChanged(auth, (user) => {
     if (user) {
         setUser(user);
-        //const details = JSON.stringify(user, null, '  ');
-        //alert(`${details}`)
         showUser(user)
         initClinics();
     } else {
@@ -21,29 +19,32 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-function toggleDropdown() {
-    var dropdown = document.getElementById("dropdown");
-    if (dropdown.classList.contains("hidden")) {
-        dropdown.classList.remove("hidden");
-    } else {
-        dropdown.classList.add("hidden");
-    }
-}
-
 clinicSetup.addEventListener('click', () => {
     window.location.href = '/clinics.html';
 });
+
 serviceCodes.addEventListener('click', () => {
     window.location.href = '/serviceCode.html';
 });
 
 // Get a reference to the dropdown
 var dropdown = document.getElementById('dropdown');
+dropdown.addEventListener('change', function () {
+    let selectedIndex = dropdown.selectedIndex;
+    let selectedOption = dropdown.options[selectedIndex];
+    let selectedId = selectedOption.dataset.id;
 
-async function initClinics() {
+    localStorage.setItem('clinicId', selectedId);
+});
 
-    getClinics().then((clinics) => {
-        if (clinics) {
+function initClinics() {
+
+    getClinics().then((result) => {
+        if (result.error) {
+            alert(result.error);
+        }
+        const clinics = result.data;
+        if (clinics && clinics.length > 0) {
             addHeader("Please select clinic");
             populateClinic(clinics);
         } else {
@@ -63,11 +64,14 @@ function addHeader(headerTxt) {
 }
 
 function populateClinic(clinics) {
+    const lastSelected = localStorage.getItem('clinicId');
     for (const [index, clinic] of clinics.entries()) {
         const option = document.createElement('option');
-        const entry = clinic.clinicName;
-        option.textContent = entry
-        //option.href = `clinic.html?clinic=${index}`;
+        option.textContent = clinic.name;
+        option.dataset.id = clinic.id;
+        if (clinic.id === lastSelected) {
+            option.selected = true;
+        }
         dropdown.appendChild(option);
     }
     dropdown.classList.remove("hidden");

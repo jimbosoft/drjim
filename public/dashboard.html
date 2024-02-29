@@ -2,6 +2,10 @@
 <html>
 
 <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>Setup Companies</title>
     <style>
         .hidden {
@@ -16,8 +20,14 @@
             background-color: darkgrey;
         }
 
+        body {
+            margin: 0;
+            padding: 20px;
+            padding-bottom: 140px;
+        }
+
         #dropdown {
-            margin-right: 40px;
+            margin-bottom: 20px;
             width: 200px;
         }
     </style>
@@ -29,6 +39,8 @@
     <h1>Dr Jim app 🩻</h1>
     <div id="selectClinic">
         <select id="dropdown" class="hidden"></select>
+    </div>
+    <div id="SetupClinic">
         <button id="clinicSetup" type="button">Setup Companies Details</button>
     </div>
     <div id="serviceCodesDisplay" style="margin-top: 20px;">
