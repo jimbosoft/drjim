@@ -7,48 +7,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="./footer.js" type="module"></script>
     <script src="./dashboard.js" type="module"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <title>Setup Companies</title>
-    <style>
-        .hidden {
-            display: none;
-        }
-
-        .footer {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            text-align: center;
-            background-color: darkgrey;
-        }
-
-        body {
-            margin: 0;
-            padding: 20px;
-            padding-bottom: 140px;
-        }
-
-        #dropdown {
-            margin-bottom: 20px;
-            width: 200px;
-        }
-    </style>
-</head>
-
-<body>
-    <h1>Dr Jim app 🩻</h1>
-    <div id="selectClinic">
-        <select id="dropdown" class="hidden"></select>
+ </head>
+ <body class="bg-gray-100 text-gray-800">
+    <div class="fixed left-0 top-0 h-full w-64 bg-blue-500 p-4 text-black p-4">
+        <h1 class="text-3xl font-bold mb-4">Dr Jim app 🩻</h1>
+        <div id="selectClinic" class="mb-4 w-full">
+            <select id="dropdown" class="hidden w-full text-blue-500 bg-white h-12 text-center"></select>
+        </div>
+        <div id="SetupClinic" class="mb-4">
+            <button id="clinicSetup" type="button" class="text-blue-500 bg-white rounded px-4 py-2 w-full h-12">Setup Companies Details</button>
+        </div>
+        <div id="serviceCodesDisplay" class="mb-4">
+            <button id="serviceCodes" type="button" class="text-blue-500 bg-white rounded px-4 py-2 w-full h-12">Review Service Codes</button>
+        </div>
     </div>
-    <div id="SetupClinic">
-        <button id="clinicSetup" type="button">Setup Companies Details</button>
-    </div>
-    <div id="serviceCodesDisplay" style="margin-top: 20px;">
-        <button id="serviceCodes" type="button">Review Service Codes</button>
-    </div>
-    <div id="appScreen" class="footer" style="padding: 30px;">
+    <div id="appScreen" class="fixed bottom-0 w-full text-center bg-gray-800 text-white py-8">
         <div id="authState"></div>
-        <button id="logoutButton" type="button">Log out</button>
+        <button id="logoutButton" type="button" class="bg-red-500 rounded px-4 py-2">Log out</button>
     </div>
 </body>
-
 </html>
