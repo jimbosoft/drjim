@@ -12,7 +12,6 @@ const firebaseConfig = {
     measurementId: "G-EE0ZDV3F0X"
 };
 export const app = initializeApp(firebaseConfig);
-//window.app = app;
 
 import { getRemoteConfig, fetchAndActivate, getValue, getString} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-remote-config.js'
 
@@ -22,19 +21,14 @@ remoteConfig.defaultConfig = {
     "env": "local"
 };
 
-//const rcDefaultsFile = await fetch('remote_config_defaults.json');
-//const rcDefaultsJson = await rcDefaultsFile.json();
-//remoteConfig.defaultConfig = rcDefaultsJson;
 await fetchAndActivate(remoteConfig);
 export const env = getString(remoteConfig, "env");
 
 import {
-    getAuth, connectAuthEmulator, createUserWithEmailAndPassword,
-    signInWithEmailAndPassword, onAuthStateChanged, signOut
+    getAuth, connectAuthEmulator
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
 export const auth = getAuth(app);
-//window.auth = auth;
 
 if (env === "local") {
     connectAuthEmulator(auth, "http://localhost:9099");
