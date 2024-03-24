@@ -72,6 +72,20 @@ function createCompanyAddressSection(index, id, name, address) {
     section.appendChild(companyNameInput);
     section.appendChild(document.createElement('br'));
 
+    const companyAbnLabel = document.createElement('label');
+    companyAbnLabel.textContent = 'Company ABN:';
+    section.appendChild(companyAbnLabel);
+    section.appendChild(document.createElement('br'));
+    const companyAbn = document.createElement('input');
+    companyAbn.type = 'text';
+    companyAbn.classList.add('companyAbn');
+    companyAbn.name = 'companyAbn';
+    if (name) {
+        companyAbn.value = name;
+    }
+    section.appendChild(companyAbn);
+    section.appendChild(document.createElement('br'));
+
     const addressLabel = document.createElement('label');
     addressLabel.textContent = 'Address:';
     section.appendChild(addressLabel);
@@ -85,6 +99,35 @@ function createCompanyAddressSection(index, id, name, address) {
         addressInput.value = address;
     }
     section.appendChild(addressInput);
+    section.appendChild(document.createElement('br'));
+
+    const companyPostCodeLabel = document.createElement('label');
+    companyPostCodeLabel.textContent = 'Company Postcode:';
+    section.appendChild(companyPostCodeLabel);
+    section.appendChild(document.createElement('br'));
+    const companyPostCode = document.createElement('input');
+    companyPostCode.type = 'text';
+    companyPostCode.classList.add('companyPostCode');
+    companyPostCode.name = 'companyPostCode';
+    if (name) {
+        companyPostCode.value = name;
+    }
+    section.appendChild(companyPostCode);
+    section.appendChild(document.createElement('br'));
+
+    const serviceFeesLabel = document.createElement('label');
+    serviceFeesLabel.textContent = 'Service Fees:';
+    section.appendChild(serviceFeesLabel);
+    section.appendChild(document.createElement('br'));
+    const serviceFees = document.createElement('input');
+    serviceFees.type = 'text';
+    serviceFees.classList.add('serviceFees');
+    serviceFees.name = 'serviceFees';
+    if (name) {
+        serviceFees.value = name;
+    }
+    section.appendChild(serviceFees);
+
     section.appendChild(document.createElement('br'));
     section.appendChild(document.createElement('br'));
 
