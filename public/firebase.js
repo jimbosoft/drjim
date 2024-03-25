@@ -2,15 +2,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 // Initialize Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyAmDuJ0yEyvQDVVApiYcqAgp7yaOJkudgA",
-    authDomain: "drjim-f2087.firebaseapp.com",
-    projectId: "drjim-f2087",
-    storageBucket: "drjim-f2087.appspot.com",
-    messagingSenderId: "13689300459",
-    appId: "1:13689300459:web:f71baf9ca9eb861cdda5ae",
-    measurementId: "G-EE0ZDV3F0X"
-};
+import {firebaseConfig} from './config.js'
 export const app = initializeApp(firebaseConfig);
 
 import { getRemoteConfig, fetchAndActivate, getValue, getString} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-remote-config.js'
