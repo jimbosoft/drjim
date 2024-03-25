@@ -32,7 +32,7 @@ function populateClinic() {
         const clinics = result.data;
         if (clinics) {
             for (const [index, clinic] of clinics.entries()) {
-                createCompanyAddressSection(index, clinic.id, clinic.name, clinic.address);
+                createCompanyAddressSection(index, clinic.id, clinic.name, clinic.address, clinic.abn[index], clinic.postcode[index], clinic.serviceFee[index]);
             }
         }
         addBlankClinicAtBottom()
@@ -46,7 +46,7 @@ function addBlankClinicAtBottom() {
 }
 
 // Function to create a new company and address section
-function createCompanyAddressSection(index, id, name, address) {
+function createCompanyAddressSection(index, id, name, address, abn, postcode, fee) {
     const section = document.createElement('div');
     section.classList.add('company-address-section');
 
@@ -80,8 +80,8 @@ function createCompanyAddressSection(index, id, name, address) {
     companyAbn.type = 'text';
     companyAbn.classList.add('companyAbn');
     companyAbn.name = 'companyAbn';
-    if (name) {
-        companyAbn.value = name;
+    if (abn) {
+        companyAbn.value = abn;
     }
     section.appendChild(companyAbn);
     section.appendChild(document.createElement('br'));
@@ -109,8 +109,8 @@ function createCompanyAddressSection(index, id, name, address) {
     companyPostCode.type = 'text';
     companyPostCode.classList.add('companyPostCode');
     companyPostCode.name = 'companyPostCode';
-    if (name) {
-        companyPostCode.value = name;
+    if (postcode) {
+        companyPostCode.value = postcode;
     }
     section.appendChild(companyPostCode);
     section.appendChild(document.createElement('br'));
@@ -123,8 +123,8 @@ function createCompanyAddressSection(index, id, name, address) {
     serviceFees.type = 'text';
     serviceFees.classList.add('serviceFees');
     serviceFees.name = 'serviceFees';
-    if (name) {
-        serviceFees.value = name;
+    if (fee) {
+        serviceFees.value = fee;
     }
     section.appendChild(serviceFees);
 
