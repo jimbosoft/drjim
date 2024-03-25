@@ -177,12 +177,18 @@ submitButton.addEventListener('click', async (e) => {
     const docNames = Array.from(form.getElementsByClassName('docId'), label => label.textContent);;
     const companyNames = Array.from(form.getElementsByClassName('companyName'), input => input.value.trim()).filter(value => value !== '');;
     const addresses = Array.from(form.getElementsByClassName('address'), input => input.value.trim()).filter(value => value !== '');
-    // Create an array of company and address objects
+    const companyAbn = Array.from(form.getElementsByClassName('companyAbn'), input => input.value.trim()).filter(value => value !== '');
+    const companyPostCode= Array.from(form.getElementsByClassName('companyPostCode'), input => input.value.trim()).filter(value => value !== '');
+    const serviceFees = Array.from(form.getElementsByClassName('serviceFees'), input => input.value.trim()).filter(value => value !== '');
+
     const companies = companyNames.map((name, i) => ({ docId: docNames[i], name: companyNames[i], address: addresses[i] }));
     let companiesArray = companies.map(company => ({
         id: company.docId,
         name: company.name,
-        address: company.address
+        address: company.address,
+        abn: companyAbn,
+        postcode: companyPostCode,
+        serviceFee: serviceFees
     }));
 
     const userId = currentUser.uid;

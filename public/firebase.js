@@ -94,14 +94,17 @@ export async function setClinics(userId, clinicList) {
 
         // Delete the documents that are not in the clinicList
         await Promise.all(docsToRemove.map(docId => deleteDoc(doc(clinicsRef, docId))));
-
+        
         // Update the documents that are in the clinicList
         await Promise.all(clinicList.map(clinic => {
             const clinicDetails = clinic.id ? doc(clinicsRef, clinic.id) : doc(clinicsRef);
 
             return setDoc(clinicDetails, {
                 name: clinic.name,
-                address: clinic.address
+                address: clinic.address,
+                abn: clinic.abn,
+                postcode: clinic.postcode,
+                serviceFee: clinic.serviceFee
             }, { merge: true });
         }));
 
