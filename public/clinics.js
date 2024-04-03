@@ -115,18 +115,18 @@ function createCompanyAddressSection(index, id, name, address, abn, postcode, fe
     section.appendChild(companyPostCode);
     section.appendChild(document.createElement('br'));
 
-    const serviceFeesLabel = document.createElement('label');
-    serviceFeesLabel.textContent = 'Service Fees:';
-    section.appendChild(serviceFeesLabel);
+    const lineNumberLabel = document.createElement('label');
+    lineNumberLabel.textContent = 'Line Number:';
+    section.appendChild(lineNumberLabel);
     section.appendChild(document.createElement('br'));
-    const serviceFees = document.createElement('input');
-    serviceFees.type = 'text';
-    serviceFees.classList.add('serviceFees');
-    serviceFees.name = 'serviceFees';
+    const lineNumber = document.createElement('input');
+    lineNumber.type = 'text';
+    lineNumber.classList.add('lineNumber');
+    lineNumber.name = 'lineNumber';
     if (fee) {
-        serviceFees.value = fee;
+        lineNumber.value = fee;
     }
-    section.appendChild(serviceFees);
+    section.appendChild(lineNumber);
 
     section.appendChild(document.createElement('br'));
     section.appendChild(document.createElement('br'));
