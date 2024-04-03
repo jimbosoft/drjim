@@ -58,7 +58,7 @@ function createCompanyAddressSection(index, id, name, address, abn, postcode, fe
     section.appendChild(document.createElement('br'));
 
     const companyNameLabel = document.createElement('label');
-    companyNameLabel.textContent = 'Clinic Name:';
+    companyNameLabel.textContent = 'Clinic Name*:';
     section.appendChild(companyNameLabel);
     section.appendChild(document.createElement('br'));
 
@@ -73,7 +73,7 @@ function createCompanyAddressSection(index, id, name, address, abn, postcode, fe
     section.appendChild(document.createElement('br'));
 
     const companyAbnLabel = document.createElement('label');
-    companyAbnLabel.textContent = 'Company ABN:';
+    companyAbnLabel.textContent = 'Company ABN*:';
     section.appendChild(companyAbnLabel);
     section.appendChild(document.createElement('br'));
     const companyAbn = document.createElement('input');
@@ -87,7 +87,7 @@ function createCompanyAddressSection(index, id, name, address, abn, postcode, fe
     section.appendChild(document.createElement('br'));
 
     const addressLabel = document.createElement('label');
-    addressLabel.textContent = 'Address:';
+    addressLabel.textContent = 'Address*:';
     section.appendChild(addressLabel);
     section.appendChild(document.createElement('br'));
 
