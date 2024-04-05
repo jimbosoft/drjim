@@ -179,29 +179,28 @@ submitButton.addEventListener('click', async (e) => {
     const addresses = Array.from(form.getElementsByClassName('address'), input => input.value.trim()).filter(value => value !== '');
     const companyAbn = Array.from(form.getElementsByClassName('companyAbn'), input => input.value.trim()).filter(value => value !== '');
     const companyPostCode= Array.from(form.getElementsByClassName('companyPostCode'), input => input.value.trim()).filter(value => value !== '');
-    const serviceFees = Array.from(form.getElementsByClassName('serviceFees'), input => input.value.trim()).filter(value => value !== '');
+    const serviceFees = Array.from(form.getElementsByClassName('lineNumber'), input => input.value.trim()).filter(value => value !== '');
 
-    const companies = companyNames.map((name, i) => ({ docId: docNames[i], name: companyNames[i], address: addresses[i] }));
-    let companiesArray = companies.map(company => ({
-        id: company.docId,
-        name: company.name,
-        address: company.address,
-        abn: companyAbn,
-        postcode: companyPostCode,
-        serviceFee: serviceFees
-    }));
-
-    const userId = currentUser.uid;
-    const errorMsg = await setClinics(userId, companiesArray);
-    if (errorMsg) {
-        alert(errorMsg);
+    if (companyNames == "" || addresses == "" || companyAbn == "") {
+        alert("Please fill in required fields")
     } else {
-        entryComplete();
+        const companies = companyNames.map((name, i) => ({ docId: docNames[i], name: companyNames[i], address: addresses[i] }));
+        let companiesArray = companies.map(company => ({
+            id: company.docId,
+            name: company.name,
+            address: company.address,
+            abn: companyAbn,
+            postcode: companyPostCode,
+            serviceFee: serviceFees
+        }));
+        const userId = currentUser.uid;
+        const errorMsg = await setClinics(userId, companiesArray);
+        if (errorMsg) {
+            alert(errorMsg);
+        } else {
+            entryComplete();
+        }
     }
-
-    // Clear the form
-    //form.innerHTML = '';
-    //form.appendChild(createCompanyAddressSection());
 });
 
 cancelButton.addEventListener('click', async (e) => {
