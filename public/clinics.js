@@ -173,29 +173,36 @@ form.addEventListener('input', (e) => {
 submitButton.addEventListener('click', async (e) => {
     e.preventDefault();
 
-    // Get the form values, exclude empty fields
-    const docNames = Array.from(form.getElementsByClassName('docId'), label => label.textContent);;
-    const companyNames = Array.from(form.getElementsByClassName('companyName'), input => input.value.trim()).filter(value => value !== '');;
-    const addresses = Array.from(form.getElementsByClassName('address'), input => input.value.trim()).filter(value => value !== '');
-    const companyAbn = Array.from(form.getElementsByClassName('companyAbn'), input => input.value.trim()).filter(value => value !== '');
-    const companyPostCode= Array.from(form.getElementsByClassName('companyPostCode'), input => input.value.trim()).filter(value => value !== '');
-    const serviceFees = Array.from(form.getElementsByClassName('lineNumber'), input => input.value.trim()).filter(value => value !== '');
-
-    if (companyNames == "" || addresses == "" || companyAbn == "") {
+    const companyNameField = form.getElementsByClassName('companyName');
+    const addressField = form.getElementsByClassName('address');
+    const abnField = form.getElementsByClassName('companyAbn');
+    if(companyNameField.value == undefined || addressField.value == undefined || abnField.value == undefined){
         alert("Please fill in required fields")
     } else {
-        const companies = companyNames.map((name, i) => ({ docId: docNames[i], name: companyNames[i], address: addresses[i] }));
-        let companiesArray = companies.map(company => ({
+        // Get the form values, exclude empty fields
+        const docNames = Array.from(form.getElementsByClassName('docId'), label => label.textContent);
+        const companyNames = Array.from(companyNameField, input => input.value.trim()).filter(value => value !== '');
+        const addresses = Array.from(addressField, input => input.value.trim()).filter(value => value !== '');
+        const companyAbn = Array.from(abnField, input => input.value.trim()).filter(value => value !== '');
+        const companyPostCode= Array.from(form.getElementsByClassName('companyPostCode'), input => input.value.trim()).filter(value => value !== '');
+        const lineNumber = Array.from(form.getElementsByClassName('lineNumber'), input => input.value.trim()).filter(value => value !== '');    
+        
+        const companies = companyNames.map((name, i) => ({
+            docId: docNames[i], name: companyNames[i], address: addresses[i], 
+            abn: companyAbn[i], postcode: companyPostCode[i], lineNumber: lineNumber[i]
+        }));
+        let companiesArray = companies.map(company => ({            
             id: company.docId,
             name: company.name,
             address: company.address,
             abn: companyAbn,
             postcode: companyPostCode,
-            serviceFee: serviceFees
+            lineNumber: lineNumber
         }));
-        const userId = currentUser.uid;
+        
+        const userId = currentUser.uid; 
         const errorMsg = await setClinics(userId, companiesArray);
-        if (errorMsg) {
+         if (errorMsg) {
             alert(errorMsg);
         } else {
             entryComplete();
