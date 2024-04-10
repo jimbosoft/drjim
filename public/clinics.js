@@ -32,7 +32,7 @@ function populateClinic() {
         const clinics = result.data;
         if (clinics) {
             for (const [index, clinic] of clinics.entries()) {
-                createCompanyAddressSection(index, clinic.id, clinic.name, clinic.address, clinic.abn[index], clinic.postcode[index], clinic.lineNumber[index]);
+                createCompanyAddressSection(index, clinic.id, clinic.name, clinic.address, clinic.abn, clinic.postcode, clinic.lineNumber);
             }
         }
         addBlankClinicAtBottom()
