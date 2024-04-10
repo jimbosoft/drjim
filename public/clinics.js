@@ -39,6 +39,8 @@ function populateClinic() {
     });
 }
 
+const form = document.getElementById('company-form');
+
 function addBlankClinicAtBottom() {
     const currentSections = form.getElementsByClassName('company-address-section');
     const nextIndex = currentSections.length;
@@ -156,19 +158,10 @@ function addDeleteButtonHandler(deleteButton, index) {
     });
 }
 
-const form = document.getElementById('company-form');
-form.addEventListener('input', (e) => {
-    // If the target of the event is an address input
-    if (e.target.classList.contains('address')) {
-        // Get the parent section of the input
-        const section = e.target.parentElement;
-
-        // If the input is filled in and the section is the last one
-        if (e.target.value && section === form.lastElementChild) {
-            addBlankClinicAtBottom();
-        }
-    }
-});
+newClinicButton.addEventListener('click', async (e) => {
+    e.preventDefault();
+    addBlankClinicAtBottom();
+})
 
 submitButton.addEventListener('click', async (e) => {
     e.preventDefault();
