@@ -32,7 +32,7 @@ function populateClinic() {
         const clinics = result.data;
         if (clinics) {
             for (const [index, clinic] of clinics.entries()) {
-                createCompanyAddressSection(index, clinic.id, clinic.name, clinic.address, clinic.abn[index], clinic.postcode[index], clinic.serviceFee[index]);
+                createCompanyAddressSection(index, clinic.id, clinic.name, clinic.address, clinic.abn[index], clinic.postcode[index], clinic.lineNumber[index]);
             }
         }
         addBlankClinicAtBottom()
@@ -171,6 +171,9 @@ submitButton.addEventListener('click', async (e) => {
         const companyNameField = form.getElementsByClassName('companyName')[i];
         const addressField = form.getElementsByClassName('address')[i];
         const abnField = form.getElementsByClassName('companyAbn')[i];
+        const postCodeField = form.getElementsByClassName('companyPostCode')[i];
+        const lineNumberField = form.getElementsByClassName('lineNumber')[i];
+
         if(companyNameField.value == '' || addressField.value == '' || abnField.value == ''){
             alert("Please fill in required fields")
         } else {
@@ -179,8 +182,8 @@ submitButton.addEventListener('click', async (e) => {
             const companyNames = companyNameField.value
             const addresses = addressField.value
             const companyAbn = abnField.value
-            const companyPostCode = form.getElementsByClassName('companyPostCode').value ?? '';
-            const lineNumber = form.getElementsByClassName('lineNumber').value ?? '';    
+            const companyPostCode = postCodeField.value ?? '';
+            const lineNumber = lineNumberField.value ?? '';    
             companies.push({
                 docId: docNames, name: companyNames, address: addresses, 
                 abn: companyAbn, postcode: companyPostCode, lineNumber: lineNumber
@@ -210,6 +213,6 @@ cancelButton.addEventListener('click', async (e) => {
 });
 
 function entryComplete() {
-  //  window.location.href = '/dashboard.html';
+    window.location.href = '/dashboard.html';
 }
 
