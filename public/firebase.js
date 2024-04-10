@@ -90,7 +90,7 @@ export async function setClinics(userId, clinicList) {
                 address: clinic.address,
                 abn: clinic.abn,
                 postcode: clinic.postcode,
-                serviceFee: clinic.serviceFee
+                lineNumber: clinic.lineNumber
             }, { merge: true });
         }));
 

@@ -165,39 +165,42 @@ newClinicButton.addEventListener('click', async (e) => {
 
 submitButton.addEventListener('click', async (e) => {
     e.preventDefault();
-    const companyNameField = form.getElementsByClassName('companyName')[0];
-    const addressField = form.getElementsByClassName('address')[0];
-    const abnField = form.getElementsByClassName('companyAbn')[0];
-    if(companyNameField.value == '' || addressField.value == '' || abnField.value == ''){
-        alert("Please fill in required fields")
-    } else {
-        // Get the form values, exclude empty fields
-        const docNames = Array.from(form.getElementsByClassName('docId'), label => label.textContent);
-        const companyNames = Array.from(companyNameField, input => input.value.trim()).filter(value => value !== '');
-        const addresses = Array.from(addressField, input => input.value.trim()).filter(value => value !== '');
-        const companyAbn = Array.from(abnField, input => input.value.trim()).filter(value => value !== '');
-        const companyPostCode= Array.from(form.getElementsByClassName('companyPostCode'), input => input.value.trim()).filter(value => value !== '');
-        const lineNumber = Array.from(form.getElementsByClassName('lineNumber'), input => input.value.trim()).filter(value => value !== '');    
-        const companies = companyNames.map((name, i) => ({
-            docId: docNames[i], name: companyNames[i], address: addresses[i], 
-            abn: companyAbn[i], postcode: companyPostCode[i], lineNumber: lineNumber[i]
-        }));
-        let companiesArray = companies.map(company => ({            
-            id: company.docId,
-            name: company.name,
-            address: company.address,
-            abn: companyAbn,
-            postcode: companyPostCode,
-            lineNumber: lineNumber
-        }));
-        
-        const userId = currentUser.uid; 
-        const errorMsg = await setClinics(userId, companiesArray);
-         if (errorMsg) {
-            alert(errorMsg);
+    const companyList = form.getElementsByClassName('company-address-section')
+    const companies = [];
+    for(let i = 0; i < companyList.length; i++){
+        const companyNameField = form.getElementsByClassName('companyName')[i];
+        const addressField = form.getElementsByClassName('address')[i];
+        const abnField = form.getElementsByClassName('companyAbn')[i];
+        if(companyNameField.value == '' || addressField.value == '' || abnField.value == ''){
+            alert("Please fill in required fields")
         } else {
-            entryComplete();
+            // Get the form values, exclude empty fields
+            const docNames = form.getElementsByClassName('docId').value;
+            const companyNames = companyNameField.value
+            const addresses = addressField.value
+            const companyAbn = abnField.value
+            const companyPostCode = form.getElementsByClassName('companyPostCode').value ?? '';
+            const lineNumber = form.getElementsByClassName('lineNumber').value ?? '';    
+            companies.push({
+                docId: docNames, name: companyNames, address: addresses, 
+                abn: companyAbn, postcode: companyPostCode, lineNumber: lineNumber
+            });
         }
+    }
+    let companiesArray = companies.map(company => ({            
+        id: company.docId,
+        name: company.name,
+        address: company.address,
+        abn: company.abn,
+        postcode: company.postcode,
+        lineNumber: company.lineNumber
+    }));
+    const userId = currentUser.uid; 
+    const errorMsg = await setClinics(userId, companiesArray);
+    if (errorMsg) {
+        alert(errorMsg);
+    } else {
+        entryComplete();
     }
 });
 
@@ -207,6 +210,6 @@ cancelButton.addEventListener('click', async (e) => {
 });
 
 function entryComplete() {
-    window.location.href = '/dashboard.html';
+  //  window.location.href = '/dashboard.html';
 }
 
