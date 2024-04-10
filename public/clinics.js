@@ -168,7 +168,7 @@ submitButton.addEventListener('click', async (e) => {
     const companyNameField = form.getElementsByClassName('companyName')[0];
     const addressField = form.getElementsByClassName('address')[0];
     const abnField = form.getElementsByClassName('companyAbn')[0];
-    if(companyNameField.value == undefined || addressField.value == undefined || abnField.value == undefined){
+    if(companyNameField.value == '' || addressField.value == '' || abnField.value == ''){
         alert("Please fill in required fields")
     } else {
         // Get the form values, exclude empty fields
@@ -178,7 +178,6 @@ submitButton.addEventListener('click', async (e) => {
         const companyAbn = Array.from(abnField, input => input.value.trim()).filter(value => value !== '');
         const companyPostCode= Array.from(form.getElementsByClassName('companyPostCode'), input => input.value.trim()).filter(value => value !== '');
         const lineNumber = Array.from(form.getElementsByClassName('lineNumber'), input => input.value.trim()).filter(value => value !== '');    
-        
         const companies = companyNames.map((name, i) => ({
             docId: docNames[i], name: companyNames[i], address: addresses[i], 
             abn: companyAbn[i], postcode: companyPostCode[i], lineNumber: lineNumber[i]
