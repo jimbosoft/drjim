@@ -165,10 +165,9 @@ newClinicButton.addEventListener('click', async (e) => {
 
 submitButton.addEventListener('click', async (e) => {
     e.preventDefault();
-
-    const companyNameField = form.getElementsByClassName('companyName');
-    const addressField = form.getElementsByClassName('address');
-    const abnField = form.getElementsByClassName('companyAbn');
+    const companyNameField = form.getElementsByClassName('companyName')[0];
+    const addressField = form.getElementsByClassName('address')[0];
+    const abnField = form.getElementsByClassName('companyAbn')[0];
     if(companyNameField.value == undefined || addressField.value == undefined || abnField.value == undefined){
         alert("Please fill in required fields")
     } else {
