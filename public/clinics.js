@@ -35,7 +35,6 @@ function populateClinic() {
                 createCompanyAddressSection(index, clinic.id, clinic.name, clinic.address, clinic.abn, clinic.postcode, clinic.lineNumber);
             }
         }
-        addBlankClinicAtBottom()
     });
 }
 
