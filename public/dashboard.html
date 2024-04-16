@@ -9,20 +9,35 @@
     <script src="./dashboard.js" type="module"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <title>Setup Companies</title>
- </head>
- <body class="bg-gray-100 text-gray-800">
-    <div class="fixed left-0 top-0 h-full w-64 bg-blue-500 p-4 text-black p-4">
+</head>
+
+<body class="bg-gray-100 text-gray-800">
+    <div class="w-full bg-blue-500 text-white p-4 fixed top-0">
         <h1 class="text-3xl font-bold mb-4">Dr Jim app 🩻</h1>
+    </div>
+
+    <div class="fixed left-0 top-16 h-full w-64 bg-blue-500 p-4 text-black p-4">
         <div id="selectClinic" class="mb-4 w-full">
             <select id="dropdown" class="hidden w-full text-blue-500 bg-white h-12 text-center"></select>
         </div>
         <div id="SetupClinic" class="mb-4">
-            <button id="clinicSetup" type="button" class="text-blue-500 bg-white rounded px-4 py-2 w-full h-12">Setup Companies Details</button>
+            <button id="clinicSetup" type="button" class="text-blue-500 bg-white rounded px-4 py-2 w-full h-12">Setup
+                Companies Details</button>
         </div>
         <div id="serviceCodesDisplay" class="mb-4">
-            <button id="serviceCodes" type="button" class="text-blue-500 bg-white rounded px-4 py-2 w-full h-12">Review Service Codes</button>
+            <button id="serviceCodes" type="button" class="text-blue-500 bg-white rounded px-4 py-2 w-full h-12">Review
+                Service Codes</button>
         </div>
     </div>
+    <div id="dropZone" class="pt-28 ml-64 p-4 border-2 border-dashed">
+        <p>Or drag and drop a file here or </p><br>
+        <input type="file" id="csvFile" accept=".csv" />
+        <button id="uploadButton" class="bg-black hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-lg">
+            Upload
+        </button>
+    </div>
+    <div id="output" class="ml-64" style="height: 200px; overflow: auto; border: 1px solid black;"></div>
+
     <div id="appScreen" class="fixed bottom-0 w-full text-center bg-gray-800 text-white py-8">
         <div id="authState"></div>
         <button id="logoutButton" type="button" class="bg-red-500 rounded px-4 py-2">Log out</button>
