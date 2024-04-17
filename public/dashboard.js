@@ -70,7 +70,28 @@ document.getElementById('uploadButton').addEventListener('click', function () {
         console.log('No file selected');
     }
 });
+/*
+json payload
 
+	{
+	    "FileContent": "your_file_content",
+	    "CsvLineStart": 16,
+	    "CompanyName": "Vermont Medical Clinic",
+	    "CodeMap": [
+	        {
+	            "code1": ["123", "456"]
+	        },
+	        {
+	            "code2": ["789", "012"]
+	        }
+	    ],
+	    "PracMap":
+	      {
+	        "Doctor1": {"code1":"50", "code2":"20"},
+	        "DOctor2": {"code1":"40", "code2":"30"}
+	      }
+	}
+*/
 async function handleInputFile(file) {
     if (file) {
         const reader = new FileReader();
