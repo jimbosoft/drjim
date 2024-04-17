@@ -30,12 +30,13 @@ let table = document.getElementById('servicesTable');
 let tableBody = table.getElementsByTagName('tbody')[0];
 
 table.addEventListener('input', function () {
+
     // Get the last row in the table
     let lastRow = tableBody.rows[tableBody.rows.length - 1];
 
     // Check if all cells in the last row are filled in
-    let allCellsFilled = Array.from(lastRow.cells).every(cell => cell.textContent.trim() !== '');
-
+    //let allCellsFilled = Array.from(lastRow.cells).every(cell => cell.textContent.trim() !== '');
+    let allCellsFilled = lastRow.cells[0].textContent.trim() !== '';
     // If all cells are filled, add a new row
     if (allCellsFilled) {
         insertServiceCodeRow(tableBody)
@@ -70,12 +71,12 @@ async function populateServiceCodes() {
     let tableBody = document.getElementById('servicesTable').getElementsByTagName('tbody')[0];
 
     data.forEach(item => {
-        insertServiceCodeRow(tableBody, item.id, item.description);
+        insertServiceCodeRow(tableBody, item.id, item.description, "");
     });
-    insertServiceCodeRow(tableBody, "", "");
+    insertServiceCodeRow(tableBody, "", "", "");
 }
 
-function insertServiceCodeRow(tableBody, code, description) {
+function insertServiceCodeRow(tableBody, code, description, itemList) {
     let row = tableBody.insertRow();
 
     let cell1 = row.insertCell();
@@ -87,30 +88,52 @@ function insertServiceCodeRow(tableBody, code, description) {
     cell2.textContent = description;
 
     let cell3 = row.insertCell();
+    cell3.contentEditable = "true";
+    cell3.textContent = itemList;
+
+    let cell4 = row.insertCell();
+    cell4.className = "no-background";
     let deleteButton = document.createElement('button');
     deleteButton.textContent = 'Delete';
-    cell3.appendChild(deleteButton);
+    cell4.appendChild(deleteButton);
 }
 
 // Handle the submit button click
 submitButton.addEventListener('click', async (e) => {
     e.preventDefault();
 
-    let serviceCodes = Array.from(tableBody.rows)
-        .filter(row => row.cells[0].textContent.trim() !== "" && row.cells[1].textContent.trim() !== "")
-        .map(row => ({
-            id: row.cells[0].textContent,
-            description: row.cells[1].textContent
-        }));
+    // Remove all highlights
+    let highlightedRows = tableBody.querySelectorAll('tr.highlight');
+    highlightedRows.forEach(row => row.classList.remove('highlight'));
+    errorBox.textContent = ""; // Clear the error message
 
-    let clinicId = localStorage.getItem('clinicId');
-    const userId = currentUser.uid;
-    const errorMsg = await setServiceCodes(userId, clinicId, serviceCodes)
-    if (errorMsg) {
-        alert(`Error setting service codes: ${errorMsg}`);
-    } else {
-        entryComplete();
-    }   
+    try {
+        let serviceCodes = Array.from(tableBody.rows)
+            .filter(row => {
+                let cell0 = row.cells[0].textContent.trim();
+                let cell1 = row.cells[1].textContent.trim();
+                if (cell0 !== "" && cell1 === "") {
+                    row.classList.add('highlight'); // Add class to highlight row
+                    throw new Error('Description cannot be empty if a code is provided');
+                }
+                return cell0 !== "" && cell1 !== "";
+            })
+            .map(row => ({
+                id: row.cells[0].textContent,
+                description: row.cells[1].textContent
+            }));
+
+        let clinicId = localStorage.getItem('clinicId');
+        const userId = currentUser.uid;
+        const errorMsg = await setServiceCodes(userId, clinicId, serviceCodes)
+        if (errorMsg) {
+            alert(`Error setting service codes: ${errorMsg}`);
+        } else {
+            entryComplete();
+        }
+    } catch (error) {
+        errorBox.textContent = error.message; // Display the error message
+    }
 });
 
 cancelButton.addEventListener('click', async (e) => {
