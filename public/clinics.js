@@ -190,10 +190,10 @@ submitButton.addEventListener('click', async (e) => {
     const companies = companyNames.map((name, i) => ({ docId: docNames[i], name: companyNames[i], address: addresses[i], abn: companyAbn[i], postcode: companyPostcode[i], accountingLine: accountingLine[i] }));
     let companiesArray = companies.map(company => ({
         id: company.docId,
-        name: company.name,
-        abn: company.abn,
-        postcode: company.postcode,
-        accountingLine: company.accountingLine,
+        name: company.name || "",
+        abn: company.abn || "",
+        postcode: company.postcode || "",
+        accountingLine: company.accountingLine || "",
         address: company.address || ""
     }));
 
