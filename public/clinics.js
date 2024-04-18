@@ -163,7 +163,7 @@ function addDeleteButtonHandler(deleteButton, index) {
 const form = document.getElementById('company-form');
 form.addEventListener('input', (e) => {
     // If the target of the event is an address input
-    if (e.target.classList.contains('address')) {
+    if (e.target.classList.contains('companyName')) {
         // Get the parent section of the input
         const section = e.target.parentElement;
 
@@ -191,10 +191,10 @@ submitButton.addEventListener('click', async (e) => {
     let companiesArray = companies.map(company => ({
         id: company.docId,
         name: company.name,
-        address: company.address,
         abn: company.abn,
         postcode: company.postcode,
-        accountingLine: company.accountingLine
+        accountingLine: company.accountingLine,
+        address: company.address || ""
     }));
 
     const userId = currentUser.uid;

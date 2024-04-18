@@ -9,12 +9,18 @@ import { getRemoteConfig, fetchAndActivate, getValue, getString} from 'https://w
 
 const remoteConfig = getRemoteConfig(app);
 remoteConfig.settings.minimumFetchIntervalMillis = 1;
-remoteConfig.defaultConfig = {
-    "env": "local"
-};
+let isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+export let env = "local";
 
-await fetchAndActivate(remoteConfig);
-export const env = getString(remoteConfig, "env");
+if (!isLocal) {
+    // Use remote config
+    remoteConfig.defaultConfig = {
+        "env": "local"
+    };
+
+    await fetchAndActivate(remoteConfig);
+    env = getString(remoteConfig, "env");
+}
 
 import {
     getAuth, connectAuthEmulator
