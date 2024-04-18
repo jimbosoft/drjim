@@ -71,7 +71,8 @@ async function populateServiceCodes() {
     let tableBody = document.getElementById('servicesTable').getElementsByTagName('tbody')[0];
 
     data.forEach(item => {
-        insertServiceCodeRow(tableBody, item.id, item.description, "");
+        let itemListString = item.itemList ? item.itemList.join(', ') : '';
+        insertServiceCodeRow(tableBody, item.id, item.description, itemListString);
     });
     insertServiceCodeRow(tableBody, "", "", "");
 }
@@ -107,6 +108,8 @@ submitButton.addEventListener('click', async (e) => {
     highlightedRows.forEach(row => row.classList.remove('highlight'));
     errorBox.textContent = ""; // Clear the error message
 
+    let numberMap = new Map(); // Map to store each number and its associated service code
+
     try {
         let serviceCodes = Array.from(tableBody.rows)
             .filter(row => {
@@ -116,11 +119,32 @@ submitButton.addEventListener('click', async (e) => {
                     row.classList.add('highlight'); // Add class to highlight row
                     throw new Error('Description cannot be empty if a code is provided');
                 }
+                //
+                // split the comma sperated string into an array of numbers
+                // tha must all be positive numbers
+                //
+                let cell2 = row.cells[2].textContent.trim();
+                cell2 = row.cells[2].textContent.trim().replace(/(^,)|(,$)/g, '');
+                let itemList = getItemList(row);
+                let allNumbers = itemList.every(num => Number.isFinite(num) && num > 0);
+                if (!allNumbers) {
+                    row.classList.add('highlight'); // Add class to highlight row
+                    throw new Error('All item numbers must be positive numbers');
+                }
+                // Check if each number in the itemList is unique across all service codes
+                itemList.forEach(num => {
+                    if (numberMap.has(num)) {
+                        row.classList.add('highlight'); // Add class to highlight row
+                        throw new Error(`Number ${num} in this row already exists under service code ${numberMap.get(num)}`);
+                    }
+                    numberMap.set(num, cell0); // Add the number and its associated service code to the map
+                });
                 return cell0 !== "" && cell1 !== "";
             })
             .map(row => ({
                 id: row.cells[0].textContent,
-                description: row.cells[1].textContent
+                description: row.cells[1].textContent,
+                itemList: getItemList(row)
             }));
 
         let clinicId = localStorage.getItem('clinicId');
@@ -135,6 +159,16 @@ submitButton.addEventListener('click', async (e) => {
         errorBox.textContent = error.message; // Display the error message
     }
 });
+
+function getItemList(row) {
+    let cell2 = row.cells[2].textContent.trim().replace(/(^,)|(,$)/g, '');
+    let numberArray = [];
+    if (cell2 !== "") {
+        let stringArray = cell2.split(',');
+        numberArray = [...new Set(stringArray.map(Number))];
+    }
+    return numberArray;
+}
 
 cancelButton.addEventListener('click', async (e) => {
     e.preventDefault();
