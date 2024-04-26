@@ -103,7 +103,7 @@ function createCompanyAddressSection(index, id, name, address, abn, postcode, ac
     section.appendChild(document.createElement('br'));
 
     const postcodeLabel = document.createElement('label');
-    postcodeLabel.textContent = 'Postcode:';
+    postcodeLabel.textContent = 'Suburb State Postcode:';
     section.appendChild(postcodeLabel);
     section.appendChild(document.createElement('br'));
 
