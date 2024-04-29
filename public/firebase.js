@@ -103,9 +103,9 @@ export async function setClinics(userId, clinicList) {
     }
 }
 
-export async function getServiceCodes(userId, docId) {
+export async function getServiceCodes(userId, clinicId) {
     try {
-        const serviceCodesRef = collection(db, "users", userId, "serviceCodes");
+        const serviceCodesRef = collection(db, "users", userId, "companyDetails", clinicId, "serviceCodes");
         const querySnapshot = await getDocs(serviceCodesRef);
         if (querySnapshot.empty) {
             return { data: null, error: "" };
@@ -128,7 +128,7 @@ export async function getServiceCodes(userId, docId) {
 //
 export async function setServiceCodes(userId, clinicId, serviceCodes) {
     try {
-        const serviceCodesRef = collection(db, "users", userId, "serviceCodes");
+        const serviceCodesRef = collection(db, "users", userId, "companyDetails", clinicId, "serviceCodes");
 
         // Fetch all documents in the serviceCodes collection
         const snapshot = await getDocs(serviceCodesRef);
