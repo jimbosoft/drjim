@@ -1,5 +1,5 @@
 
-import { auth, setUser, getClinics } from './firebase.js';
+import { auth, setUser, getClinics, getServiceCodes, currentUser } from './firebase.js';
 import { islogoutButtonPressed, resetlogoutButtonPressed, showLoginScreen, showUser } from './footer.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { cloudServiceConfig } from './config.js';
@@ -28,8 +28,22 @@ serviceCodes.addEventListener('click', () => {
     window.location.href = '/serviceCode.html';
 });
 
+practitioners.addEventListener('click', () => {
+    window.location.href = '/practitioners.html';
+});
+// Get a reference to the dropdown
+var dropdown = document.getElementById('dropdown');
+dropdown.addEventListener('change', function () {
+    let selectedIndex = dropdown.selectedIndex;
+    let selectedOption = dropdown.options[selectedIndex];
+    let selectedId = selectedOption.dataset.id;
+
+    localStorage.setItem('clinicId', selectedId);
+});
+
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('csvFile');
+const providerButton = document.getElementById('practitioners');
 
 dropZone.addEventListener('dragover', function (e) {
     e.preventDefault();
@@ -63,6 +77,24 @@ document.getElementById('uploadButton').addEventListener('click', function () {
 /*
 json payload
 
+    {
+        "FileContent": "your_file_content",
+        "CsvLineStart": 16,
+        "CompanyName": "Vermont Medical Clinic",
+        "CodeMap": [
+            {
+                "code1": ["123", "456"]
+            },
+            {
+                "code2": ["789", "012"]
+            }
+        ],
+        "PracMap":
+          {
+            "Doctor1": {"code1":"50", "code2":"20"},
+            "DOctor2": {"code1":"40", "code2":"30"}
+          }
+    }
     {
         "FileContent": "your_file_content",
         "CsvLineStart": 16,
@@ -123,9 +155,10 @@ function initClinics() {
         }
         const clinics = result.data;
         if (clinics && clinics.length > 0) {
-             populateClinic(clinics);
+            populateClinic(clinics);
         } else {
             dropdown.classList.add("hidden");
+            localStorage.setItem('clinicId', null);
         }
     })
 }
@@ -140,6 +173,8 @@ function addHeader(headerTxt) {
     var div = document.getElementById('selectClinic');
     // Add the h2 to the div
     div.insertBefore(h2, div.firstChild);
+    //var div = document.getElementById('companyName')
+    //div.textContent = headerTxt;
 }
 
 function populateClinic(clinics) {
@@ -161,6 +196,7 @@ function populateClinic(clinics) {
         option.dataset.id = clinic.id;
         if (clinic.id === lastSelected) {
             option.selected = true;
+            serviceCodesSet(clinic.id)
         }
         dropdown.appendChild(option);
     }
@@ -174,6 +210,7 @@ function populateClinic(clinics) {
         let selectedOption = dropdown.options[selectedIndex];
         let selectedId = selectedOption.dataset.id;
         localStorage.setItem('clinicId', selectedId);
+        serviceCodesSet(selectedId);
         companySelected();
     });
 }
@@ -183,4 +220,21 @@ function companyWasSetup() {
 
 function companySelected() {
     serviceCodes.classList.remove('hidden');
+}
+
+function serviceCodesSet(clinicId) {
+    getServiceCodes(currentUser.uid, clinicId)
+        .then(result => {
+            if (result.error) {
+                alert(`Error getting service codes: ${result.error}`);
+            }
+            if (Array.isArray(result.data) && result.data.length > 0) {
+                providerButton.classList.remove('hidden');
+            } else {
+                providerButton.classList.add('hidden');
+            }
+        })
+        .catch(error => {
+            console.error(`Error getting service codes: ${error}`);
+        });
 }

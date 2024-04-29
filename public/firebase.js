@@ -102,7 +102,57 @@ export async function setClinics(userId, clinicList) {
         return error.message;
     }
 }
+export async function setPractitioners(userId, clinicId, practitioners) {
+    try {
+        const practitionersRef = collection(db, "users", userId, "companyDetails", clinicId, "practitioners");
 
+        // Fetch all documents in the practitioners collection
+        const snapshot = await getDocs(practitionersRef);
+        const docsInFirestore = snapshot.docs.map(doc => doc.id);
+
+        // Find the documents that are not in the practitioners array
+        const docsToRemove = docsInFirestore.filter(docId => !practitioners.some(practitioner => practitioner.id === docId));
+
+        // Delete the documents that are not in the practitioners array
+        await Promise.all(docsToRemove.map(docId => deleteDoc(doc(practitionersRef, docId))));
+
+        // Update the documents that are in the practitioners array
+        await Promise.all(practitioners.map(practitioner => {
+            const providerDetails = practitioner.id ? doc(practitionersRef, practitioner.id) : doc(practitionersRef);
+            return setDoc(providerDetails, {
+                name: practitioner.name,
+            });
+        }));
+        return "";
+    } catch (error) {
+        return error.message;
+    }
+}
+export async function getPractitioners(userId, clinicId) {
+    try {
+        const practitionersRef = collection(db, "users", userId, "companyDetails", clinicId, "practitioners");
+        const querySnapshot = await getDocs(practitionersRef);
+        if (querySnapshot.empty) {
+            return { data: null, error: "" };
+        }
+        return { data: Array.from(querySnapshot.docs, doc => ({ id: doc.id, ...doc.data() })), error: "" };
+    } catch (error) {
+        return { data: null, error: error.message };
+    }
+}
+export async function getPractitionerByPracId(userId, clinicId, pracId) {
+    try {
+        const practitionerRef = doc(db, "users", userId, "companyDetails", clinicId, "practitioners", pracId);
+        const docSnap = await getDoc(practitionerRef);
+        if (docSnap.exists()) {
+            return { data: { id: docSnap.id, ...docSnap.data() }, error: "" };
+        } else {
+            return { data: null, error: 'No practitioner found for the given id' };
+        }
+    } catch (error) {
+        return { data: null, error: error.message };
+    }
+}
 export async function getServiceCodes(userId, clinicId) {
     try {
         const serviceCodesRef = collection(db, "users", userId, "companyDetails", clinicId, "serviceCodes");
