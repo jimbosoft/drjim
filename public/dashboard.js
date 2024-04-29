@@ -28,16 +28,6 @@ serviceCodes.addEventListener('click', () => {
     window.location.href = '/serviceCode.html';
 });
 
-// Get a reference to the dropdown
-var dropdown = document.getElementById('dropdown');
-dropdown.addEventListener('change', function () {
-    let selectedIndex = dropdown.selectedIndex;
-    let selectedOption = dropdown.options[selectedIndex];
-    let selectedId = selectedOption.dataset.id;
-
-    localStorage.setItem('clinicId', selectedId);
-});
-
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('csvFile');
 
@@ -70,7 +60,28 @@ document.getElementById('uploadButton').addEventListener('click', function () {
         console.log('No file selected');
     }
 });
+/*
+json payload
 
+    {
+        "FileContent": "your_file_content",
+        "CsvLineStart": 16,
+        "CompanyName": "Vermont Medical Clinic",
+        "CodeMap": [
+            {
+                "code1": ["123", "456"]
+            },
+            {
+                "code2": ["789", "012"]
+            }
+        ],
+        "PracMap":
+          {
+            "Doctor1": {"code1":"50", "code2":"20"},
+            "DOctor2": {"code1":"40", "code2":"30"}
+          }
+    }
+*/
 async function handleInputFile(file) {
     if (file) {
         const reader = new FileReader();
@@ -112,10 +123,7 @@ function initClinics() {
         }
         const clinics = result.data;
         if (clinics && clinics.length > 0) {
-            if (clinics.length > 1) {
-                addHeader("Please select clinic:");
-            }
-            populateClinic(clinics);
+             populateClinic(clinics);
         } else {
             dropdown.classList.add("hidden");
         }
@@ -136,7 +144,18 @@ function addHeader(headerTxt) {
 
 function populateClinic(clinics) {
     const lastSelected = localStorage.getItem('clinicId');
+
+    // Add default option
+    const defaultOption = document.createElement('option');
+    defaultOption.textContent = 'Please select company';
+    if (!lastSelected) {
+        dropdown.appendChild(defaultOption);
+    } else {
+        companySelected();
+    }
+
     for (const [index, clinic] of clinics.entries()) {
+        companyWasSetup();
         const option = document.createElement('option');
         option.textContent = clinic.name;
         option.dataset.id = clinic.id;
@@ -145,5 +164,23 @@ function populateClinic(clinics) {
         }
         dropdown.appendChild(option);
     }
+
+    // Remove default option when a selection is made
+    dropdown.addEventListener('change', function () {
+        if (defaultOption.parentNode) {
+            defaultOption.remove();
+        }
+        let selectedIndex = dropdown.selectedIndex;
+        let selectedOption = dropdown.options[selectedIndex];
+        let selectedId = selectedOption.dataset.id;
+        localStorage.setItem('clinicId', selectedId);
+        companySelected();
+    });
+}
+function companyWasSetup() {
     dropdown.classList.remove("hidden");
+}
+
+function companySelected() {
+    serviceCodes.classList.remove('hidden');
 }

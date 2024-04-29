@@ -2,10 +2,10 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 // Initialize Firebase
-import {firebaseConfig} from './config.js'
+import { firebaseConfig } from './config.js'
 export const app = initializeApp(firebaseConfig);
 
-import { getRemoteConfig, fetchAndActivate, getValue, getString} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-remote-config.js'
+import { getRemoteConfig, fetchAndActivate, getValue, getString } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-remote-config.js'
 
 const remoteConfig = getRemoteConfig(app);
 remoteConfig.settings.minimumFetchIntervalMillis = 1;
@@ -103,14 +103,21 @@ export async function setClinics(userId, clinicList) {
     }
 }
 
-export async function getServiceCodes(userId, docId) {
+export async function getServiceCodes(userId, clinicId) {
     try {
-        const serviceCodesRef = collection(db, "users", userId, "companyDetails", docId, "serviceCodes");
+        const serviceCodesRef = collection(db, "users", userId, "companyDetails", clinicId, "serviceCodes");
         const querySnapshot = await getDocs(serviceCodesRef);
         if (querySnapshot.empty) {
             return { data: null, error: "" };
         }
-        return { data: Array.from(querySnapshot.docs, doc => ({ id: doc.id, ...doc.data() })), error: "" };
+        const serviceCodes = [];
+        for (const doc of querySnapshot.docs) {
+            const itemListRef = collection(doc.ref, 'itemList');
+            const itemListSnapshot = await getDocs(itemListRef);
+            const itemList = itemListSnapshot.docs.map(doc => doc.data().value);
+            serviceCodes.push({ id: doc.id, itemList: itemList, ...doc.data() });
+        }
+        return { data: serviceCodes, error: "" };
     } catch (error) {
         return { data: null, error: error.message };
     }
@@ -134,15 +141,62 @@ export async function setServiceCodes(userId, clinicId, serviceCodes) {
         await Promise.all(docsToRemove.map(docId => deleteDoc(doc(serviceCodesRef, docId))));
 
         // Update the documents that are in the serviceCodes array
-        await Promise.all(serviceCodes.map(serviceCode =>
-            setDoc(doc(serviceCodesRef, serviceCode.id), {
+        await Promise.all(serviceCodes.map(async serviceCode => {
+            const docRef = doc(serviceCodesRef, serviceCode.id);
+            setDoc(docRef, {
                 description: serviceCode.description
-            })
-        ));
+            });
+            // Fetch all documents in the itemList collection
+            const itemListRef = collection(docRef, 'itemList');
+            const itemListSnapshot = await getDocs(itemListRef);
+            const itemsInFirestore = itemListSnapshot.docs.map(doc => doc.id);
 
+            // Delete all documents in the itemList collection
+            await Promise.all(itemsInFirestore.map(itemId => deleteDoc(doc(itemListRef, itemId))));
+
+            // Add each number in itemList as a document to the itemList collection
+            return Promise.all(serviceCode.itemList.map(item =>
+                setDoc(doc(itemListRef, String(item)), {
+                    value: item
+                })
+            ));
+        }));
         return "";
     } catch (error) {
         return error.message;
+    }
+}
+
+export async function getServiceCodeByItemNumber(userId, itemNumber) {
+    try {
+        // Query all itemList collections in the Firestore database
+        const querySnapshot = await getDocs(collectionGroup(db, 'itemList'), where('value', '==', itemNumber));
+
+        // If no document was found, return an error
+        if (querySnapshot.empty) {
+            return { data: null, error: 'No service code found for the given item number' };
+        }
+
+        // Get the parent document of the first document in the query results
+        const parentDoc = querySnapshot.docs[0].ref.parent.parent;
+
+        // If the parent document does not exist, return an error
+        if (!parentDoc) {
+            return { data: null, error: 'No service code found for the given item number' };
+        }
+
+        // Get the data of the parent document
+        const parentDocData = (await getDoc(parentDoc)).data();
+
+        // If the parent document does not have data, return an error
+        if (!parentDocData) {
+            return { data: null, error: 'No service code found for the given item number' };
+        }
+
+        // Return the id and description of the parent document
+        return { data: { id: parentDoc.id, description: parentDocData.description }, error: "" };
+    } catch (error) {
+        return { data: null, error: error.message };
     }
 }
 ///////////////////////////////////////////////////////////////
