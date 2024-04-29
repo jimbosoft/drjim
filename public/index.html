@@ -3,116 +3,76 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Sample FirebaseUI App</title>
-  <script type="module" src="./firebase.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.js"></script>
-  <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <title>PRIMS</title>
 
-  <script type="module">
-    import { app, auth, env } from './firebase.js';
-    // FirebaseUI config.
-    var uiConfig = {
-      signInSuccessUrl: 'dashboard.html',
-      signInOptions: [
-        // Leave the lines as is for the providers you want to offer your users.
-        firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-        firebase.auth.FacebookAuthProvider.PROVIDER_ID,
-        firebase.auth.TwitterAuthProvider.PROVIDER_ID,
-        firebase.auth.GithubAuthProvider.PROVIDER_ID,
-        firebase.auth.EmailAuthProvider.PROVIDER_ID
-      ],
-      // tosUrl and privacyPolicyUrl accept either url string or a callback function.
-      // Terms of service url/callback.
-      tosUrl: '<your-tos-url>',
-      // Privacy policy url/callback.
-      privacyPolicyUrl: function () {
-        window.location.assign('<your-privacy-policy-url>');
-      }
-    };
-    var ui = new firebaseui.auth.AuthUI(auth);
-    // Assuming firebase has been initialized already
-    // The start method will wait until the DOM is loaded.
-    ui.start('#firebaseui-auth-container', uiConfig);
-  </script>
 </head>
-
 <body>
-  <!-- The surrounding HTML is left untouched by FirebaseUI.
-         Your app may use that space for branding, controls and other customizations.-->
-  <div id="firebaseui-auth-container"></div>
+  <nav class="bg-white border-gray-200 dark:bg-gray-900">
+    <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+    <a href="https://flowbite.com/" class="flex items-center space-x-3 rtl:space-x-reverse">
+        <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">PRIMS</span>
+    </a>
+    <div class="flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
+      <a href="login.html">
+        <button id="loginButton" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Login</button>
+      </a>
+        <button data-collapse-toggle="navbar-cta" type="button" class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600" aria-controls="navbar-cta" aria-expanded="false">
+          <span class="sr-only">Open main menu</span>
+          <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
+          </svg>
+      </button>
+    </div>
+    <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-cta">
+      <ul class="flex flex-col font-medium p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
+        <li>
+          <a href="index.html" class="block py-2 px-3 md:p-0 text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:dark:text-blue-500" aria-current="page">Home</a>
+        </li>
+        <li>
+          <a href="#" class="block py-2 px-3 md:p-0 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700">About</a>
+        </li>
+        <li>
+          <a href="#" class="block py-2 px-3 md:p-0 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700">Contact</a>
+        </li>
+      </ul>
+    </div>
+    </div>
+  </nav>
 
-  <div id="comp-lra2haj31" class="HcOXKn c9GqVL QxJLC3 comp-lra2haj31 wixui-rich-text" data-testid="richTextElement">
-    <h2 class="font_2 wixui-rich-text__text" style="line-height:normal; font-size:45px;"><span style="color:#673247;"
-        class="wixui-rich-text__text"><span style="letter-spacing:normal;" class="wixui-rich-text__text">Practitioner
-          Invoicing Made Simple</span></span></h2>
-  </div>
-  <div id="comp-lra2irnz" class="MazNVa comp-lra2irnz wixui-image">
-    <div data-testid="linkElement" class="j7pOnl"><wow-image id="img_comp-lra2irnz" class="HlRz5e BI8PVQ"
-        data-image-info="{&quot;containerId&quot;:&quot;comp-lra2irnz&quot;,&quot;displayMode&quot;:&quot;fill&quot;,&quot;targetWidth&quot;:474,&quot;targetHeight&quot;:400,&quot;isLQIP&quot;:false,&quot;imageData&quot;:{&quot;width&quot;:4500,&quot;height&quot;:3000,&quot;uri&quot;:&quot;11062b_8553d6f7c282407fb5373cfc1ffae02c~mv2.jpg&quot;,&quot;name&quot;:&quot;Man at his Desk&quot;,&quot;displayMode&quot;:&quot;fill&quot;,&quot;crop&quot;:{&quot;x&quot;:240,&quot;y&quot;:0,&quot;width&quot;:3555,&quot;height&quot;:3000,&quot;svgId&quot;:&quot;909695c1e003409ba70b5561666c7c4d.svg&quot;}}}"
-        data-bg-effect-name="" data-has-ssr-src=""><img
-          src="https://static.wixstatic.com/media/11062b_8553d6f7c282407fb5373cfc1ffae02c~mv2.jpg/v1/crop/x_240,y_0,w_3555,h_3000/fill/w_474,h_400,al_c,q_80,usm_0.66_1.00_0.01,enc_auto/Man%20at%20his%20Desk.jpg"
-          alt="Man at his Desk" style="width:474px;height:400px;object-fit:cover" width="474" height="400"
-          srcSet="https://static.wixstatic.com/media/11062b_8553d6f7c282407fb5373cfc1ffae02c~mv2.jpg/v1/crop/x_240,y_0,w_3555,h_3000/fill/w_474,h_400,al_c,q_80,usm_0.66_1.00_0.01,enc_auto/Man%20at%20his%20Desk.jpg 1x, https://static.wixstatic.com/media/11062b_8553d6f7c282407fb5373cfc1ffae02c~mv2.jpg/v1/crop/x_240,y_0,w_3555,h_3000/fill/w_948,h_800,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/Man%20at%20his%20Desk.jpg 2x"
-          fetchpriority="high" /></wow-image></div>
-  </div>
-  <div id="comp-lra3eqt8" class="MazNVa comp-lra3eqt8 wixui-image">
-    <div data-testid="linkElement" class="j7pOnl"><wow-image id="img_comp-lra3eqt8" class="HlRz5e BI8PVQ"
-        data-image-info="{&quot;containerId&quot;:&quot;comp-lra3eqt8&quot;,&quot;displayMode&quot;:&quot;fill&quot;,&quot;targetWidth&quot;:121,&quot;targetHeight&quot;:123,&quot;isLQIP&quot;:false,&quot;imageData&quot;:{&quot;width&quot;:2364,&quot;height&quot;:2363,&quot;uri&quot;:&quot;619db9_901bcff0a2734f9582d7010e391409f1~mv2.png&quot;,&quot;name&quot;:&quot;PRIMS-Primary-Full-Colour-RGB.png&quot;,&quot;displayMode&quot;:&quot;fill&quot;}}"
-        data-bg-effect-name="" data-has-ssr-src=""><img
-          src="https://static.wixstatic.com/media/619db9_901bcff0a2734f9582d7010e391409f1~mv2.png/v1/fill/w_121,h_123,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/PRIMS-Primary-Full-Colour-RGB.png"
-          alt="PRIMS-Primary-Full-Colour-RGB.png" style="width:121px;height:123px;object-fit:cover" width="121"
-          height="123"
-          srcSet="https://static.wixstatic.com/media/619db9_901bcff0a2734f9582d7010e391409f1~mv2.png/v1/fill/w_121,h_123,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/PRIMS-Primary-Full-Colour-RGB.png 1x, https://static.wixstatic.com/media/619db9_901bcff0a2734f9582d7010e391409f1~mv2.png/v1/fill/w_242,h_246,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/PRIMS-Primary-Full-Colour-RGB.png 2x"
-          fetchpriority="high" /></wow-image></div>
-  </div>
-  <div id="comp-lra3eqt4" class="HcOXKn c9GqVL QxJLC3 comp-lra3eqt4 wixui-rich-text" data-testid="richTextElement">
-    <h5 class="font_5 wixui-rich-text__text" style="font-size:22px;">PRIMS - Monthly License (Practitioner Invoicing
-      Made Simple)</h5>
-  </div>
-  <div id="comp-lra2jwnt" class="HcOXKn c9GqVL QxJLC3 comp-lra2jwnt wixui-rich-text" data-testid="richTextElement">
-    <h6 class="font_6 wixui-rich-text__text" style="font-size:18px;"><span style="font-size:18px;"
-        class="wixui-rich-text__text">$49.00 including GST</span></h6>
-  </div>
-  <div id="comp-lra2haj91" class="comp-lra2haj91 _xg6_p"></div>
-  <div id="comp-lra2lwcy" class="HcOXKn c9GqVL QxJLC3 comp-lra2lwcy wixui-rich-text" data-testid="richTextElement">
-    <p class="font_7 wixui-rich-text__text" style="font-size:17px;"><span style="font-size:17px;"
-        class="wixui-rich-text__text">Simplify your processes with PRIMS, Practitioner Invoicing Made Simple.</span></p>
 
-    <p class="font_7 wixui-rich-text__text" style="font-size:17px;"><span style="font-size:17px;"
-        class="wixui-rich-text__text">&nbsp;</span></p>
+  <div class="relative overflow-hidden bg-primary pt-[120px] md:pt-[130px] lg:pt-[160px]">
+    <h4 class="text-center mt-8 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white">Practitioner Invoicing Made Simple</h4>
+    <p class="text-center mt-4 text-lg font-normal text-gray-500 lg:text-xl sm:px-16 xl:px-48 dark:text-gray-400">Simplify your processes with PRIMS, Practitioner Invoicing Made Simple</p>
 
-    <p class="font_7 wixui-rich-text__text" style="font-size:17px;"><span style="font-size:17px;"
-        class="wixui-rich-text__text">After an initial straight forward export from Best Practice reports, our web-based
-        application will fast-track your practitioner tax-invoice creation.</span></p>
+    <section class="py-8">
+      <div class="container mx-auto px-2 pt-4 pb-12 text-gray-800">
+        <h2 class="w-full my-2 text-5xl font-black leading-tight text-center text-gray-800">
+          Pricing
+        </h2>
 
-    <p class="font_7 wixui-rich-text__text" style="font-size:17px;"><span style="font-size:17px;"
-        class="wixui-rich-text__text">&nbsp;</span></p>
+        <div class="flex flex-col sm:flex-row justify-center pt-12 my-12 sm:my-4">
+          <div class="flex flex-col w-5/6 lg:w-1/4 mx-auto lg:mx-0 rounded-none lg:rounded-l-lg bg-white mt-4">
+            <div class="flex-1 bg-white text-gray-600 rounded-t rounded-b-none overflow-hidden shadow">
+              <div class="p-8 text-3xl font-bold text-center border-b-4">
+                $49
+              </div>
+              <ul class="w-full text-center text-sm">
+                <li class="border-b py-4">Reduce the risk of grouping for Payroll Tax</li>
+                <li class="border-b py-4">Fast Tax Invoice creation, with option to email</li>
+                <li class="border-b py-4">Save hours of bookkeeping work every billing cycle</li>
+                <li class="border-b py-4">Xero and QuickBooks integration</li>
+              </ul>
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <ul class="font_7 wixui-rich-text__text" style="font-size:17px;">
-      <li class="wixui-rich-text__text">
-        <p class="font_7 wixui-rich-text__text" style="font-size:17px;"><span style="font-size:17px;"
-            class="wixui-rich-text__text">Reduce the risk of grouping for Payroll Tax</span></p>
-      </li>
-      <li class="wixui-rich-text__text">
-        <p class="font_7 wixui-rich-text__text" style="font-size:17px;"><span style="font-size:17px;"
-            class="wixui-rich-text__text">Fast Tax Invoice creation, with option to email</span></p>
-      </li>
-      <li class="wixui-rich-text__text">
-        <p class="font_7 wixui-rich-text__text" style="font-size:17px;"><span style="font-size:17px;"
-            class="wixui-rich-text__text">Save hours of bookkeeping work every billing cycle</span></p>
-      </li>
-      <li class="wixui-rich-text__text">
-        <p class="font_7 wixui-rich-text__text" style="font-size:17px;"><span style="font-size:17px;"
-            class="wixui-rich-text__text">Xero and QuickBooks integration</span></p>
-      </li>
-      <li class="wixui-rich-text__text">
-        <p class="font_7 wixui-rich-text__text" style="font-size:17px;"><span style="font-size:17px;"
-            class="wixui-rich-text__text">Standard version can manage 50 practitioners and 10,000 services in each
-            cycle</span></p>
-      </li>
-    </ul>
   </div>
-</body>
+ 
+  </body>
 </html>
+
+
