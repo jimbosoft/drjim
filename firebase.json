@@ -12,7 +12,7 @@
       "port": 9099
     },
     "hosting": {
-      "port": 5056
+      "port": 5055
     },
     "ui": {
       "enabled": true
