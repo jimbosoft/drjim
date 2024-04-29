@@ -32,7 +32,7 @@ function populateClinic() {
         const clinics = result.data;
         if (clinics) {
             for (const [index, clinic] of clinics.entries()) {
-                createCompanyAddressSection(index, clinic.id, clinic.name, clinic.address);
+                createCompanyAddressSection(index, clinic.id, clinic.name, clinic.address, clinic.abn, clinic.postcode, clinic.accountingLine);
             }
         }
         addBlankClinicAtBottom()
@@ -46,7 +46,7 @@ function addBlankClinicAtBottom() {
 }
 
 // Function to create a new company and address section
-function createCompanyAddressSection(index, id, name, address) {
+function createCompanyAddressSection(index, id, name, address, abn, postcode, accountingLine) {
     const section = document.createElement('div');
     section.classList.add('company-address-section');
 
@@ -85,6 +85,53 @@ function createCompanyAddressSection(index, id, name, address) {
         addressInput.value = address;
     }
     section.appendChild(addressInput);
+    section.appendChild(document.createElement('br'));
+
+    const abnLabel = document.createElement('label');
+    abnLabel.textContent = 'ABN:';
+    section.appendChild(abnLabel);
+    section.appendChild(document.createElement('br'));
+
+    const abnInput = document.createElement('input');
+    abnInput.type = 'text';
+    abnInput.classList.add('abn');
+    abnInput.name = 'abn';
+    if (abn) {
+        abnInput.value = abn;
+    }
+    section.appendChild(abnInput);
+    section.appendChild(document.createElement('br'));
+
+    const postcodeLabel = document.createElement('label');
+    postcodeLabel.textContent = 'Suburb State Postcode:';
+    section.appendChild(postcodeLabel);
+    section.appendChild(document.createElement('br'));
+
+    const postCodeInput = document.createElement('input');
+    postCodeInput.type = 'text';
+    postCodeInput.classList.add('postcode');
+    postCodeInput.name = 'postcode';
+    if (postcode) {
+        postCodeInput.value = postcode;
+    }
+    section.appendChild(postCodeInput);
+    section.appendChild(document.createElement('br'));
+
+    const accountingLineLabel = document.createElement('label');
+    accountingLineLabel.textContent = 'Accounting Line for Service Fees:';
+    section.appendChild(accountingLineLabel);
+    section.appendChild(document.createElement('br'));
+
+    const accountingLineInput = document.createElement('input');
+    accountingLineInput.type = 'text';
+    accountingLineInput.classList.add('accountingLine');
+    accountingLineInput.name = 'accountingLine';
+    if (accountingLine) {
+        accountingLineInput.value = accountingLine;
+    }
+    section.appendChild(accountingLineInput);
+
+
     section.appendChild(document.createElement('br'));
     section.appendChild(document.createElement('br'));
 
@@ -134,11 +181,19 @@ submitButton.addEventListener('click', async (e) => {
     const docNames = Array.from(form.getElementsByClassName('docId'), label => label.textContent);;
     const companyNames = Array.from(form.getElementsByClassName('companyName'), input => input.value.trim()).filter(value => value !== '');;
     const addresses = Array.from(form.getElementsByClassName('address'), input => input.value.trim()).filter(value => value !== '');
+    const companyAbn = Array.from(form.getElementsByClassName('abn'), input => input.value.trim()).filter(value => value !== '');
+    const companyPostcode = Array.from(form.getElementsByClassName('postcode'), input => input.value.trim()).filter(value => value !== '');
+    const accountingLine = Array.from(form.getElementsByClassName('accountingLine'), input => input.value.trim()).filter(value => value !== '');
+
+
     // Create an array of company and address objects
-    const companies = companyNames.map((name, i) => ({ docId: docNames[i], name: companyNames[i], address: addresses[i] }));
+    const companies = companyNames.map((name, i) => ({ docId: docNames[i], name: companyNames[i], address: addresses[i], abn: companyAbn[i], postcode: companyPostcode[i], accountingLine: accountingLine[i] }));
     let companiesArray = companies.map(company => ({
         id: company.docId,
-        name: company.name,
+        name: company.name || "",
+        abn: company.abn || "",
+        postcode: company.postcode || "",
+        accountingLine: company.accountingLine || "",
         address: company.address || ""
     }));
 

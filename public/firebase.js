@@ -93,7 +93,10 @@ export async function setClinics(userId, clinicList) {
 
             return setDoc(clinicDetails, {
                 name: clinic.name,
-                address: clinic.address
+                address: clinic.address, 
+                abn: clinic.abn,
+                postcode: clinic.postcode, 
+                accountingLine: clinic.accountingLine
             }, { merge: true });
         }));
 
