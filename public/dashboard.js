@@ -1,5 +1,5 @@
 
-import { auth, setUser, getClinics, getServiceCodes, currentUser } from './firebase.js';
+import { auth, setUser, getClinics, getServiceCodes, currentUser, clinicId } from './firebase.js';
 import { islogoutButtonPressed, resetlogoutButtonPressed, showLoginScreen, showUser } from './footer.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { cloudServiceConfig } from './config.js';
@@ -31,15 +31,7 @@ serviceCodes.addEventListener('click', () => {
 practitioners.addEventListener('click', () => {
     window.location.href = '/practitioners.html';
 });
-// Get a reference to the dropdown
 var dropdown = document.getElementById('dropdown');
-dropdown.addEventListener('change', function () {
-    let selectedIndex = dropdown.selectedIndex;
-    let selectedOption = dropdown.options[selectedIndex];
-    let selectedId = selectedOption.dataset.id;
-
-    localStorage.setItem('clinicId', selectedId);
-});
 
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('csvFile');
@@ -48,12 +40,12 @@ const providerButton = document.getElementById('practitioners');
 dropZone.addEventListener('dragover', function (e) {
     e.preventDefault();
     dropZone.classList.add('bg-gray-200');
-    dropZone.style.cursor = 'copy'; // Add this line
+    dropZone.style.cursor = 'copy'; 
 });
 
 dropZone.addEventListener('dragleave', function (e) {
     dropZone.classList.remove('bg-gray-200');
-    dropZone.style.cursor = 'default'; // Add this line
+    dropZone.style.cursor = 'default'; 
 });
 dropZone.addEventListener('drop', function (e) {
     e.preventDefault();
@@ -158,32 +150,18 @@ function initClinics() {
             populateClinic(clinics);
         } else {
             dropdown.classList.add("hidden");
-            localStorage.setItem('clinicId', null);
+            localStorage.setItem(clinicId, null);
         }
     })
 }
 
-function addHeader(headerTxt) {
-    // Create a new h2 element
-    var h2 = document.createElement('h2');
-    h2.textContent = headerTxt;
-    // Add a Tailwind CSS class to the h2
-    h2.classList.add('mb-2');
-    // Get the div to which you want to add the h2
-    var div = document.getElementById('selectClinic');
-    // Add the h2 to the div
-    div.insertBefore(h2, div.firstChild);
-    //var div = document.getElementById('companyName')
-    //div.textContent = headerTxt;
-}
-
 function populateClinic(clinics) {
-    const lastSelected = localStorage.getItem('clinicId');
-
+    const lastSelected = localStorage.getItem(clinicId);
+   
     // Add default option
     const defaultOption = document.createElement('option');
     defaultOption.textContent = 'Please select company';
-    if (!lastSelected) {
+    if (!lastSelected || lastSelected === 'null') {
         dropdown.appendChild(defaultOption);
     } else {
         companySelected();
@@ -209,7 +187,7 @@ function populateClinic(clinics) {
         let selectedIndex = dropdown.selectedIndex;
         let selectedOption = dropdown.options[selectedIndex];
         let selectedId = selectedOption.dataset.id;
-        localStorage.setItem('clinicId', selectedId);
+        localStorage.setItem(clinicId, selectedId);
         serviceCodesSet(selectedId);
         companySelected();
     });
