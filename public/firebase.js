@@ -52,6 +52,8 @@ if (env === "local") {
     connectFirestoreEmulator(db, 'localhost', 8080)
 }
 
+export const clinicId = 'clinicId';
+
 export async function getClinics() {
     try {
         const userId = currentUser.uid;
@@ -105,7 +107,7 @@ export async function setClinics(userId, clinicList) {
         return error.message;
     }
 }
-export async function setPractitioners(userId, clinicId, practitioners) {
+export async function setPractitioners2(userId, clinicId, practitioners) {
     try {
         const practitionersRef = collection(db, "users", userId, "companyDetails", clinicId, "practitioners");
 
@@ -124,14 +126,14 @@ export async function setPractitioners(userId, clinicId, practitioners) {
             const providerDetails = practitioner.id ? doc(practitionersRef, practitioner.id) : doc(practitionersRef);
             return setDoc(providerDetails, {
                 name: practitioner.name,
-            });
+            }, { merge: true });
         }));
         return "";
     } catch (error) {
         return error.message;
     }
 }
-export async function getPractitioners(userId, clinicId) {
+export async function getPractitioners2(userId, clinicId) {
     try {
         const practitionersRef = collection(db, "users", userId, "companyDetails", clinicId, "practitioners");
         const querySnapshot = await getDocs(practitionersRef);
@@ -141,6 +143,68 @@ export async function getPractitioners(userId, clinicId) {
         return { data: Array.from(querySnapshot.docs, doc => ({ id: doc.id, ...doc.data() })), error: "" };
     } catch (error) {
         return { data: null, error: error.message };
+    }
+}
+export async function setPractitioners(userId, clinicId, practitioners) {
+    try {
+        const practitionersRef = collection(db, "users", userId, "companyDetails", clinicId, "practitioners");
+
+        // Fetch all documents in the practitioners collection
+        const snapshot = await getDocs(practitionersRef);
+        const docsInFirestore = snapshot.docs.map(doc => doc.id);
+
+        // Find the documents that are not in the practitioners array
+        const docsToRemove = docsInFirestore.filter(docId => !practitioners.some(practitioner => practitioner.id === docId));
+
+        // Delete the documents that are not in the practitioners array
+        await Promise.all(docsToRemove.map(docId => deleteDoc(doc(practitionersRef, docId))));
+
+        // Update the documents that are in the practitioners array
+        await Promise.all(practitioners.map(async practitioner => {
+            const providerDetails = practitioner.id ? doc(practitionersRef, practitioner.id) : doc(practitionersRef);
+            await setDoc(providerDetails, {
+                name: practitioner.name,
+            }, { merge: true });
+
+            // Store services as a collection against each practitioner
+            const servicesRef = collection(providerDetails, "services");
+            await Promise.all(practitioner.services.map(service => setDoc(doc(servicesRef, service.id), {
+                value: service.value
+            })));
+       }));
+        return "";
+    } catch (error) {
+        return error.message;
+    }
+}
+
+export async function getPractitioners(userId, clinicId) {
+    try {
+        const practitionersRef = collection(db, "users", userId, "companyDetails", clinicId, "practitioners");
+        const snapshot = await getDocs(practitionersRef);
+
+        const practitioners = [];
+        for (const doc of snapshot.docs) {
+            const practitionerData = doc.data();
+            const servicesRef = collection(doc.ref, "services");
+            const servicesSnapshot = await getDocs(servicesRef);
+
+            const services = servicesSnapshot.docs.map(serviceDoc => ({
+                id: serviceDoc.id,
+                value: serviceDoc.data().value
+            }));
+
+            practitioners.push({
+                id: doc.id,
+                name: practitionerData.name,
+                services: services
+            });
+        }
+
+        return practitioners;
+    } catch (error) {
+        console.error("Error getting practitioners: ", error);
+        return [];
     }
 }
 export async function getPractitionerByPracId(userId, clinicId, pracId) {

@@ -31,10 +31,6 @@
       margin-right: 40px;
     }
 
-    .highlight {
-      background-color: yellow;
-    }
-
     input[type="number"]::-webkit-inner-spin-button,
     input[type="number"]::-webkit-outer-spin-button {
       -webkit-appearance: none;
@@ -44,28 +40,24 @@
     input[type="number"] {
       -moz-appearance: textfield;
     }
-
+ 
     .service-code {
-      width: 100px;
+      width: 200px;
       margin-left: 10px;
-      margin-top: 10px; 
-      /* Adjust as needed */
+      margin-top: 10px;
     }
 
     .percentage-number {
       width: 30px;
       margin-left: 5px;
     }
+
     button {
       margin-left: 10px;
     }
 
-    .name-entry {
-        margin-bottom: 10px; 
-    }
     #button-container {
       display: flex;
-      justify-content: center;
       margin-top: 20px;
     }
   </style>
@@ -73,14 +65,16 @@
 
 <body>
   <h2>Providers:</h2>
-  <div id="practitioners-form">
-    <div class="name-entry">
+  <div id="provider-form">
+ <!--    <div class="providerRow" style="display: flex">
       <input type="text" class="name-input" placeholder="Enter new name">
-      <select class="service-code"></select>
-      <input type="number" class="percentage-number">
-      <span>%</span>
+      <div class="service-code-entry">
+        <label class="service-code">service-code</label>
+        <input type="number" class="percentage-number">
+        <span>%</span>
+      </div>
       <button>Delete</button>
-    </div>
+ -->    </div>
   </div>
 
   <div id="button-container">
