@@ -1,4 +1,4 @@
-# drjim web application for invoicing
+# drjim web application for invoicing practitioners 
 
 Based on firebase: https://console.firebase.google.com/u/0/project/drjim-f2087/overview
 
