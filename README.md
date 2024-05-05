@@ -32,3 +32,5 @@ Used **Remote Config** key **env** to know if it is running locally against emul
 
 [What I learnt](./public/MyJourney.md)
 
+never commit to master
+
