@@ -1,5 +1,5 @@
 
-import { auth, setUser } from './firebase.js';
+import { auth, setUser, clinicId } from './firebase.js';
 
 let logoutButtonPressed = false;
 export function islogoutButtonPressed() {
@@ -16,7 +16,7 @@ export function showLoginScreen() {
 }
 export function logout() {
     setUser(null)
-    localStorage.removeItem('clinicId');
+    localStorage.removeItem(clinicId);
     auth.signOut().then(() => {
         showLoginScreen()
     }).catch((error) => {
