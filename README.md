@@ -31,4 +31,5 @@ Used **Remote Config** key **env** to know if it is running locally against emul
  firebase deploy               --only hosting <br>
 
 [What I learnt](./public/MyJourney.md)
+ never push to master
 
