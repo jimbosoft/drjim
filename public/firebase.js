@@ -44,7 +44,7 @@ import {
     doc,
     getDocs,
     deleteDoc,
-    collection,
+    collection
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js'
 
 export const db = getFirestore(app);
@@ -95,9 +95,9 @@ export async function setClinics(userId, clinicList) {
 
             return setDoc(clinicDetails, {
                 name: clinic.name,
-                address: clinic.address, 
+                address: clinic.address,
                 abn: clinic.abn,
-                postcode: clinic.postcode, 
+                postcode: clinic.postcode,
                 accountingLine: clinic.accountingLine
             }, { merge: true });
         }));
@@ -105,44 +105,6 @@ export async function setClinics(userId, clinicList) {
         return "";
     } catch (error) {
         return error.message;
-    }
-}
-export async function setPractitioners2(userId, clinicId, practitioners) {
-    try {
-        const practitionersRef = collection(db, "users", userId, "companyDetails", clinicId, "practitioners");
-
-        // Fetch all documents in the practitioners collection
-        const snapshot = await getDocs(practitionersRef);
-        const docsInFirestore = snapshot.docs.map(doc => doc.id);
-
-        // Find the documents that are not in the practitioners array
-        const docsToRemove = docsInFirestore.filter(docId => !practitioners.some(practitioner => practitioner.id === docId));
-
-        // Delete the documents that are not in the practitioners array
-        await Promise.all(docsToRemove.map(docId => deleteDoc(doc(practitionersRef, docId))));
-
-        // Update the documents that are in the practitioners array
-        await Promise.all(practitioners.map(practitioner => {
-            const providerDetails = practitioner.id ? doc(practitionersRef, practitioner.id) : doc(practitionersRef);
-            return setDoc(providerDetails, {
-                name: practitioner.name,
-            }, { merge: true });
-        }));
-        return "";
-    } catch (error) {
-        return error.message;
-    }
-}
-export async function getPractitioners2(userId, clinicId) {
-    try {
-        const practitionersRef = collection(db, "users", userId, "companyDetails", clinicId, "practitioners");
-        const querySnapshot = await getDocs(practitionersRef);
-        if (querySnapshot.empty) {
-            return { data: null, error: "" };
-        }
-        return { data: Array.from(querySnapshot.docs, doc => ({ id: doc.id, ...doc.data() })), error: "" };
-    } catch (error) {
-        return { data: null, error: error.message };
     }
 }
 export async function setPractitioners(userId, clinicId, practitioners) {
@@ -158,7 +120,17 @@ export async function setPractitioners(userId, clinicId, practitioners) {
 
         // Delete the documents that are not in the practitioners array
         await Promise.all(docsToRemove.map(docId => deleteDoc(doc(practitionersRef, docId))));
-
+ /*        await Promise.all(docsToRemove.map(async (docId) => {
+            console.error('docId:', docId);
+            const docRef = doc(practitionersRef, docId);
+            console.error('docRef:', docRef);
+            const servicesRef = collection(docRef, 'services');
+            console.error(servicesRef)
+            const querySnapshot = await getDocs(servicesRef);
+            querySnapshot.forEach((doc) => {
+                deleteDoc(doc.ref);
+        })})).catch(error => console.error('Failed to delete some documents:', error));
+ */
         // Update the documents that are in the practitioners array
         await Promise.all(practitioners.map(async practitioner => {
             const providerDetails = practitioner.id ? doc(practitionersRef, practitioner.id) : doc(practitionersRef);
@@ -171,18 +143,40 @@ export async function setPractitioners(userId, clinicId, practitioners) {
             await Promise.all(practitioner.services.map(service => setDoc(doc(servicesRef, service.id), {
                 value: service.value
             })));
-       }));
+        }));
         return "";
     } catch (error) {
         return error.message;
     }
 }
+async function getProviders(userId, clinicId) {
+    try {
+        const providersRef = collection(db, "users", userId, "companyDetails", clinicId, "practitioners");
+        const snapshot = await getDocs(providersRef);
+        if (snapshot.empty) {
+            return { ref: providersRef, data: [], error: "" };
+        }
+        return { ref: providersRef, data: Array.from(snapshot.docs, doc => ({ id: doc.id, ...doc.data() })), error: "" };
+    } catch (error) {
+        return { ref: providersRef, data: [], error: error.message };
+    }
+}
+
+export async function hasProviders(userId, clinicId) {
+    const providers = await getProviders(userId, clinicId)
+    if (providers.error) {
+        alert(providers.error);
+    }
+    return providers && providers.data.length > 0;
+}
 
 export async function getPractitioners(userId, clinicId) {
     try {
-        const practitionersRef = collection(db, "users", userId, "companyDetails", clinicId, "practitioners");
-        const snapshot = await getDocs(practitionersRef);
-
+        const providers = await getProviders(userId, clinicId);
+        if (providers.error) {
+            return { data: null, error: providers.error };
+        }
+        const snapshot = await getDocs(providers.ref);
         const practitioners = [];
         for (const doc of snapshot.docs) {
             const practitionerData = doc.data();
@@ -200,24 +194,9 @@ export async function getPractitioners(userId, clinicId) {
                 services: services
             });
         }
-
-        return practitioners;
+        return { data: practitioners, error: null };
     } catch (error) {
-        console.error("Error getting practitioners: ", error);
-        return [];
-    }
-}
-export async function getPractitionerByPracId(userId, clinicId, pracId) {
-    try {
-        const practitionerRef = doc(db, "users", userId, "companyDetails", clinicId, "practitioners", pracId);
-        const docSnap = await getDoc(practitionerRef);
-        if (docSnap.exists()) {
-            return { data: { id: docSnap.id, ...docSnap.data() }, error: "" };
-        } else {
-            return { data: null, error: 'No practitioner found for the given id' };
-        }
-    } catch (error) {
-        return { data: null, error: error.message };
+        return { data: [], error: error.message };
     }
 }
 export async function getServiceCodes(userId, clinicId) {
@@ -225,7 +204,7 @@ export async function getServiceCodes(userId, clinicId) {
         const serviceCodesRef = collection(db, "users", userId, "companyDetails", clinicId, "serviceCodes");
         const querySnapshot = await getDocs(serviceCodesRef);
         if (querySnapshot.empty) {
-            return { data: null, error: "" };
+            return { data: [], error: "" };
         }
         const serviceCodes = [];
         for (const doc of querySnapshot.docs) {
@@ -235,6 +214,20 @@ export async function getServiceCodes(userId, clinicId) {
             serviceCodes.push({ id: doc.id, itemList: itemList, ...doc.data() });
         }
         return { data: serviceCodes, error: "" };
+    } catch (error) {
+        return { data: [], error: error.message };
+    }
+}
+
+export async function getPractitionerByPracId(userId, clinicId, pracId) {
+    try {
+        const practitionerRef = doc(db, "users", userId, "companyDetails", clinicId, "practitioners", pracId);
+        const docSnap = await getDoc(practitionerRef);
+        if (docSnap.exists()) {
+            return { data: { id: docSnap.id, ...docSnap.data() }, error: "" };
+        } else {
+            return { data: null, error: 'No practitioner found for the given id' };
+        }
     } catch (error) {
         return { data: null, error: error.message };
     }
@@ -316,6 +309,39 @@ export async function getServiceCodeByItemNumber(userId, itemNumber) {
         return { data: null, error: error.message };
     }
 }
+//------------- Delete collections -------------------------
+async function deleteCollection(db, collectionRef, batchSize) {
+    const query = collectionRef.limit(batchSize);
+
+    return new Promise((resolve, reject) => {
+        deleteQueryBatch(db, query, batchSize, resolve, reject);
+    });
+}
+
+async function deleteQueryBatch(db, query, batchSize, resolve, reject) {
+    const snapshot = await query.get();
+
+    if (snapshot.size == 0) {
+        // When there are no documents left, we are done
+        resolve();
+        return;
+    }
+
+    // Delete documents in a batch
+    const batch = db.batch();
+    snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+
+    // Recurse on the next process tick, to avoid
+    // exploding the stack.
+    setTimeout(() => {
+        deleteQueryBatch(db, query, batchSize, resolve, reject);
+    });
+}
+
 ///////////////////////////////////////////////////////////////
 // import {
 //     connectStorageEmulator,
