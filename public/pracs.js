@@ -36,8 +36,8 @@ function populatePracs() {
                 alert(lstServiceCodes.error);
             }
             serviceCodes = lstServiceCodes.data
-            if (lstProviders && lstProviders.length > 0) {
-                for (const [index, provider] of lstProviders.entries()) {
+            if (lstProviders && lstProviders.data.length > 0) {
+                for (const [index, provider] of lstProviders.data.entries()) {
                     let serviceMap = []
                     if (provider.services) {
                         serviceMap = provider.services.reduce((map, service) => {

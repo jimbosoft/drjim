@@ -65,7 +65,7 @@ async function populateServiceCodes() {
     if (result.error) {
         alert(`Error getting service codes: ${result.error}`);
     }
-    if (result.data) {
+    if (result.data && result.data.length > 0) {
         data = result.data;
     }
     let tableBody = document.getElementById('servicesTable').getElementsByTagName('tbody')[0];
