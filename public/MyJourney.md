@@ -10,6 +10,11 @@
 
 * preview channels
 
+## insane things about javascript
+* a function can return 2 parameters and in the same function it can also return 3, without any error or warning
+* size is used for maps and sets and length is used for arrays
+* you can call an async function without wait and there will be no warning or error
+
 ## Running firebase
 
  login:use <email>   set the default account to use for this project
