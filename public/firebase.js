@@ -1,31 +1,19 @@
-//
-// Import the functions you need from the SDKs you need
+import { firebaseConfig, isLocal } from './config.js'
+export let env = "deploy";
+if (isLocal) {
+    env = "local"
+}
+
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-// Initialize Firebase
-import { firebaseConfig } from './config.js'
 export const app = initializeApp(firebaseConfig);
 
 import { getRemoteConfig, fetchAndActivate, getValue, getString } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-remote-config.js'
-
 const remoteConfig = getRemoteConfig(app);
 remoteConfig.settings.minimumFetchIntervalMillis = 1;
-let isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-export let env = "local";
-
-if (!isLocal) {
-    // Use remote config
-    remoteConfig.defaultConfig = {
-        "env": "local"
-    };
-
-    await fetchAndActivate(remoteConfig);
-    env = getString(remoteConfig, "env");
-}
 
 import {
     getAuth, connectAuthEmulator
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-
 export const auth = getAuth(app);
 
 if (env === "local") {
