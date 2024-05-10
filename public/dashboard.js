@@ -234,6 +234,13 @@ function initClinics() {
 }
 
 function populateClinic(clinics) {
+    //
+    // If there is only one = auto selection
+    //
+    if (clinics.length == 1) {
+        localStorage.setItem(clinicId, clinics[0].id);
+    }
+
     const lastSelected = localStorage.getItem(clinicId);
 
     // Add default option
