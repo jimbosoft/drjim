@@ -228,7 +228,7 @@ function initClinics() {
             populateClinic(clinics);
         } else {
             clinicDropdown.classList.add("hidden");
-            localStorage.setItem(clinicId, null);
+            localStorage.removeItem(clinicId);
         }
     })
 }
