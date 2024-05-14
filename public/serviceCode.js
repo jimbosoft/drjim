@@ -1,4 +1,4 @@
-import { auth, setUser, currentUser, db, getClinics } from './firebase.js';
+import { auth, setUser, currentUser, clinicId } from './firebase.js';
 import {
     islogoutButtonPressed,
     resetlogoutButtonPressed,
@@ -60,12 +60,12 @@ async function populateServiceCodes() {
         { id: 'UVB', description: 'Ultraviolet Phototherapy' },
         // more data...
     ];
-    let clinicId = localStorage.getItem('clinicId');
-    const result = await getServiceCodes(currentUser.uid, clinicId);
+    let cId = localStorage.getItem(clinicId);
+    const result = await getServiceCodes(currentUser.uid, cId);
     if (result.error) {
         alert(`Error getting service codes: ${result.error}`);
     }
-    if (result.data) {
+    if (result.data && result.data.length > 0) {
         data = result.data;
     }
     let tableBody = document.getElementById('servicesTable').getElementsByTagName('tbody')[0];
@@ -147,9 +147,9 @@ submitButton.addEventListener('click', async (e) => {
                 itemList: getItemList(row)
             }));
 
-        let clinicId = localStorage.getItem('clinicId');
+        let cId = localStorage.getItem(clinicId);
         const userId = currentUser.uid;
-        const errorMsg = await setServiceCodes(userId, clinicId, serviceCodes)
+        const errorMsg = await setServiceCodes(userId, cId, serviceCodes)
         if (errorMsg) {
             alert(`Error setting service codes: ${errorMsg}`);
         } else {

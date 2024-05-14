@@ -1,31 +1,19 @@
-//
-// Import the functions you need from the SDKs you need
+import { firebaseConfig, isLocal } from './config.js'
+export let env = "deploy";
+if (isLocal) {
+    env = "local"
+}
+
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-// Initialize Firebase
-import { firebaseConfig } from './config.js'
 export const app = initializeApp(firebaseConfig);
 
 import { getRemoteConfig, fetchAndActivate, getValue, getString } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-remote-config.js'
-
 const remoteConfig = getRemoteConfig(app);
 remoteConfig.settings.minimumFetchIntervalMillis = 1;
-let isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-export let env = "local";
-
-if (!isLocal) {
-    // Use remote config
-    remoteConfig.defaultConfig = {
-        "env": "local"
-    };
-
-    await fetchAndActivate(remoteConfig);
-    env = getString(remoteConfig, "env");
-}
 
 import {
     getAuth, connectAuthEmulator
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-
 export const auth = getAuth(app);
 
 if (env === "local") {
@@ -44,13 +32,15 @@ import {
     doc,
     getDocs,
     deleteDoc,
-    collection,
+    collection
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js'
 
 export const db = getFirestore(app);
 if (env === "local") {
     connectFirestoreEmulator(db, 'localhost', 8080)
 }
+
+export const clinicId = 'clinicId';
 
 export async function getClinics() {
     try {
@@ -93,9 +83,9 @@ export async function setClinics(userId, clinicList) {
 
             return setDoc(clinicDetails, {
                 name: clinic.name,
-                address: clinic.address, 
+                address: clinic.address,
                 abn: clinic.abn,
-                postcode: clinic.postcode, 
+                postcode: clinic.postcode,
                 accountingLine: clinic.accountingLine
             }, { merge: true });
         }));
@@ -105,13 +95,104 @@ export async function setClinics(userId, clinicList) {
         return error.message;
     }
 }
+export async function setPractitioners(userId, clinicId, practitioners) {
+    try {
+        const practitionersRef = collection(db, "users", userId, "companyDetails", clinicId, "practitioners");
 
+        // Fetch all documents in the practitioners collection
+        const snapshot = await getDocs(practitionersRef);
+        const docsInFirestore = snapshot.docs.map(doc => doc.id);
+
+        // Find the documents that are not in the practitioners array
+        const docsToRemove = docsInFirestore.filter(docId => !practitioners.some(practitioner => practitioner.id === docId));
+
+        // Delete the documents that are not in the practitioners array
+        await Promise.all(docsToRemove.map(docId => deleteDoc(doc(practitionersRef, docId))));
+ /*        await Promise.all(docsToRemove.map(async (docId) => {
+            console.error('docId:', docId);
+            const docRef = doc(practitionersRef, docId);
+            console.error('docRef:', docRef);
+            const servicesRef = collection(docRef, 'services');
+            console.error(servicesRef)
+            const querySnapshot = await getDocs(servicesRef);
+            querySnapshot.forEach((doc) => {
+                deleteDoc(doc.ref);
+        })})).catch(error => console.error('Failed to delete some documents:', error));
+ */
+        // Update the documents that are in the practitioners array
+        await Promise.all(practitioners.map(async practitioner => {
+            const providerDetails = practitioner.id ? doc(practitionersRef, practitioner.id) : doc(practitionersRef);
+            await setDoc(providerDetails, {
+                name: practitioner.name,
+            }, { merge: true });
+
+            // Store services as a collection against each practitioner
+            const servicesRef = collection(providerDetails, "services");
+            await Promise.all(practitioner.services.map(service => setDoc(doc(servicesRef, service.id), {
+                value: service.value
+            })));
+        }));
+        return "";
+    } catch (error) {
+        return error.message;
+    }
+}
+async function getProviders(userId, clinicId) {
+    try {
+        const providersRef = collection(db, "users", userId, "companyDetails", clinicId, "practitioners");
+        const snapshot = await getDocs(providersRef);
+        if (snapshot.empty) {
+            return { ref: providersRef, data: [], error: "" };
+        }
+        return { ref: providersRef, data: Array.from(snapshot.docs, doc => ({ id: doc.id, ...doc.data() })), error: "" };
+    } catch (error) {
+        return { ref: providersRef, data: [], error: error.message };
+    }
+}
+
+export async function hasProviders(userId, clinicId) {
+    const providers = await getProviders(userId, clinicId)
+    if (providers.error) {
+        alert(providers.error);
+    }
+    return providers && providers.data.length > 0;
+}
+
+export async function getPractitioners(userId, clinicId) {
+    try {
+        const providers = await getProviders(userId, clinicId);
+        if (providers.error) {
+            return { data: null, error: providers.error };
+        }
+        const snapshot = await getDocs(providers.ref);
+        const practitioners = [];
+        for (const doc of snapshot.docs) {
+            const practitionerData = doc.data();
+            const servicesRef = collection(doc.ref, "services");
+            const servicesSnapshot = await getDocs(servicesRef);
+
+            const services = servicesSnapshot.docs.map(serviceDoc => ({
+                id: serviceDoc.id,
+                value: serviceDoc.data().value
+            }));
+
+            practitioners.push({
+                id: doc.id,
+                name: practitionerData.name,
+                services: services
+            });
+        }
+        return { data: practitioners, error: null };
+    } catch (error) {
+        return { data: [], error: error.message };
+    }
+}
 export async function getServiceCodes(userId, clinicId) {
     try {
         const serviceCodesRef = collection(db, "users", userId, "companyDetails", clinicId, "serviceCodes");
         const querySnapshot = await getDocs(serviceCodesRef);
         if (querySnapshot.empty) {
-            return { data: null, error: "" };
+            return { data: [], error: "" };
         }
         const serviceCodes = [];
         for (const doc of querySnapshot.docs) {
@@ -121,6 +202,20 @@ export async function getServiceCodes(userId, clinicId) {
             serviceCodes.push({ id: doc.id, itemList: itemList, ...doc.data() });
         }
         return { data: serviceCodes, error: "" };
+    } catch (error) {
+        return { data: [], error: error.message };
+    }
+}
+
+export async function getPractitionerByPracId(userId, clinicId, pracId) {
+    try {
+        const practitionerRef = doc(db, "users", userId, "companyDetails", clinicId, "practitioners", pracId);
+        const docSnap = await getDoc(practitionerRef);
+        if (docSnap.exists()) {
+            return { data: { id: docSnap.id, ...docSnap.data() }, error: "" };
+        } else {
+            return { data: null, error: 'No practitioner found for the given id' };
+        }
     } catch (error) {
         return { data: null, error: error.message };
     }
@@ -202,6 +297,39 @@ export async function getServiceCodeByItemNumber(userId, itemNumber) {
         return { data: null, error: error.message };
     }
 }
+//------------- Delete collections -------------------------
+async function deleteCollection(db, collectionRef, batchSize) {
+    const query = collectionRef.limit(batchSize);
+
+    return new Promise((resolve, reject) => {
+        deleteQueryBatch(db, query, batchSize, resolve, reject);
+    });
+}
+
+async function deleteQueryBatch(db, query, batchSize, resolve, reject) {
+    const snapshot = await query.get();
+
+    if (snapshot.size == 0) {
+        // When there are no documents left, we are done
+        resolve();
+        return;
+    }
+
+    // Delete documents in a batch
+    const batch = db.batch();
+    snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+
+    // Recurse on the next process tick, to avoid
+    // exploding the stack.
+    setTimeout(() => {
+        deleteQueryBatch(db, query, batchSize, resolve, reject);
+    });
+}
+
 ///////////////////////////////////////////////////////////////
 // import {
 //     connectStorageEmulator,
