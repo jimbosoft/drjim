@@ -287,12 +287,8 @@ function companyWasSetup() {
 
 function companySelected(companyId) {
     serviceCodes.classList.remove('hidden');
-    hasProviders(currentUser.uid, companyId).then((gotProviders) => {
-        if (gotProviders) {
-            const fileProcessing = document.getElementById('file-processing');
-            fileProcessing.classList.remove('hidden');
-        }
-    });
+    const fileProcessing = document.getElementById('file-processing');
+    fileProcessing.classList.remove('hidden');
 }
 
 function serviceCodesSet(clinicId) {
