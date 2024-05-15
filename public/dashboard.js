@@ -1,5 +1,5 @@
 
-import { auth, setUser, getClinics, getServiceCodes, currentUser, clinicId, hasProviders, getPractitioners } from './firebase.js';
+import { auth, setUser, getClinics, getServiceCodes, currentUser, clinicId, hasProviders, getPractitioners, getSubscription, getBillingPortal } from './firebase.js';
 import { islogoutButtonPressed, resetlogoutButtonPressed, showLoginScreen, showUser } from './footer.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { cloudServiceConfig } from './config.js';
@@ -9,6 +9,7 @@ onAuthStateChanged(auth, (user) => {
         setUser(user);
         showUser(user)
         initClinics();
+        subscriptionDetails();
     } else {
         // User is signed out
         if (islogoutButtonPressed()) {
@@ -31,6 +32,13 @@ serviceCodes.addEventListener('click', () => {
 practitioners.addEventListener('click', () => {
     window.location.href = '/practitioners.html';
 });
+
+billingPortalSetup.addEventListener('click', () => {
+    getBillingPortal()
+});
+
+
+
 var clinicDropdown = document.getElementById('clinicDropdown');
 
 const dropZone = document.getElementById('dropZone');
@@ -310,4 +318,25 @@ function serviceCodesSet(clinicId) {
         .catch(error => {
             console.error(`Error getting service codes: ${error}`);
         });
+}
+
+
+function subscriptionDetails(){
+    getSubscription(currentUser.uid).then(async (result) => {
+        const billingPortal = document.getElementById('SetupBillingPortal');
+        if (result.error) {
+            alert(result.error);
+            const companyDetails = document.getElementById('clinicSetup');
+            companyDetails.style.display  = 'none';
+            return;
+        }
+        const subscriptionId = result.data.subscriptionId;
+        const dateEnd = document.getElementById('subscriptionDateEnd');
+        if(subscriptionId === 'FREE_TRIAL'){
+            // Hide billing portal for free trial
+            billingPortal.style.display  = 'none';
+        }
+        dateEnd.innerHTML = ("Subscription End: ").concat(result.data.endDate);
+
+    })
 }

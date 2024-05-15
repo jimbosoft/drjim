@@ -16,8 +16,12 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 export const auth = getAuth(app);
 
+import { getFunctions, httpsCallable, connectFunctionsEmulator  } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
+const functions = getFunctions(app);
+
 if (env === "local") {
     connectAuthEmulator(auth, "http://localhost:9099");
+    connectFunctionsEmulator(functions, "127.0.0.1", 5001);
 }
 export let currentUser = null
 export function setUser(user) {
@@ -32,7 +36,10 @@ import {
     doc,
     getDocs,
     deleteDoc,
-    collection
+    collection,
+    query,
+    where,
+    onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js'
 
 export const db = getFirestore(app);
@@ -297,6 +304,34 @@ export async function getServiceCodeByItemNumber(userId, itemNumber) {
         return { data: null, error: error.message };
     }
 }
+
+export async function getSubscription(userId){
+    try {
+        var currentSeconds = new Date() / 1000;
+        const subscriptionQuery = query(collection(db, "users", userId, "subscriptionDetails"), where("dateEnd", ">=", currentSeconds));
+
+        // Get all the documents in the collection
+        const querySnapshot = await getDocs(subscriptionQuery);
+        if(querySnapshot.empty){
+            return { data: null, error: 'No subscription found' };
+        }
+        const subscriptionData = querySnapshot.docs[0].data();
+        var date = new Date(subscriptionData.dateEnd * 1000).toISOString().slice(0, 10)
+        return { data: { subscriptionId: querySnapshot.docs[0].id, endDate: date, seatPurchased: subscriptionData.seatPurchased }, error: "" };
+    } catch (error) {
+        return { data: null, error: error.message };
+    }
+}
+
+export async function getBillingPortal(){
+    const functions = getFunctions(app);
+    const createPortalLink = httpsCallable(functions, 'createPortalLink');
+    const result = await createPortalLink();
+    window.open(result.data, '_blank');
+}
+
+
+
 //------------- Delete collections -------------------------
 async function deleteCollection(db, collectionRef, batchSize) {
     const query = collectionRef.limit(batchSize);
