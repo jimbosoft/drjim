@@ -149,8 +149,12 @@ submitButton.addEventListener('click', async (e) => {
 
     for (let i = 0; i < providerRows.length; i++) {
         const nameInput = providerRows[i].getElementsByClassName('name-input')[0];
+        let idValue = nameInput.getAttribute('data-id');
+        idValue = (idValue === 'null' || idValue === null) ? '' : idValue;
+
         if (nameInput.value !== '') {
             const providerData = {
+                id: idValue,
                 name: nameInput.value,
                 services: []
             };

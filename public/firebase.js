@@ -32,7 +32,7 @@ import {
     doc,
     getDocs,
     deleteDoc,
-    collection
+    collection,
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js'
 
 export const db = getFirestore(app);
@@ -107,18 +107,17 @@ export async function setPractitioners(userId, clinicId, practitioners) {
         const docsToRemove = docsInFirestore.filter(docId => !practitioners.some(practitioner => practitioner.id === docId));
 
         // Delete the documents that are not in the practitioners array
-        await Promise.all(docsToRemove.map(docId => deleteDoc(doc(practitionersRef, docId))));
- /*        await Promise.all(docsToRemove.map(async (docId) => {
-            console.error('docId:', docId);
+        //await Promise.all(docsToRemove.map(docId => deleteDoc(doc(practitionersRef, docId))));
+        await Promise.all(docsToRemove.map(async (docId) => {
             const docRef = doc(practitionersRef, docId);
-            console.error('docRef:', docRef);
             const servicesRef = collection(docRef, 'services');
-            console.error(servicesRef)
             const querySnapshot = await getDocs(servicesRef);
             querySnapshot.forEach((doc) => {
                 deleteDoc(doc.ref);
-        })})).catch(error => console.error('Failed to delete some documents:', error));
- */
+            })
+            deleteDoc(docRef)
+        })).catch(error => console.error('Failed to delete some documents:', error));
+
         // Update the documents that are in the practitioners array
         await Promise.all(practitioners.map(async practitioner => {
             const providerDetails = practitioner.id ? doc(practitionersRef, practitioner.id) : doc(practitionersRef);
