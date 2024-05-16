@@ -323,14 +323,6 @@ export async function getSubscription(userId){
     }
 }
 
-export async function getBillingPortal(){
-    const functions = getFunctions(app);
-    const createPortalLink = httpsCallable(functions, 'createPortalLink');
-    const result = await createPortalLink();
-    window.open(result.data, '_blank');
-}
-
-
 
 //------------- Delete collections -------------------------
 async function deleteCollection(db, collectionRef, batchSize) {
