@@ -305,19 +305,32 @@ export async function getServiceCodeByItemNumber(userId, itemNumber) {
     }
 }
 
-export async function getSubscription(userId){
+export function getSubscription(userId, callback){
     try {
-        var currentSeconds = new Date() / 1000;
+        const currentSeconds = new Date() / 1000;
         const subscriptionQuery = query(collection(db, "users", userId, "subscriptionDetails"), where("dateEnd", ">=", currentSeconds));
 
-        // Get all the documents in the collection
-        const querySnapshot = await getDocs(subscriptionQuery);
-        if(querySnapshot.empty){
-            return { data: null, error: 'No subscription found' };
-        }
-        const subscriptionData = querySnapshot.docs[0].data();
-        var date = new Date(subscriptionData.dateEnd * 1000).toISOString().slice(0, 10)
-        return { data: { subscriptionId: querySnapshot.docs[0].id, endDate: date, seatPurchased: subscriptionData.seatPurchased }, error: "" };
+        // Listen for real-time updates using onSnapshot
+        const unsubscribe = onSnapshot(subscriptionQuery, (querySnapshot) => {
+            if (querySnapshot.empty) {
+                callback({ data: null, error: 'No subscription found' });
+            } else {
+                const subscriptionData = querySnapshot.docs[0].data();
+                const date = new Date(subscriptionData.dateEnd * 1000).toISOString().slice(0, 10);
+                const result = {
+                    data: {
+                        subscriptionId: querySnapshot.docs[0].id,
+                        endDate: date,
+                        seatPurchased: subscriptionData.seatPurchased
+                    },
+                    error: ""
+                };
+                callback(result);
+            }
+        });
+
+        // Return the unsubscribe function so the caller can stop listening when needed
+        return unsubscribe;
     } catch (error) {
         return { data: null, error: error.message };
     }

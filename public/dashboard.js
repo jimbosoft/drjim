@@ -316,7 +316,7 @@ function serviceCodesSet(clinicId) {
 
 
 function subscriptionDetails(){
-    getSubscription(currentUser.uid).then(async (result) => {
+    getSubscription(currentUser.uid, (result) => {
         if (result.error) {
             alert(result.error);
         } else {
@@ -329,7 +329,6 @@ function subscriptionDetails(){
                 subscription =  "Subscription End: "
             }
             dateEnd.innerHTML = (subscription).concat(result.data.endDate);    
-
-        }
+        }    
     })
 }
