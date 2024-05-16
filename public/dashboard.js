@@ -319,10 +319,17 @@ function subscriptionDetails(){
     getSubscription(currentUser.uid).then(async (result) => {
         if (result.error) {
             alert(result.error);
-            return;
-        }
-        const dateEnd = document.getElementById('subscriptionDateEnd');
-        dateEnd.innerHTML = ("Subscription End: ").concat(result.data.endDate);
+        } else {
+            const subscriptionStatus = result.data.subscriptionId
+            const dateEnd = document.getElementById('subscriptionDateEnd');
+            var subscription = ""
+            if(subscriptionStatus == "FREE_TRIAL"){
+                subscription = "Free Trial: "
+            } else {
+                subscription =  "Subscription End: "
+            }
+            dateEnd.innerHTML = (subscription).concat(result.data.endDate);    
 
+        }
     })
 }
