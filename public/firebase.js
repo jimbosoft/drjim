@@ -63,9 +63,13 @@ export async function getClinics() {
 // Remove the clinic no longer in the list 
 // and update the clinic details that are in the list
 //
-export async function setClinics(userId, clinicList) {
+export async function setClinics(userId, clinicList, userEmail) {
     try {
-        const clinicsRef = collection(db, "users", userId, "companyDetails");
+        const userRef = doc(db, "users", userId);
+        const clinicsRef = collection(userRef, "companyDetails");
+
+        // Save the user's email
+        await setDoc(userRef, { name: userEmail}, { merge: true });
 
         // Fetch all documents in the companyDetails collection
         const snapshot = await getDocs(clinicsRef);
