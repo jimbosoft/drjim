@@ -129,12 +129,13 @@ async function handleInputFile(file) {
                         return;
                     }
 
-                    let data
+                    let fileResult
                     try {
-                        data = await response.json();
+                        fileResult = await response.json();
                     } catch (error) {
                         console.error('Error:', error);
                     }
+                    let data = fileResult.chargeDetail
                     let output = '';
                     if (Array.isArray(data)) {
                         let table = document.createElement('table');
@@ -171,6 +172,15 @@ async function handleInputFile(file) {
                         });
                         resultOutput.appendChild(table);
                         messageOutput.innerHTML = output;
+                    }
+                    if (Object.keys(fileResult.missingProviders).length > 0) {
+                        messageOutput.innerHTML += "missing providers: " +
+                            JSON.stringify(fileResult.missingProviders) + "<br>";
+                    }
+
+                    if (Object.keys(fileResult.missingItemNrs).length > 0) {
+                        messageOutput.innerHTML += "missing item numbers: " +
+                            JSON.stringify(fileResult.missingItemNrs) + "<br>";
                     }
                 }
             });
