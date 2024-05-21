@@ -198,7 +198,7 @@ submitButton.addEventListener('click', async (e) => {
     }));
 
     const userId = currentUser.uid;
-    const errorMsg = await setClinics(userId, companiesArray);
+    const errorMsg = await setClinics(userId, companiesArray, currentUser.email);
     if (errorMsg) {
         alert(errorMsg);
     } else {
