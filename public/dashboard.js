@@ -9,6 +9,7 @@ onAuthStateChanged(auth, (user) => {
         setUser(user);
         showUser(user)
         initClinics();
+        showLastLoad();
     } else {
         // User is signed out
         if (islogoutButtonPressed()) {
@@ -66,6 +67,19 @@ document.getElementById('uploadButton').addEventListener('click', function () {
         console.log('No file selected');
     }
 });
+
+function showLastLoad() {
+    const fileContents = localStorage.getItem('fileContents');
+    const fileName = localStorage.getItem('fileName');
+    if (fileContents && fileContents !== 'null'
+        && fileContents.length > 0 && fileContents !== 'undefined') {
+        document.getElementById('rerunContainer').classList.remove('hidden');
+    }
+    if (fileName && fileName !== 'null'
+        && fileName.length > 0 && fileName !== 'undefined') {
+        document.getElementById('fileName').textContent = fileName;
+    }
+}
 /*
 json payload
     {
@@ -95,98 +109,18 @@ async function handleInputFile(file) {
         if (resultOutput.firstChild) {
             resultOutput.removeChild(resultOutput.firstChild);
         }
+        document.getElementById('missingProviders').classList.add('hidden');
+        document.getElementById('missingItems').classList.add('hidden');
+        localStorage.removeItem('missingProviders');
+        localStorage.removeItem('missingItems');
+
         const reader = new FileReader();
         reader.onload = async function (e) {
             const fileContents = e.target.result;
-            getProviderDetails(currentUser.uid, localStorage.getItem(clinicId)).then(async (result) => {
-                if (result.error) {
-                    alert(result.error);
-                    return
-                }
-                const companyName = getCompanyName();
-                if (result.codeMap && result.procMap) {
-                    const paymentFile = {
-                        FileContent: fileContents,
-                        CsvLineStart: 16,
-                        CompanyName: companyName,
-                        CodeMap: result.codeMap,
-                        PracMap: result.procMap
-                    };
-                    const response = await fetch(cloudServiceConfig.processFileUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(paymentFile)
-                    });
-
-                    if (!response.ok) {
-                        response.text().then(text => {
-                            messageOutput.innerHTML =
-                                "HTTP error: " + response.status + "<br>"
-                                + "Reason: " + text;
-                        });
-                        return;
-                    }
-
-                    let fileResult
-                    try {
-                        fileResult = await response.json();
-                    } catch (error) {
-                        console.error('Error:', error);
-                    }
-                    let data = fileResult.chargeDetail
-                    let output = '';
-                    if (Array.isArray(data)) {
-                        let table = document.createElement('table');
-                        let headerRow = document.createElement('tr');
-                        for (let key in data[0]) {
-                            if (key === 'error') {
-                                continue;
-                            }
-                            let headerCell = document.createElement('th');
-                            headerCell.innerHTML = key;
-                            headerRow.appendChild(headerCell);
-                        }
-                        table.appendChild(headerRow);
-
-                        data.forEach(item => {
-                            if (item.error && item.error.msg) {
-                                output += '&nbsp;' + item.error.msg + '<br>';
-                            } else {
-                                let row = document.createElement('tr');
-                                for (let key in item) {
-                                    let cell = document.createElement('td');
-                                    if (key === 'error') {
-                                        continue;
-                                    } else if (key === 'service') {
-                                        cell.innerHTML = 'Code: ' + item[key].code + ', Percentage: ' + item[key].percentage;
-                                    } else {
-                                        cell.innerHTML = item[key];
-                                    }
-                                    row.appendChild(cell);
-                                }
-                                table.appendChild(row);
-                            }
-                            //------------------------------------
-                        });
-                        resultOutput.appendChild(table);
-                        messageOutput.innerHTML = output;
-                    }
-                    if (Object.keys(fileResult.missingProviders).length > 0) {
-                        document.getElementById('missingProvidersTxt').textContent = 'There a missing providers in the file';
-                        document.getElementById('missingProviders').classList.remove('hidden');
-                        const storeVal = fileResult.missingProviders
-                        localStorage.setItem('missingProviders', JSON.stringify(storeVal));
-                    }
-                    if (Object.keys(fileResult.missingItemNrs).length > 0) {
-                        document.getElementById('missingItemsTxt').textContent = 'There a missing item numbers in the file';
-                        document.getElementById('missingItems').classList.remove('hidden');
-                        const storeVal = fileResult.missingProviders
-                        localStorage.setItem('missingItems', JSON.stringify(storeVal));
-                    }
-                }
-            });
+            localStorage.setItem('fileContents', fileContents);
+            localStorage.setItem('fileName', file.name);
+            showLastLoad();
+            processFile(fileContents);
         };
         reader.readAsText(file);
     } else {
@@ -194,11 +128,114 @@ async function handleInputFile(file) {
     }
 }
 
-document.getElementById('missingProvidersButton').addEventListener('click', function() {
+function processFile(fileContents) {
+    getProviderDetails(currentUser.uid, localStorage.getItem(clinicId)).then(async (result) => {
+        if (result.error) {
+            alert(result.error);
+            return
+        }
+        const companyName = getCompanyName();
+        if (result.codeMap && result.procMap) {
+            const paymentFile = {
+                FileContent: fileContents,
+                CsvLineStart: 16,
+                CompanyName: companyName,
+                CodeMap: result.codeMap,
+                PracMap: result.procMap
+            };
+            const response = await fetch(cloudServiceConfig.processFileUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(paymentFile)
+            });
+
+            if (!response.ok) {
+                response.text().then(text => {
+                    messageOutput.innerHTML =
+                        "HTTP error: " + response.status + "<br>"
+                        + "Reason: " + text;
+                });
+                return;
+            }
+
+            let fileResult
+            try {
+                fileResult = await response.json();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+            let data = fileResult.chargeDetail
+            let output = '';
+            if (Array.isArray(data)) {
+                let table = document.createElement('table');
+                let headerRow = document.createElement('tr');
+                for (let key in data[0]) {
+                    if (key === 'error') {
+                        continue;
+                    }
+                    let headerCell = document.createElement('th');
+                    headerCell.innerHTML = key;
+                    headerRow.appendChild(headerCell);
+                }
+                table.appendChild(headerRow);
+
+                data.forEach(item => {
+                    if (item.error && item.error.msg) {
+                        output += '&nbsp;' + item.error.msg + '<br>';
+                    } else {
+                        let row = document.createElement('tr');
+                        for (let key in item) {
+                            let cell = document.createElement('td');
+                            if (key === 'error') {
+                                continue;
+                            } else if (key === 'service') {
+                                cell.innerHTML = 'Code: ' + item[key].code + ', Percentage: ' + item[key].percentage;
+                            } else {
+                                cell.innerHTML = item[key];
+                            }
+                            row.appendChild(cell);
+                        }
+                        table.appendChild(row);
+                    }
+                });
+                resultOutput.appendChild(table);
+                messageOutput.innerHTML = output;
+            }
+            if (Object.keys(fileResult.missingProviders).length > 0) {
+                document.getElementById('missingProvidersTxt').textContent = 'There a missing providers in the file';
+                document.getElementById('missingProviders').classList.remove('hidden');
+                const storeVal = fileResult.missingProviders
+                localStorage.setItem('missingProviders', JSON.stringify(storeVal));
+            }
+            if (Object.keys(fileResult.missingItemNrs).length > 0) {
+                document.getElementById('missingItemsTxt').textContent = 'There a missing item numbers in the file';
+                document.getElementById('missingItems').classList.remove('hidden');
+                const storeVal = fileResult.missingProviders
+                localStorage.setItem('missingItems', JSON.stringify(storeVal));
+            }
+        }
+    });
+}
+
+document.getElementById('rerunButton').addEventListener('click', function () {
+    const fileContents = localStorage.getItem('fileContents');
+    if (fileContents && fileContents !== 'null'
+        && fileContents.length > 0 && fileContents !== 'undefined') {
+        processFile(fileContents);
+    }
+    else {
+        localStorage.removeItem('fileContents');
+        document.getElementById('rerunButton').classList.add('hidden');
+    }
+});
+
+document.getElementById('missingProvidersButton').addEventListener('click', function () {
     window.location.href = 'practitioners.html';
 });
 
-document.getElementById('missingItemsButton').addEventListener('click', function() {
+document.getElementById('missingItemsButton').addEventListener('click', function () {
     window.location.href = 'practitioners.html';
 });
 

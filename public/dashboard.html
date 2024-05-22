@@ -58,32 +58,41 @@
         </div>
     </div>
     <div id="file-processing" class="hidden">
-        <div id="dropZone" class="pt-28 ml-64 p-4 border-2 border-box">
+        <div id="dropZone" class="pt-28 ml-64 p-4 border-2 border-box flex items-center gap-4">
             <p>Or drag and drop a file here or </p><br>
             <input type="file" id="csvFile" accept=".csv" />
             <button id="uploadButton"
                 class="bg-black hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-lg">
                 Upload
             </button>
+            <div id="rerunContainer" class="hidden">
+                <label id="fileName" class="mr-2"></label>
+                <button id="rerunButton"
+                    class="bg-black hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-lg">
+                    Re-Run
+                </button>
+            </div>
         </div>
         <div id="resultOutput" class="ml-64" style="overflow: auto; max-height: 250px"></div>
         <br>
-        <div id="messageOutput" class="ml-64" style="overflow: auto; max-height: 200px; margin-bottom: 200px; border: 1px solid black"></div>
-        <div id="missingProviders" class="ml-64 hidden flex items-center space-x-4">
+        <div id="messageOutput" class="ml-64"
+            style="overflow: auto; max-height: 200px; margin-bottom: 200px; border: 1px solid black"></div>
+
+        <div id="missingProviders" class="ml-64 px-4 mb-2 hidden flex items-center space-x-4">
             <p id="missingProvidersTxt"></p>
             <button id="missingProvidersButton"
                 class="bg-black hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-lg">
                 Add Now
             </button>
         </div>
-        <div id="missingItems" class="ml-64 hidden flex items-center space-x-4">
+        <div id="missingItems" class="ml-64 px-4 hidden flex items-center space-x-4">
             <p id="missingItemsTxt"></p>
             <button id="missingItemsButton"
                 class="bg-black hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-lg">
                 Add Now
             </button>
         </div>
-    
+
     </div>
     <div id="appScreen" class="fixed bottom-0 max-height: 200px; w-full text-center bg-gray-800 text-white py-8">
         <div id="authState"></div>
