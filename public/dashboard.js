@@ -174,13 +174,16 @@ async function handleInputFile(file) {
                         messageOutput.innerHTML = output;
                     }
                     if (Object.keys(fileResult.missingProviders).length > 0) {
-                        messageOutput.innerHTML += "missing providers: " +
-                            JSON.stringify(fileResult.missingProviders) + "<br>";
+                        document.getElementById('missingProvidersTxt').textContent = 'There a missing providers in the file';
+                        document.getElementById('missingProviders').classList.remove('hidden');
+                        const storeVal = fileResult.missingProviders
+                        localStorage.setItem('missingProviders', JSON.stringify(storeVal));
                     }
-
                     if (Object.keys(fileResult.missingItemNrs).length > 0) {
-                        messageOutput.innerHTML += "missing item numbers: " +
-                            JSON.stringify(fileResult.missingItemNrs) + "<br>";
+                        document.getElementById('missingItemsTxt').textContent = 'There a missing item numbers in the file';
+                        document.getElementById('missingItems').classList.remove('hidden');
+                        const storeVal = fileResult.missingProviders
+                        localStorage.setItem('missingItems', JSON.stringify(storeVal));
                     }
                 }
             });
@@ -191,7 +194,15 @@ async function handleInputFile(file) {
     }
 }
 
-export async function getProviderDetails(userId, clinicId) {
+document.getElementById('missingProvidersButton').addEventListener('click', function() {
+    window.location.href = 'practitioners.html';
+});
+
+document.getElementById('missingItemsButton').addEventListener('click', function() {
+    window.location.href = 'practitioners.html';
+});
+
+async function getProviderDetails(userId, clinicId) {
     try {
         // Fetch practitioners
         const practitionersResult = await getPractitioners(userId, clinicId);
