@@ -172,7 +172,7 @@ function processFile(fileContents) {
                 let table = document.createElement('table');
                 let headerRow = document.createElement('tr');
                 for (let key in data[0]) {
-                    if (key === 'error') {
+                    if (key === 'msg') {
                         continue;
                     }
                     let headerCell = document.createElement('th');
@@ -182,8 +182,8 @@ function processFile(fileContents) {
                 table.appendChild(headerRow);
 
                 data.forEach(item => {
-                    if (item.error && item.error.msg) {
-                        output += '&nbsp;' + item.error.msg + '<br>';
+                    if (item.msg) {
+                        output += '&nbsp;' + item.msg + '<br>';
                     } else {
                         let row = document.createElement('tr');
                         for (let key in item) {
