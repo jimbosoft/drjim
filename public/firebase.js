@@ -31,6 +31,7 @@ import {
     setDoc,
     doc,
     getDocs,
+    getDoc,
     deleteDoc,
     collection,
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js'
@@ -69,7 +70,7 @@ export async function setClinics(userId, clinicList, userEmail) {
         const clinicsRef = collection(userRef, "companyDetails");
 
         // Save the user's email
-        await setDoc(userRef, { name: userEmail}, { merge: true });
+        await setDoc(userRef, { name: userEmail }, { merge: true });
 
         // Fetch all documents in the companyDetails collection
         const snapshot = await getDocs(clinicsRef);
@@ -111,7 +112,6 @@ export async function setPractitioners(userId, clinicId, practitioners) {
         const docsToRemove = docsInFirestore.filter(docId => !practitioners.some(practitioner => practitioner.id === docId));
 
         // Delete the documents that are not in the practitioners array
-        //await Promise.all(docsToRemove.map(docId => deleteDoc(doc(practitionersRef, docId))));
         await Promise.all(docsToRemove.map(async (docId) => {
             const docRef = doc(practitionersRef, docId);
             const servicesRef = collection(docRef, 'services');
@@ -247,25 +247,54 @@ export async function setServiceCodes(userId, clinicId, serviceCodes) {
             setDoc(docRef, {
                 description: serviceCode.description
             });
-            // Fetch all documents in the itemList collection
-            const itemListRef = collection(docRef, 'itemList');
-            const itemListSnapshot = await getDocs(itemListRef);
-            const itemsInFirestore = itemListSnapshot.docs.map(doc => doc.id);
-
-            // Delete all documents in the itemList collection
-            await Promise.all(itemsInFirestore.map(itemId => deleteDoc(doc(itemListRef, itemId))));
-
-            // Add each number in itemList as a document to the itemList collection
-            return Promise.all(serviceCode.itemList.map(item =>
-                setDoc(doc(itemListRef, String(item)), {
-                    value: item
-                })
-            ));
         }));
+        await setItemNumbers(serviceCodesRef, serviceCodes, false);
+
         return "";
     } catch (error) {
         return error.message;
     }
+}
+export async function updateItemNumbers(userId, clinicId, serviceCodes) {
+    try {
+        const serviceCodesRef = collection(db, "users", userId, "companyDetails", clinicId, "serviceCodes");
+        await setItemNumbers(serviceCodesRef, serviceCodes, true);
+        return "";
+    } catch (error) {
+        return error.message;
+    }
+}
+
+async function setItemNumbers(serviceCodesRef, serviceCodes, updateItems = false) {
+    await Promise.all(serviceCodes.map(async serviceCode => {
+        const docRef = doc(serviceCodesRef, serviceCode.id);
+        const itemListRef = collection(docRef, 'itemList');
+        const itemListSnapshot = await getDocs(itemListRef);
+        const itemsInFirestore = itemListSnapshot.docs.map(doc => doc.id);
+
+        // If updateItems is true, add the items from the service code list to the existing items
+        if (updateItems) {
+            const existingItems = itemsInFirestore.map(itemId => parseInt(itemId));
+            const newItems = serviceCode.itemList.filter(item => !existingItems.includes(item));
+
+            // Add new items to the itemList collection
+            await Promise.all(newItems.map(item =>
+                setDoc(doc(itemListRef, String(item)), {
+                    value: item
+                })
+            ));
+        } else {
+            // Delete all documents in the itemList collection
+            await Promise.all(itemsInFirestore.map(itemId => deleteDoc(doc(itemListRef, itemId))));
+
+            // Add each number in itemList as a document to the itemList collection
+            await Promise.all(serviceCode.itemList.map(item =>
+                setDoc(doc(itemListRef, String(item)), {
+                    value: item
+                })
+            ));
+        }
+    }));
 }
 
 export async function getServiceCodeByItemNumber(userId, itemNumber) {
