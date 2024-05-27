@@ -120,7 +120,7 @@ export async function setPractitioners(userId, clinicId, practitioners) {
                 deleteDoc(doc.ref);
             })
             deleteDoc(docRef)
-        })).catch(error => console.error('Failed to delete some documents:', error));
+        })).catch(error => console.error('Failed to delete some providers:', error));
 
         // Update the documents that are in the practitioners array
         await Promise.all(practitioners.map(async practitioner => {
@@ -238,8 +238,16 @@ export async function setServiceCodes(userId, clinicId, serviceCodes) {
         // Find the documents that are not in the serviceCodes array
         const docsToRemove = docsInFirestore.filter(docId => !serviceCodes.some(serviceCode => serviceCode.id === docId));
 
-        // Delete the documents that are not in the serviceCodes array
-        await Promise.all(docsToRemove.map(docId => deleteDoc(doc(serviceCodesRef, docId))));
+        // Delete the documents that are not in the serviceCodes array and attached items
+        await Promise.all(docsToRemove.map(async (docId) => {
+            const docRef = doc(serviceCodesRef, docId);
+            const itemsRef = collection(docRef, 'itemList');
+            const querySnapshot = await getDocs(itemsRef);
+            querySnapshot.forEach((doc) => {
+                deleteDoc(doc.ref);
+            })
+            deleteDoc(docRef);
+        })).catch(error => console.error('Failed to delete some service codes:', error));
 
         // Update the documents that are in the serviceCodes array
         await Promise.all(serviceCodes.map(async serviceCode => {
