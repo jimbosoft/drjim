@@ -212,10 +212,10 @@ function processFile(fileContents) {
             if (Object.keys(fileResult.missingItemNrs).length > 0) {
                 document.getElementById('missingItemsTxt').textContent = 'There a missing item numbers in the file';
                 document.getElementById('missingItems').classList.remove('hidden');
-                const storeVal = fileResult.missingProviders
+                const storeVal = fileResult.missingItemNrs
                 localStorage.setItem('missingItems', JSON.stringify(storeVal));
             }
-        }
+         }
     });
 }
 
@@ -236,7 +236,10 @@ document.getElementById('missingProvidersButton').addEventListener('click', func
 });
 
 document.getElementById('missingItemsButton').addEventListener('click', function () {
-    window.location.href = 'practitioners.html';
+    const missing = localStorage.getItem('missingItems');
+    const missingItems = JSON.parse(missing);
+    console.log(missingItems);
+    window.location.href = 'items.html';
 });
 
 async function getProviderDetails(userId, clinicId) {
