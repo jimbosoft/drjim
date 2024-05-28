@@ -48,13 +48,27 @@ function populatePracs() {
                     fillPracs(provider.id, provider.name, serviceMap)
                 }
             }
+            populateMissingPracs();
             fillPracs(null, null, null)
         });
-    });
+    })
 }
+
+function populateMissingPracs() {
+    const missing = localStorage.getItem('missingProviders');
+    if (missing && missing !== 'null' && missing !== 'undefined') {
+        const missingProviders = JSON.parse(missing);
+        if (missingProviders && Object.keys(missingProviders).length > 0) {
+            for (const key of Object.keys(missingProviders)) {
+                fillPracs(null, key, null)
+            }
+        }
+    }
+    localStorage.removeItem('missingProviders');
+}
+
 const providerRow = 'providerRow';
 const serviceCodeEntry = 'service-code-entry';
-const providerName = '.name-input';
 const providerForm = 'provider-form';
 const submitButton = document.getElementById('submitButton');
 const cancelButton = document.getElementById('cancelButton');

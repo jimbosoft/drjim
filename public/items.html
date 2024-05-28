@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="items.js" type="module"></script>
+  <title>PRIMS</title>
+  <style>
+    .hidden {
+      display: none;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      text-align: center;
+      background-color: darkgrey;
+      height: 60px;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      padding-bottom: 140px;
+    }
+
+    #submit-button {
+      margin-right: 40px;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+ 
+    .service-code {
+      width: 200px;
+      margin-left: 10px;
+      margin-top: 10px;
+    }
+
+    .percentage-number {
+      width: 30px;
+      margin-left: 5px;
+    }
+
+    button {
+      margin-left: 10px;
+    }
+
+    #button-container {
+      display: flex;
+      margin-top: 20px;
+    }
+
+    #provider-form {
+      display: flex;
+      flex-direction: column;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Items:</h2>
+  <div id="item-form">
+ <!--    <div class="providerRow" style="display: flex">
+      <input type="text" class="name-input" placeholder="Enter new name">
+      <div class="service-code-entry">
+        <label class="service-code">service-code</label>
+        <input type="number" class="percentage-number">
+        <span>%</span>
+      </div>
+      <button>Delete</button>
+ -->    </div>
+  </div>
+
+  <div id="button-container">
+    <button id="submitButton" style>Submit</button>
+    <button id="cancelButton">Cancel</button>
+  </div>
+
+  <div id="appScreen" class="footer" style="padding: 30px;">
+    <div id="authState"></div>
+    <button id="logoutButton" type="button">Log out</button>
+  </div>
+
+</body>
+</html>
