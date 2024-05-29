@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="./footer.js" type="module"></script>
     <script src="./dashboard.js" type="module"></script>
+    <script src="./fileHandler.js" type="module"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <title>Setup Companies</title>
 </head>
@@ -93,6 +94,13 @@
     <div id="missingItems" class="ml-64 px-4 hidden flex items-center space-x-4">
         <p id="missingItemsTxt"></p>
         <button id="missingItemsButton"
+            class="bg-black hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-lg">
+            Add Now
+        </button>
+    </div>
+    <div id="missingServiceCodes" class="ml-64 px-4 hidden flex items-center space-x-4">
+        <p id="missingServiceCodesTxt"></p>
+        <button id="missingServiceCodesButton"
             class="bg-black hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-lg">
             Add Now
         </button>
