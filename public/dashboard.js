@@ -1,5 +1,5 @@
 
-import { auth, setUser, getClinics, getServiceCodes, currentUser, clinicId, hasProviders, getPractitioners, getSubscription } from './firebase.js';
+import { auth, setUser, getClinics, getServiceCodes, currentUser, clinicId, hasProviders, getPractitioners, getSubscription, getBillingPortal } from './firebase.js';
 import { islogoutButtonPressed, resetlogoutButtonPressed, showLoginScreen, showUser } from './footer.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { cloudServiceConfig } from './config.js';
@@ -10,6 +10,7 @@ onAuthStateChanged(auth, (user) => {
         showUser(user)
         initClinics();
         subscriptionDetails();
+        getBillingPortal()
     } else {
         // User is signed out
         if (islogoutButtonPressed()) {

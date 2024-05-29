@@ -1,4 +1,4 @@
-import { auth, setUser, currentUser, getClinics, setClinics } from './firebase.js';
+import { auth, setUser, currentUser, getClinics, setClinics, getSubscription } from './firebase.js';
 import {
     islogoutButtonPressed,
     resetlogoutButtonPressed,
@@ -6,6 +6,8 @@ import {
     showUser
 } from './footer.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+
+var numberOfSeats = 0;
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -24,12 +26,30 @@ onAuthStateChanged(auth, (user) => {
 });
 
 function populateClinic() {
-
+    const unsubscribe = getSubscription(currentUser.uid, (result) => {
+        if(result.data == null){
+            const clinicContainer = document.getElementById("clinic-container")
+            clinicContainer.style.display = 'none';
+            alert("No active subscription found!")
+        } else {
+            const seatsPurchased = result.data.seatsPuchased
+            if(result.data.seatsPuchased != null){
+                numberOfSeats = seatsPurchased
+            } else {
+                // Unlimited seats for free trial
+                numberOfSeats = -1
+            }
+        }
+    })
     getClinics().then((result) => {
+        unsubscribe()
         if (result.error) {
             alert(result.error);
         }
-        const clinics = result.data;
+        var clinics = result.data;
+        if(numberOfSeats > 0){
+            clinics.slice(0, numberOfSeats)
+        }
         if (clinics) {
             for (const [index, clinic] of clinics.entries()) {
                 createCompanyAddressSection(index, clinic.id, clinic.name, clinic.address, clinic.abn, clinic.postcode, clinic.accountingLine);

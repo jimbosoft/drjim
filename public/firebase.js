@@ -336,6 +336,13 @@ export function getSubscription(userId, callback){
     }
 }
 
+export async function getBillingPortal(){
+    const functions = getFunctions(app);
+    const createPortalLink = httpsCallable(functions, 'createPortalLink');
+    const result = await createPortalLink();
+    console.log(result.data)
+}
+
 
 //------------- Delete collections -------------------------
 async function deleteCollection(db, collectionRef, batchSize) {
