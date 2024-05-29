@@ -49,6 +49,7 @@ function populatePracs() {
                 }
             }
             populateMissingPracs();
+            highlightMissingServiceCodes();
             fillPracs(null, null, null)
         });
     })
@@ -65,6 +66,32 @@ function populateMissingPracs() {
         }
     }
     localStorage.removeItem('missingProviders');
+}
+
+function highlightMissingServiceCodes() {
+    const missing = localStorage.getItem('missingServiceCodes');
+    if (missing && missing !== 'null' && missing !== 'undefined') {
+        const missingProvidersServiceCodes = JSON.parse(missing);
+        if (missingProvidersServiceCodes && Object.keys(missingProvidersServiceCodes).length > 0) {
+            for (const key of Object.keys(missingProvidersServiceCodes)) {
+                const providerRows = document.getElementsByClassName('providerRow');
+                for (let i = 0; i < providerRows.length; i++) {
+                    const nameInput = providerRows[i].getElementsByClassName('name-input')[0];
+                    if (nameInput.value === key) {
+                        const serviceCodeInputs = providerRows[i].getElementsByClassName('service-code');
+                        const serviceNumbers = providerRows[i].getElementsByClassName('percentage-number');
+                        for (let j = 0; j < serviceCodeInputs.length; j++) {
+                            if (serviceCodeInputs[j].id in missingProvidersServiceCodes[key]) {
+                                serviceCodeInputs[j].style.backgroundColor = 'yellow';
+                                serviceNumbers[j].style.backgroundColor = 'yellow';
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    localStorage.removeItem('missingServiceCodes');
 }
 
 const providerRow = 'providerRow';
