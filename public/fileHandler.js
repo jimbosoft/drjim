@@ -190,19 +190,19 @@ function processFile(fileContents) {
                 messageOutput.innerHTML = output;
             }
             if (Object.keys(fileResult.missingProviders).length > 0) {
-                document.getElementById('missingProvidersTxt').textContent = 'There a missing providers in the file';
+                document.getElementById('missingProvidersTxt').textContent = 'There are missing providers in the file';
                 document.getElementById('missingProviders').classList.remove('hidden');
                 const storeVal = fileResult.missingProviders
                 localStorage.setItem('missingProviders', JSON.stringify(storeVal));
             }
             if (Object.keys(fileResult.missingItemNrs).length > 0) {
-                document.getElementById('missingItemsTxt').textContent = 'There a missing item numbers in the file';
+                document.getElementById('missingItemsTxt').textContent = 'There are missing item numbers in the file';
                 document.getElementById('missingItems').classList.remove('hidden');
                 const storeVal = fileResult.missingItemNrs
                 localStorage.setItem('missingItems', JSON.stringify(storeVal));
             }
             if (Object.keys(fileResult.missingServiceCodes).length > 0) {
-                document.getElementById('missingServiceCodesTxt').textContent = 'There a missing service code cuts in the file';
+                document.getElementById('missingServiceCodesTxt').textContent = 'There are missing service code cuts in the file';
                 document.getElementById('missingServiceCodes').classList.remove('hidden');
                 const storeVal = fileResult.missingServiceCodes
                 localStorage.setItem('missingServiceCodes', JSON.stringify(storeVal));
