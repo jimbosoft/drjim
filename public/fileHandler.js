@@ -207,6 +207,12 @@ function processFile(fileContents) {
                 const storeVal = fileResult.missingServiceCodes
                 localStorage.setItem('missingServiceCodes', JSON.stringify(storeVal));
             }
+            if (Object.keys(fileResult.noItemNrs).length > 0) {
+                document.getElementById('noItemNrsTxt').textContent = 'There are descriptions without item numbers in the file';
+                document.getElementById('noItemNrs').classList.remove('hidden');
+                const storeVal = fileResult.noItemNrs
+                localStorage.setItem('noItemNrs', JSON.stringify(storeVal));
+            }
         }
     });
 }

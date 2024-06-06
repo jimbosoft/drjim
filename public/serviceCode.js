@@ -71,8 +71,14 @@ async function populateServiceCodes() {
     let tableBody = document.getElementById('servicesTable').getElementsByTagName('tbody')[0];
 
     data.forEach(item => {
-        let itemListString = item.itemList ? item.itemList.join(', ') : '';
+        let positiveItemList = item.itemList ? item.itemList.filter(str => !isNaN(str) && Number(str) > 0) : [];
+        let nonItemList = item.itemList ? item.itemList.filter(str => isNaN(str)) : [];
+
+        let itemListString = positiveItemList.join(', ');
         insertServiceCodeRow(tableBody, item.id, item.description, itemListString);
+        if (nonItemList.length > 0) {
+            fillNoItems(nonItemList, item.id);
+        }
     });
     insertServiceCodeRow(tableBody, "", "", "");
 }
@@ -97,6 +103,47 @@ function insertServiceCodeRow(tableBody, code, description, itemList) {
     let deleteButton = document.createElement('button');
     deleteButton.textContent = 'Delete';
     cell4.appendChild(deleteButton);
+}
+
+const itemRow = 'itemRow';
+const itemForm = 'item-form';
+
+function fillNoItems(missingItems, serviceCode) {
+
+    for (const item of missingItems) {
+        const section = document.createElement('div');
+        section.classList.add(itemRow);
+        section.style.display = 'flex';
+        section.style.flexWrap = 'wrap';
+        section.style.justifyContent = 'space-between';
+
+        const itemGroup = document.createElement('div');
+        itemGroup.style.display = 'flex';
+        itemGroup.style.alignItems = 'center';
+        itemGroup.style.marginBottom = '10px';
+
+        const nameLabel = document.createElement('label');
+        nameLabel.className = 'name-label';
+        nameLabel.style.marginLeft = '10px';
+        nameLabel.style.marginRight = '10px';
+        nameLabel.style.width = 'auto';
+        //nameLabel.style.border = '1px solid black';
+        nameLabel.textContent = item;
+        itemGroup.appendChild(nameLabel);
+
+        // Create a drop down element
+        const selectElement = document.createElement('label');
+        selectElement.className = 'name-label';
+        selectElement.style.marginRight = '10px';
+        selectElement.style.width = 'auto';
+        //nameLabel.style.border = '1px solid black';
+        selectElement.textContent = serviceCode;
+        itemGroup.appendChild(selectElement);
+        section.appendChild(itemGroup);
+
+        const nameEntry = document.getElementById(itemForm);
+        nameEntry.appendChild(section);
+    }
 }
 
 // Handle the submit button click

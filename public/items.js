@@ -1,5 +1,7 @@
-import { auth, setUser, currentUser, setServiceCodes, getServiceCodes, 
-    updateItemNumbers, clinicId } from './firebase.js';
+import {
+    auth, setUser, currentUser, setServiceCodes, getServiceCodes,
+    updateItemNumbers, clinicId
+} from './firebase.js';
 import {
     islogoutButtonPressed,
     resetlogoutButtonPressed,
@@ -24,25 +26,46 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
+let itemMissing = false;
+let noItemNrsMissing = false;
 function populateItems() {
-    const missing = localStorage.getItem('missingItems');
 
-    const cId = localStorage.getItem(clinicId);
-    getServiceCodes(currentUser.uid, cId).then((lstServiceCodes) => {
-        if (lstServiceCodes.error) {
-            alert(lstServiceCodes.error);
-        }
-        const serviceCodes = lstServiceCodes.data
+    let missingItems;
+    let noItemNrsItems;
+    ({ isMissing: itemMissing, items: missingItems } = checkForMissingStuff('missingItems'));
+    ({ isMissing: noItemNrsMissing, items: noItemNrsItems } = checkForMissingStuff('noItemNrs'));
 
-        if (missing && missing !== 'null' && missing !== 'undefined') {
-            const missingItems = JSON.parse(missing);
-            if (missingItems && Object.keys(missingItems).length > 0) {
-                fillItems(missingItems, serviceCodes)
-            } else {
-                entryComplete()
+    if (itemMissing || noItemNrsMissing) {
+        const cId = localStorage.getItem(clinicId);
+        getServiceCodes(currentUser.uid, cId).then((lstServiceCodes) => {
+            if (lstServiceCodes.error) {
+                alert(lstServiceCodes.error);
             }
+            const serviceCodes = lstServiceCodes.data
+
+            if (itemMissing) {
+                fillItems(missingItems, serviceCodes)
+                localStorage.removeItem('missingItems');
+            }
+            if (noItemNrsMissing) {
+                fillItems(noItemNrsItems, serviceCodes)
+                localStorage.removeItem('noItemNrs');
+           }
+        });
+    } else {
+        entryComplete();
+    }
+}
+
+function checkForMissingStuff(stuff) {
+    const missing = localStorage.getItem(stuff);
+    if (missing && missing !== 'null' && missing !== 'undefined') {
+        const missingItems = JSON.parse(missing);
+        if (missingItems && Object.keys(missingItems).length > 0) {
+            return { isMissing: true, items: missingItems };
         }
-    });
+    }
+    return { isMissing: false, items: null };
 }
 
 const itemRow = 'itemRow';
@@ -67,7 +90,7 @@ function fillItems(missingItems, serviceCodes) {
         const nameLabel = document.createElement('label');
         nameLabel.className = 'name-label';
         nameLabel.style.marginRight = '10px';
-        nameLabel.style.width = '7ch';
+        nameLabel.style.width = 'auto';
         //nameLabel.style.border = '1px solid black';
         nameLabel.textContent = key;
         itemGroup.appendChild(nameLabel);
@@ -100,7 +123,7 @@ submitButton.addEventListener('click', function (e) {
     let serviceCodes = Array.from(rows).map(row => {
         const selectElement = row.querySelector('select');
         const serviceCode = selectElement.value;
-    
+
         // Only add the row if a service code is selected and it isn't the initial "Please Select" value
         if (selectElement.selectedIndex > 0) {
             const itemNumber = row.querySelector('.name-label').textContent;

@@ -36,10 +36,11 @@ document.getElementById('missingProvidersButton').addEventListener('click', func
     window.location.href = 'practitioners.html';
 });
 
+document.getElementById('noItemNrsButton').addEventListener('click', function () {
+    window.location.href = 'items.html';
+});
+
 document.getElementById('missingItemsButton').addEventListener('click', function () {
-    const missing = localStorage.getItem('missingItems');
-    const missingItems = JSON.parse(missing);
-    console.log(missingItems);
     window.location.href = 'items.html';
 });
 
