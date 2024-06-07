@@ -90,6 +90,7 @@ function fillItems(missingItems, serviceCodes) {
         const nameLabel = document.createElement('label');
         nameLabel.className = 'name-label';
         nameLabel.style.marginRight = '10px';
+        nameLabel.style.minWidth = '7ch';
         nameLabel.style.width = 'auto';
         //nameLabel.style.border = '1px solid black';
         nameLabel.textContent = key;

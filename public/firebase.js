@@ -29,6 +29,7 @@ import {
     connectFirestoreEmulator,
     getFirestore,
     setDoc,
+    addDoc,
     doc,
     getDocs,
     getDoc,
@@ -325,7 +326,7 @@ async function setItemNumbers(serviceCodesRef, serviceCodes, updateItems = false
 
             // Add new items to the itemList collection
             await Promise.all(newItems.map(item =>
-                setDoc(doc(itemListRef, String(item)), {
+                addDoc(itemListRef, {
                     value: item
                 })
             ));
@@ -335,7 +336,7 @@ async function setItemNumbers(serviceCodesRef, serviceCodes, updateItems = false
 
             // Add each number in itemList as a document to the itemList collection
             await Promise.all(serviceCode.itemList.map(item =>
-                setDoc(doc(itemListRef, String(item)), {
+                addDoc(itemListRef, {
                     value: item
                 })
             ));
