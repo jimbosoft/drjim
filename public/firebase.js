@@ -43,6 +43,24 @@ if (env === "local") {
 }
 
 export const clinicId = 'clinicId';
+export const currentUserName = 'currentUser'
+export const currentClinic = 'currentClinic'
+export const missingProvidersKey = 'missingProviders'
+export const missingItemsKey = 'missingItemsKey'
+export const noItemNrs = 'noItemNrs'
+export const missingServiceCodes = 'missingServiceCodes'
+export const fileContentsKey = 'fileContents';
+export const fileNameKey = 'fileName';
+
+export function storeStuff(key, value) { 
+    sessionStorage.setItem(key, value);
+}
+export function clearStore(key) { 
+    sessionStorage.removeItem(key);
+}
+export function getStore(key) { 
+    return sessionStorage.getItem(key);
+}
 
 export async function getClinics() {
     try {
