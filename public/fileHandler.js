@@ -1,4 +1,7 @@
-import { getServiceCodes, currentUser, clinicId, getPractitioners } from './firebase.js';
+import { getServiceCodes, currentUser, clinicId, getPractitioners,
+    storeStuff, getStore, clearStore, 
+    missingProvidersKey, missingItemsKey, missingServiceCodes, noItemNrs, fileContentsKey, fileNameKey
+ } from './firebase.js';
 import { cloudServiceConfig } from './config.js';
 
 var clinicDropdown = document.getElementById('clinicDropdown');
@@ -37,20 +40,20 @@ document.getElementById('uploadButton').addEventListener('click', function () {
 });
 
 document.getElementById('rerunButton').addEventListener('click', function () {
-    const fileContents = localStorage.getItem('fileContents');
+    const fileContents = getStore(fileContentsKey);
     if (fileContents && fileContents !== 'null'
         && fileContents.length > 0 && fileContents !== 'undefined') {
         processFile(fileContents);
     }
     else {
-        localStorage.removeItem('fileContents');
+        clearStore(fileContents);
         document.getElementById('rerunButton').classList.add('hidden');
     }
 });
 
 export function showLastLoad() {
-    const fileContents = localStorage.getItem('fileContents');
-    const fileName = localStorage.getItem('fileName');
+    const fileContents = getStore(fileContentsKey);
+    const fileName = getStore(fileNameKey);
     if (fileContents && fileContents !== 'null'
         && fileContents.length > 0 && fileContents !== 'undefined') {
         document.getElementById('rerunContainer').classList.remove('hidden');
@@ -95,16 +98,16 @@ async function handleInputFile(file) {
         if (resultOutput.firstChild) {
             resultOutput.removeChild(resultOutput.firstChild);
         }
-        document.getElementById('missingProviders').classList.add('hidden');
-        document.getElementById('missingItems').classList.add('hidden');
-        localStorage.removeItem('missingProviders');
-        localStorage.removeItem('missingItems');
+        //document.getElementById('missingProviders').classList.add('hidden');
+        //document.getElementById('missingItemsKey').classList.add('hidden');
+        clearStore(missingProvidersKey);
+        clearStore(missingItemsKey);
 
         const reader = new FileReader();
         reader.onload = async function (e) {
             const fileContents = e.target.result;
-            localStorage.setItem('fileContents', fileContents);
-            localStorage.setItem('fileName', file.name);
+            storeStuff(fileContentsKey, fileContents);
+            storeStuff(fileNameKey, file.name);
             showLastLoad();
             processFile(fileContents);
         };
@@ -193,27 +196,27 @@ function processFile(fileContents) {
                 document.getElementById('missingProvidersTxt').textContent = 'There are missing providers in the file';
                 document.getElementById('missingProviders').classList.remove('hidden');
                 const storeVal = fileResult.missingProviders
-                localStorage.setItem('missingProviders', JSON.stringify(storeVal));
+                storeStuff(missingProvidersKey, JSON.stringify(storeVal));
             }
-            if (Object.keys(fileResult.missingItemNrs).length > 0) {
-                document.getElementById('missingItemsTxt').textContent = 'There are missing item numbers in the file';
-                document.getElementById('missingItems').classList.remove('hidden');
+            if (Object.keys(fileResult.noItemNrs).length > 0) {
+                const storeVal = fileResult.noItemNrs
+                storeStuff(noItemNrs, JSON.stringify(storeVal));
+            }
+            if (Object.keys(fileResult.missingItemNrs).length > 0){
                 const storeVal = fileResult.missingItemNrs
-                localStorage.setItem('missingItems', JSON.stringify(storeVal));
+                storeStuff(missingItemsKey, JSON.stringify(storeVal));  
+            }
+            if (Object.keys(fileResult.missingItemNrs).length > 0 || Object.keys(fileResult.noItemNrs).length > 0) {
+                document.getElementById('missingItemsTxt').textContent = 'There are missing items in the file';
+                document.getElementById('missingItems').classList.remove('hidden');
             }
             if (Object.keys(fileResult.missingServiceCodes).length > 0) {
                 document.getElementById('missingServiceCodesTxt').textContent = 'There are missing service code cuts in the file';
                 document.getElementById('missingServiceCodes').classList.remove('hidden');
                 const storeVal = fileResult.missingServiceCodes
-                localStorage.setItem('missingServiceCodes', JSON.stringify(storeVal));
+                storeStuff(missingServiceCodes, JSON.stringify(storeVal));
             }
-            if (Object.keys(fileResult.noItemNrs).length > 0) {
-                document.getElementById('noItemNrsTxt').textContent = 'There are descriptions without item numbers in the file';
-                document.getElementById('noItemNrs').classList.remove('hidden');
-                const storeVal = fileResult.noItemNrs
-                localStorage.setItem('noItemNrs', JSON.stringify(storeVal));
-            }
-        }
+         }
     });
 }
 

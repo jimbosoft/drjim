@@ -1,4 +1,6 @@
-import { auth, setUser, currentUser, setPractitioners, getPractitioners, getServiceCodes, clinicId } from './firebase.js';
+import { auth, setUser, currentUser, setPractitioners, getPractitioners, getServiceCodes, clinicId,
+    getStore, clearStore, 
+    missingProvidersKey, missingServiceCodes } from './firebase.js';
 import {
     islogoutButtonPressed,
     resetlogoutButtonPressed,
@@ -56,7 +58,7 @@ function populatePracs() {
 }
 
 function populateMissingPracs() {
-    const missing = localStorage.getItem('missingProviders');
+    const missing = getStore(missingProvidersKey);
     if (missing && missing !== 'null' && missing !== 'undefined') {
         const missingProviders = JSON.parse(missing);
         if (missingProviders && Object.keys(missingProviders).length > 0) {
@@ -65,11 +67,11 @@ function populateMissingPracs() {
             }
         }
     }
-    localStorage.removeItem('missingProviders');
+    clearStore(missingProvidersKey);
 }
 
 function highlightMissingServiceCodes() {
-    const missing = localStorage.getItem('missingServiceCodes');
+    const missing = getStore(missingServiceCodes);
     if (missing && missing !== 'null' && missing !== 'undefined') {
         const missingProvidersServiceCodes = JSON.parse(missing);
         if (missingProvidersServiceCodes && Object.keys(missingProvidersServiceCodes).length > 0) {
@@ -91,7 +93,7 @@ function highlightMissingServiceCodes() {
             }
         }
     }
-    localStorage.removeItem('missingServiceCodes');
+    clearStore(missingServiceCodes);
 }
 
 const providerRow = 'providerRow';

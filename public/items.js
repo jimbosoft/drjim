@@ -1,6 +1,8 @@
 import {
     auth, setUser, currentUser, setServiceCodes, getServiceCodes,
-    updateItemNumbers, clinicId
+    updateItemNumbers, clinicId,
+    getStore, clearStore, 
+    missingItemsKey, noItemNrs
 } from './firebase.js';
 import {
     islogoutButtonPressed,
@@ -32,8 +34,8 @@ function populateItems() {
 
     let missingItems;
     let noItemNrsItems;
-    ({ isMissing: itemMissing, items: missingItems } = checkForMissingStuff('missingItems'));
-    ({ isMissing: noItemNrsMissing, items: noItemNrsItems } = checkForMissingStuff('noItemNrs'));
+    ({ isMissing: itemMissing, items: missingItems } = checkForMissingStuff(missingItemsKey));
+    ({ isMissing: noItemNrsMissing, items: noItemNrsItems } = checkForMissingStuff(noItemNrs));
 
     if (itemMissing || noItemNrsMissing) {
         const cId = localStorage.getItem(clinicId);
@@ -45,11 +47,11 @@ function populateItems() {
 
             if (itemMissing) {
                 fillItems(missingItems, serviceCodes)
-                localStorage.removeItem('missingItems');
+                clearStore(missingItemsKey);
             }
             if (noItemNrsMissing) {
                 fillItems(noItemNrsItems, serviceCodes)
-                localStorage.removeItem('noItemNrs');
+                clearStore(noItemNrs);
            }
         });
     } else {
@@ -58,7 +60,7 @@ function populateItems() {
 }
 
 function checkForMissingStuff(stuff) {
-    const missing = localStorage.getItem(stuff);
+    const missing = getStore(stuff);
     if (missing && missing !== 'null' && missing !== 'undefined') {
         const missingItems = JSON.parse(missing);
         if (missingItems && Object.keys(missingItems).length > 0) {
