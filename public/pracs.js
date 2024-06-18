@@ -1,5 +1,5 @@
 import { auth, setUser, currentUser, setPractitioners, getPractitioners, getServiceCodes, clinicId,
-    getStore, clearStore, 
+    getStore, clearStore,
     missingProvidersKey, missingServiceCodes } from './firebase.js';
 import {
     islogoutButtonPressed,
@@ -28,12 +28,12 @@ onAuthStateChanged(auth, (user) => {
 let serviceCodes
 function populatePracs() {
     const cId = localStorage.getItem(clinicId);
-    const userId = currentUser.uid;
+    const userId = currentUser.email;
     getPractitioners(userId, cId).then((lstProviders) => {
         if (lstProviders.error) {
             alert(lstProviders.error);
         }
-        getServiceCodes(currentUser.uid, cId).then((lstServiceCodes) => {
+        getServiceCodes(currentUser.email, cId).then((lstServiceCodes) => {
             if (lstServiceCodes.error) {
                 alert(lstServiceCodes.error);
             }
@@ -218,7 +218,7 @@ submitButton.addEventListener('click', async (e) => {
     }
 
     const cId = localStorage.getItem(clinicId);
-    const userId = currentUser.uid;
+    const userId = currentUser.email;
     setPractitioners(userId, cId, providers)
         .then(() => entryComplete())
         .catch(error => alert(`Error setting practitioners: ${error}`));

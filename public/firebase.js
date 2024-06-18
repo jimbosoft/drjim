@@ -1,30 +1,19 @@
 import { firebaseConfig, isLocal } from './config.js'
-export let env = "deploy";
-if (isLocal) {
-    env = "local"
-}
+
+export { currentUser, setUser } from './storage.js';
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 export const app = initializeApp(firebaseConfig);
-
-import { getRemoteConfig, fetchAndActivate, getValue, getString } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-remote-config.js'
-const remoteConfig = getRemoteConfig(app);
-remoteConfig.settings.minimumFetchIntervalMillis = 1;
 
 import {
     getAuth, connectAuthEmulator
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 export const auth = getAuth(app);
 
-if (env === "local") {
+if (isLocal) {
     connectAuthEmulator(auth, "http://localhost:9099");
 }
-export let currentUser = null
-export function setUser(user) {
-    currentUser = user
-}
 
-/////////////////////////////////////////////////////////////
 import {
     connectFirestoreEmulator,
     getFirestore,
@@ -38,7 +27,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js'
 
 export const db = getFirestore(app);
-if (env === "local") {
+if (isLocal) {
     connectFirestoreEmulator(db, 'localhost', 8080)
 }
 
@@ -52,19 +41,18 @@ export const missingServiceCodes = 'missingServiceCodes'
 export const fileContentsKey = 'fileContents';
 export const fileNameKey = 'fileName';
 
-export function storeStuff(key, value) { 
+export function storeStuff(key, value) {
     sessionStorage.setItem(key, value);
 }
-export function clearStore(key) { 
+export function clearStore(key) {
     sessionStorage.removeItem(key);
 }
-export function getStore(key) { 
+export function getStore(key) {
     return sessionStorage.getItem(key);
 }
 
-export async function getClinics() {
+export async function getClinics(userId) {
     try {
-        const userId = currentUser.uid;
         const clinicsRef = collection(db, "users", userId, "companyDetails");
 
         // Get all the documents in the collection
@@ -120,7 +108,7 @@ export async function setClinics(userId, clinicList, userEmail) {
         for (const doc of querySnapshot.docs) {
             const clinicId = doc.id;
             await defaultServiceCodes(userId, clinicId);
-        };        
+        };
         return "";
     } catch (error) {
         return error.message;
@@ -438,7 +426,7 @@ async function deleteQueryBatch(db, query, batchSize, resolve, reject) {
 //connectStorageEmulator(storage, '127.0.0.1', 9199)
 // function uploadFile() {
 //     try {
-//         const storageRef = ref(storage, `user/${currentUser.uid}/test.txt`)
+//         const storageRef = ref(storage, `user/${currentUser.email}/test.txt`)
 //         const content = `Hello, World! by ${currentUser.email} on ${new Date().toISOString()}`
 //         uploadString(storageRef, content).then((snapshot) => {
 //             console.log('File uploaded')
