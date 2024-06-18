@@ -25,7 +25,7 @@ onAuthStateChanged(auth, (user) => {
 
 function populateClinic() {
 
-    getClinics().then((result) => {
+    getClinics(currentUser.email).then((result) => {
         if (result.error) {
             alert(result.error);
         }
@@ -197,7 +197,7 @@ submitButton.addEventListener('click', async (e) => {
         address: company.address || ""
     }));
 
-    const userId = currentUser.uid;
+    const userId = currentUser.email;
     const errorMsg = await setClinics(userId, companiesArray, currentUser.email);
     if (errorMsg) {
         alert(errorMsg);

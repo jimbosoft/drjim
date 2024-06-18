@@ -1,9 +1,10 @@
 import {
-    auth, setUser, currentUser, setServiceCodes, getServiceCodes,
+    auth, setUser, currentUser, getServiceCodes,
     updateItemNumbers, clinicId,
-    getStore, clearStore, 
+    getStore, clearStore,
     missingItemsKey, noItemNrs
 } from './firebase.js';
+
 import {
     islogoutButtonPressed,
     resetlogoutButtonPressed,
@@ -39,7 +40,7 @@ function populateItems() {
 
     if (itemMissing || noItemNrsMissing) {
         const cId = localStorage.getItem(clinicId);
-        getServiceCodes(currentUser.uid, cId).then((lstServiceCodes) => {
+        getServiceCodes(currentUser.email, cId).then((lstServiceCodes) => {
             if (lstServiceCodes.error) {
                 alert(lstServiceCodes.error);
             }
@@ -52,7 +53,7 @@ function populateItems() {
             if (noItemNrsMissing) {
                 fillItems(noItemNrsItems, serviceCodes)
                 clearStore(noItemNrs);
-           }
+            }
         });
     } else {
         entryComplete();
@@ -139,7 +140,7 @@ submitButton.addEventListener('click', function (e) {
     }).filter(Boolean); // Remove undefined values
 
     const cId = localStorage.getItem(clinicId);
-    updateItemNumbers(currentUser.uid, cId, serviceCodes)
+    updateItemNumbers(currentUser.email, cId, serviceCodes)
         .then(() => entryComplete())
         .catch(error => alert(`Error setting practitioners: ${error}`));
 

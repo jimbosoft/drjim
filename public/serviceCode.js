@@ -1,4 +1,4 @@
-import { auth, setUser, currentUser, clinicId } from './firebase.js';
+import { auth, setUser, clinicId, currentUser } from './firebase.js';
 import {
     islogoutButtonPressed,
     resetlogoutButtonPressed,
@@ -8,7 +8,7 @@ import {
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { getServiceCodes, setServiceCodes } from './firebase.js';
 
-onAuthStateChanged(auth, (user) => {
+ onAuthStateChanged(auth, (user) => {
     if (user) {
         setUser(user);
         //const details = JSON.stringify(user, null, '  ');
@@ -61,7 +61,7 @@ async function populateServiceCodes() {
         // more data...
     ];
     let cId = localStorage.getItem(clinicId);
-    const result = await getServiceCodes(currentUser.uid, cId);
+    const result = await getServiceCodes(currentUser.email, cId);
     if (result.error) {
         alert(`Error getting service codes: ${result.error}`);
     }
@@ -195,7 +195,7 @@ submitButton.addEventListener('click', async (e) => {
             }));
 
         let cId = localStorage.getItem(clinicId);
-        const userId = currentUser.uid;
+        const userId = currentUser.email;
         const errorMsg = await setServiceCodes(userId, cId, serviceCodes)
         if (errorMsg) {
             alert(`Error setting service codes: ${errorMsg}`);

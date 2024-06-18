@@ -1,5 +1,5 @@
 
-import { auth, setUser, getClinics, getServiceCodes, currentUser, clinicId, hasProviders, getPractitioners } from './firebase.js';
+import { auth, setUser, getClinics, getServiceCodes, currentUser, clinicId } from './firebase.js';
 import { islogoutButtonPressed, resetlogoutButtonPressed, showLoginScreen, showUser } from './footer.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { showLastLoad } from './fileHandler.js';
@@ -46,7 +46,7 @@ document.getElementById('missingServiceCodesButton').addEventListener('click', f
 
 function initClinics() {
 
-    getClinics().then((result) => {
+    getClinics(currentUser.email).then((result) => {
         if (result.error) {
             alert(result.error);
         }
@@ -118,7 +118,7 @@ function companySelected(companyId) {
 const providerButton = document.getElementById('practitioners');
 
 function serviceCodesSet(clinicId) {
-    getServiceCodes(currentUser.uid, clinicId)
+    getServiceCodes(currentUser.email, clinicId)
         .then(result => {
             if (result.error) {
                 alert(`Error getting service codes: ${result.error}`);

@@ -1,7 +1,7 @@
 import { getServiceCodes, currentUser, clinicId, getPractitioners,
-    storeStuff, getStore, clearStore, 
+    storeStuff, getStore, clearStore,
     missingProvidersKey, missingItemsKey, missingServiceCodes, noItemNrs, fileContentsKey, fileNameKey
- } from './firebase.js';
+} from './firebase.js';
 import { cloudServiceConfig } from './config.js';
 
 var clinicDropdown = document.getElementById('clinicDropdown');
@@ -118,7 +118,7 @@ async function handleInputFile(file) {
 }
 
 function processFile(fileContents) {
-    getProviderDetails(currentUser.uid, localStorage.getItem(clinicId)).then(async (result) => {
+    getProviderDetails(currentUser.email, localStorage.getItem(clinicId)).then(async (result) => {
         if (result.error) {
             alert(result.error);
             return
@@ -204,7 +204,7 @@ function processFile(fileContents) {
             }
             if (Object.keys(fileResult.missingItemNrs).length > 0){
                 const storeVal = fileResult.missingItemNrs
-                storeStuff(missingItemsKey, JSON.stringify(storeVal));  
+                storeStuff(missingItemsKey, JSON.stringify(storeVal));
             }
             if (Object.keys(fileResult.missingItemNrs).length > 0 || Object.keys(fileResult.noItemNrs).length > 0) {
                 document.getElementById('missingItemsTxt').textContent = 'There are missing items in the file';
@@ -216,7 +216,7 @@ function processFile(fileContents) {
                 const storeVal = fileResult.missingServiceCodes
                 storeStuff(missingServiceCodes, JSON.stringify(storeVal));
             }
-         }
+        }
     });
 }
 
