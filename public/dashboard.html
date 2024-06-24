@@ -32,6 +32,33 @@
     td {
         padding: 8px;
     }
+
+    /*-------------------------------------------------------------*/
+
+    #progress-bar {
+        width: 300px;
+        height: 20px;
+        background-color: #faf7f7;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    #progress {
+        width: 0;
+        height: 100%;
+        background-color: #4CAF50;
+        animation: progressMove 5s linear infinite;
+    }
+
+    @keyframes progressMove {
+        0% {
+            width: 0%;
+        }
+
+        100% {
+            width: 100%;
+        }
+    }
 </style>
 
 <body class="flex flex-col min-h-screen">
@@ -76,11 +103,15 @@
                     <label id="fileName" class="mr-2"></label>
                     <button id="rerunButton"
                         class="bg-black hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-lg">
-                        Re-Run
+                        Process
                     </button>
+                </div>
+                <div id="progress-bar" style="display: none;">
+                    <div id="progress"></div>
                 </div>
             </div>
         </div>
+
         <div id="resultOutput" class="ml-64 overflow-auto max-h-64 mb-4"></div>
         <div id="messageOutput" class="ml-64 overflow-auto max-h-48 mb-4 border border-black"></div>
 
@@ -105,7 +136,7 @@
                 Add Now
             </button>
         </div>
-     </div>
+    </div>
     <div id="footerId" class="w-full text-center bg-gray-800 text-white py-8" style="max-height: 200px;">
         <div id="authState"></div>
         <button id="logoutButton" type="button" class="bg-red-500 rounded px-4 py-2">Log out</button>
