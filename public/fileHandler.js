@@ -43,6 +43,7 @@ document.getElementById('rerunButton').addEventListener('click', function () {
     const fileContents = getStore(fileContentsKey);
     if (fileContents && fileContents !== 'null'
         && fileContents.length > 0 && fileContents !== 'undefined') {
+        clearOutput();
         processFile(fileContents);
     }
     else {
@@ -69,6 +70,15 @@ function getCompanyName() {
     return selectedOption.textContent;
 }
 
+function clearOutput() {
+    messageOutput.innerHTML = '';
+    if (resultOutput.firstChild) {
+        resultOutput.removeChild(resultOutput.firstChild);
+    }
+    document.getElementById('missingProviders').classList.add('hidden');
+    document.getElementById('missingItems').classList.add('hidden');
+    document.getElementById('missingServiceCodes').classList.add('hidden');
+}
 /*
 json payload
     {
@@ -94,12 +104,7 @@ const messageOutput = document.getElementById("messageOutput")
 const resultOutput = document.getElementById("resultOutput")
 async function handleInputFile(file) {
     if (file) {
-        messageOutput.innerHTML = '';
-        if (resultOutput.firstChild) {
-            resultOutput.removeChild(resultOutput.firstChild);
-        }
-        //document.getElementById('missingProviders').classList.add('hidden');
-        //document.getElementById('missingItemsKey').classList.add('hidden');
+        clearOutput();
         clearStore(missingProvidersKey);
         clearStore(missingItemsKey);
 
@@ -117,7 +122,13 @@ async function handleInputFile(file) {
     }
 }
 
+const getDetails = "GetDetails";
+const APICall = "APICall";
 function processFile(fileContents) {
+    console.time(getDetails);
+    var progressBar = document.getElementById('progress-bar');
+    progressBar.style.display = 'block';
+
     getProviderDetails(currentUser.email, localStorage.getItem(clinicId)).then(async (result) => {
         if (result.error) {
             alert(result.error);
@@ -132,6 +143,9 @@ function processFile(fileContents) {
                 CodeMap: result.codeMap,
                 PracMap: result.procMap
             };
+            console.timeEnd(getDetails);
+            console.time(APICall);
+ 
             const response = await fetch(cloudServiceConfig.processFileUrl, {
                 method: 'POST',
                 headers: {
@@ -155,6 +169,9 @@ function processFile(fileContents) {
             } catch (error) {
                 console.error('Error:', error);
             }
+            console.timeEnd(APICall);
+            progressBar.style.display = 'none';
+    
             let data = fileResult.chargeDetail
             let output = '';
             if (Array.isArray(data)) {
