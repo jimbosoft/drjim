@@ -8,7 +8,7 @@ import {
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { getServiceCodes, setServiceCodes } from './firebase.js';
 
- onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, (user) => {
     if (user) {
         setUser(user);
         //const details = JSON.stringify(user, null, '  ');
@@ -71,13 +71,13 @@ async function populateServiceCodes() {
     let tableBody = document.getElementById('servicesTable').getElementsByTagName('tbody')[0];
 
     data.forEach(item => {
-        let positiveItemList = item.itemList ? item.itemList.filter(str => !isNaN(str) && Number(str) > 0) : [];
-        let nonItemList = item.itemList ? item.itemList.filter(str => isNaN(str)) : [];
+        let words = item.itemList ? item.itemList.filter(str => str.trim().indexOf(' ') === -1) : [];
+        let sentences = item.itemList ? item.itemList.filter(str => str.trim().indexOf(' ') !== -1) : [];
 
-        let itemListString = positiveItemList.join(', ');
+        let itemListString = words.join(', ');
         insertServiceCodeRow(tableBody, item.id, item.description, itemListString);
-        if (nonItemList.length > 0) {
-            fillNoItems(nonItemList, item.id);
+        if (sentences.length > 0) {
+            fillNoItems(sentences, item.id, data);
         }
     });
     insertServiceCodeRow(tableBody, "", "", "");
@@ -108,7 +108,7 @@ function insertServiceCodeRow(tableBody, code, description, itemList) {
 const itemRow = 'itemRow';
 const itemForm = 'item-form';
 
-function fillNoItems(missingItems, serviceCode) {
+function fillNoItems(missingItems, theCode, serviceCodes) {
 
     for (const item of missingItems) {
         const section = document.createElement('div');
@@ -132,13 +132,39 @@ function fillNoItems(missingItems, serviceCode) {
         itemGroup.appendChild(nameLabel);
 
         // Create a drop down element
-        const selectElement = document.createElement('label');
-        selectElement.className = 'name-label';
-        selectElement.style.marginRight = '10px';
-        selectElement.style.width = 'auto';
-        //nameLabel.style.border = '1px solid black';
-        selectElement.textContent = serviceCode;
+        const selectElement = document.createElement('select');
+        selectElement.style.marginLeft = '15px';
+        selectElement.style.minWidth = '100px';
+
+        for (const serviceCode of serviceCodes) {
+            const optionElement = document.createElement('option');
+            optionElement.value = serviceCode.id;
+            optionElement.textContent = serviceCode.id;
+            selectElement.appendChild(optionElement);
+        }
+        //
+        // Does that service code still exist?
+        //
+        const exists = serviceCodes.some(element => element.id === theCode);
+        if (exists) {
+            selectElement.value = theCode;
+        } else {
+            const defaultOptionElement = document.createElement('option');
+            defaultOptionElement.value = '';
+            defaultOptionElement.textContent = 'Please Select';
+            selectElement.insertBefore(defaultOptionElement, selectElement.firstChild);
+        }
+
         itemGroup.appendChild(selectElement);
+        // Create Delete button
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.style.marginLeft = '10px';
+        deleteButton.addEventListener('click', function () {
+            section.remove();
+        });
+
+        itemGroup.appendChild(deleteButton);
         section.appendChild(itemGroup);
 
         const nameEntry = document.getElementById(itemForm);
@@ -156,6 +182,7 @@ submitButton.addEventListener('click', async (e) => {
     errorBox.textContent = ""; // Clear the error message
 
     let numberMap = new Map(); // Map to store each number and its associated service code
+    let serviceCodesMap = new Map();
 
     try {
         let serviceCodes = Array.from(tableBody.rows)
@@ -173,11 +200,11 @@ submitButton.addEventListener('click', async (e) => {
                 let cell2 = row.cells[2].textContent.trim();
                 cell2 = row.cells[2].textContent.trim().replace(/(^,)|(,$)/g, '');
                 let itemList = getItemList(row);
-                let allNumbers = itemList.every(num => Number.isFinite(num) && num > 0);
-                if (!allNumbers) {
-                    row.classList.add('highlight'); // Add class to highlight row
-                    throw new Error('All item numbers must be positive numbers');
-                }
+                // let allNumbers = itemList.every(num => Number.isFinite(num) && num > 0);
+                // if (!allNumbers) {
+                //     row.classList.add('highlight'); // Add class to highlight row
+                //     throw new Error('All item numbers must be positive numbers');
+                // }
                 // Check if each number in the itemList is unique across all service codes
                 itemList.forEach(num => {
                     if (numberMap.has(num)) {
@@ -186,17 +213,33 @@ submitButton.addEventListener('click', async (e) => {
                     }
                     numberMap.set(num, cell0); // Add the number and its associated service code to the map
                 });
-                return cell0 !== "" && cell1 !== "";
-            })
-            .map(row => ({
-                id: row.cells[0].textContent,
-                description: row.cells[1].textContent,
-                itemList: getItemList(row)
-            }));
+                if (cell0 !== "" && cell1 !== "") {
+                    serviceCodesMap.set(cell0, {
+                        id: cell0,
+                        description: cell1,
+                        itemList: itemList
+                    });
+                }
+            });
+
+        // Iterate over each item group in the item form
+        const itemGroups = document.getElementById(itemForm).querySelectorAll('.' + itemRow);
+        itemGroups.forEach(group => {
+            const selectedServiceCode = group.querySelector('select').value; // Get the selected service code
+            const nameLabel = group.querySelector('.name-label').textContent; // Get the name label text
+            if (serviceCodesMap.has(selectedServiceCode)) {
+                let serviceCodeObj = serviceCodesMap.get(selectedServiceCode);
+                if (!serviceCodeObj.itemList.includes(nameLabel)) {
+                    serviceCodeObj.itemList.push(nameLabel);
+                }
+            } else {
+                console.log(`Service code ${selectedServiceCode} does not exist in the map.`);
+            }
+        });
 
         let cId = localStorage.getItem(clinicId);
         const userId = currentUser.email;
-        const errorMsg = await setServiceCodes(userId, cId, serviceCodes)
+        const errorMsg = await setServiceCodes(userId, cId, serviceCodesMap)
         if (errorMsg) {
             alert(`Error setting service codes: ${errorMsg}`);
         } else {
@@ -209,12 +252,13 @@ submitButton.addEventListener('click', async (e) => {
 
 function getItemList(row) {
     let cell2 = row.cells[2].textContent.trim().replace(/(^,)|(,$)/g, '');
-    let numberArray = [];
+    let wordSet = new Set();
     if (cell2 !== "") {
         let stringArray = cell2.split(',');
-        numberArray = [...new Set(stringArray.map(Number))];
+        // Map to trimmed strings and add to the set to ensure uniqueness
+        stringArray.forEach(word => wordSet.add(word.trim()));
     }
-    return numberArray;
+    return Array.from(wordSet); // Convert the set back to an array
 }
 
 cancelButton.addEventListener('click', async (e) => {
