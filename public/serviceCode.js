@@ -200,12 +200,8 @@ submitButton.addEventListener('click', async (e) => {
                 let cell2 = row.cells[2].textContent.trim();
                 cell2 = row.cells[2].textContent.trim().replace(/(^,)|(,$)/g, '');
                 let itemList = getItemList(row);
-                // let allNumbers = itemList.every(num => Number.isFinite(num) && num > 0);
-                // if (!allNumbers) {
-                //     row.classList.add('highlight'); // Add class to highlight row
-                //     throw new Error('All item numbers must be positive numbers');
-                // }
-                // Check if each number in the itemList is unique across all service codes
+                //
+                // Check if each item in the itemList is unique across all service codes
                 itemList.forEach(num => {
                     if (numberMap.has(num)) {
                         row.classList.add('highlight'); // Add class to highlight row
