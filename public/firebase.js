@@ -114,6 +114,7 @@ export async function setClinics(userId, clinicList, userEmail) {
         return error.message;
     }
 }
+
 async function defaultServiceCodes(userId, clinicId) {
     let empty = false
     try {
@@ -131,14 +132,14 @@ async function defaultServiceCodes(userId, clinicId) {
             { id: 'CSB', description: 'Consumables' },
             // more data...
         ];
-        let sCodes = data.map(item => ({
-            id: item.id,
+        let sCodes = new Map(data.map(item => [item.id, {
             description: item.description,
             itemList: []
-        }));
+        }]));
         return setServiceCodes(userId, clinicId, sCodes)
     }
 }
+
 async function getOnlyServiceCodes(userId, clinicId) {
     const serviceCodesRef = collection(db, "users", userId, "companyDetails", clinicId, "serviceCodes");
     const querySnapshot = await getDocs(serviceCodesRef);
@@ -167,7 +168,7 @@ export async function getServiceCodes(userId, clinicId) {
 // Remove the service code no longer in the list 
 // and update the service codes that are in the list
 //
-export async function setServiceCodes(userId, clinicId, serviceCodes) {
+export async function setServiceCodes(userId, clinicId, serviceCodesMap) {
     try {
         const serviceCodesRef = collection(db, "users", userId, "companyDetails", clinicId, "serviceCodes");
         // Fetch all documents in the serviceCodes collection
@@ -175,7 +176,7 @@ export async function setServiceCodes(userId, clinicId, serviceCodes) {
         const docsInFirestore = snapshot.docs.map(doc => doc.id);
 
         // Find the documents that are not in the serviceCodes array
-        const docsToRemove = docsInFirestore.filter(docId => !serviceCodes.some(serviceCode => serviceCode.id === docId));
+        const docsToRemove = docsInFirestore.filter(docId => !serviceCodesMap.has(docId));
 
         // Delete the documents that are not in the serviceCodes array and attached items
         await Promise.all(docsToRemove.map(async (docId) => {
@@ -189,12 +190,13 @@ export async function setServiceCodes(userId, clinicId, serviceCodes) {
         })).catch(error => console.error('Failed to delete some service codes:', error));
 
         // Update the documents that are in the serviceCodes array
-        await Promise.all(serviceCodes.map(async serviceCode => {
-            const docRef = doc(serviceCodesRef, serviceCode.id);
+        serviceCodesMap.forEach(async (value, key) => {
+            const docRef = doc(serviceCodesRef, key);
             setDoc(docRef, {
-                description: serviceCode.description
+                description: value.description
             });
-        }));
+        });
+        const serviceCodes = Array.from(serviceCodesMap.values());
         await setItemNumbers(serviceCodesRef, serviceCodes, false);
 
         return "";
