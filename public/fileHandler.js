@@ -145,7 +145,7 @@ function processFile(fileContents) {
             };
             console.timeEnd(getDetails);
             console.time(APICall);
- 
+
             const response = await fetch(cloudServiceConfig.processFileUrl, {
                 method: 'POST',
                 headers: {
@@ -171,10 +171,14 @@ function processFile(fileContents) {
             }
             console.timeEnd(APICall);
             progressBar.style.display = 'none';
-    
+
             let data = fileResult.chargeDetail
             let output = '';
-            if (Array.isArray(data)) {
+            let dataMap = new Map(Object.entries(data));
+            if (dataMap instanceof Map && dataMap.size > 0) {
+                generateProviderList(dataMap);
+            }
+ /*            if (Array.isArray(data)) {
                 let table = document.createElement('table');
                 let headerRow = document.createElement('tr');
                 for (let key in data[0]) {
@@ -208,7 +212,7 @@ function processFile(fileContents) {
                 });
                 resultOutput.appendChild(table);
                 messageOutput.innerHTML = output;
-            }
+            }*/
             if (Object.keys(fileResult.missingProviders).length > 0) {
                 document.getElementById('missingProvidersTxt').textContent = 'There are missing providers in the file';
                 document.getElementById('missingProviders').classList.remove('hidden');
@@ -271,4 +275,31 @@ async function getProviderDetails(userId, clinicId) {
     } catch (errorRes) {
         return { codeMap: null, procMap: null, error: errorRes };
     }
+}
+
+function generateProviderList(data) {
+    const providerListElement = document.getElementById('providerList');
+    data.forEach((value, key) => {
+        const providerElement = document.createElement('div');
+        providerElement.innerText = key;
+
+        const viewPdfButton = document.createElement('button');
+        viewPdfButton.innerText = 'View PDF';
+        const classesToAdd = ['bg-black', 'hover:bg-blue-500', 'text-white', 'font-bold', 'py-2', 'px-4', 'rounded', 'shadow-lg'];
+        classesToAdd.forEach(cls => viewPdfButton.classList.add(cls));
+        viewPdfButton.onclick = () => {
+            const binaryString = atob(value.invoice);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            const pdfUrl = URL.createObjectURL(blob);        
+            window.open(pdfUrl, '_blank');
+        };
+
+        providerElement.appendChild(viewPdfButton);
+        providerListElement.appendChild(providerElement);
+    });
 }
