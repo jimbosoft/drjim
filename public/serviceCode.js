@@ -58,6 +58,7 @@ async function populateServiceCodes() {
     let data = [
         { id: 'EPC', description: 'EPC Items' },
         { id: 'UVB', description: 'Ultraviolet Phototherapy' },
+        { id: 'DEF', description: 'Default' },
         // more data...
     ];
     let cId = localStorage.getItem(clinicId);
