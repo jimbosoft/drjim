@@ -12,29 +12,6 @@
     <title>Setup Companies</title>
 </head>
 <style>
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    table,
-    th,
-    td {
-        border: 1px solid #ddd;
-    }
-
-    th {
-        background-color: #f2f2f2;
-        text-align: left;
-        padding: 8px;
-    }
-
-    td {
-        padding: 8px;
-    }
-
-    /*-------------------------------------------------------------*/
-
     #progress-bar {
         width: 300px;
         height: 20px;
@@ -58,6 +35,24 @@
         100% {
             width: 100%;
         }
+    }
+
+    /* --------------------------------------------------- */
+    .provider-container {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .button {
+        background-color: black;
+        color: white;
+        font-weight: bold;
+        padding: 4px 2px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
     }
 </style>
 
@@ -89,13 +84,9 @@
         </div>
         <div id="file-processing" class="hidden">
             <div class="pt-28 ml-64 p-4 grid gap-4">
-                <div id="dropZone" class="flex items-center gap-4">
+                <div id="dropZone" class="flex items-center gap-4 border-2 border-gray-300 p-4">
                     <p>Or drag and drop a file here or </p>
                     <input type="file" id="csvFile" accept=".csv" />
-                    <button id="uploadButton"
-                        class="bg-black hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-lg">
-                        Upload
-                    </button>
                 </div>
                 <div id="rerunContainer" class="hidden flex items-center gap-4">
                     <div></div> <!-- Empty div for spacing -->
@@ -113,8 +104,8 @@
         </div>
 
         <div id="resultOutput" class="ml-64 overflow-auto max-h-64 mb-4"></div>
-        <div id="messageOutput" class="ml-64 overflow-auto max-h-48 mb-4"></div>
-        <div id="providerList"  class="ml-64 overflow-auto max-h-48 mb-4"></div>
+        <div id="providerList" class="ml-72 overflow-auto mb-4"></div>
+        <div id="messageOutput" class="ml-72 overflow-auto max-h-48 mb-4"></div>
 
         <div id="missingProviders" class="ml-64 px-4 mb-2 hidden flex items-center space-x-4">
             <p id="missingProvidersTxt"></p>

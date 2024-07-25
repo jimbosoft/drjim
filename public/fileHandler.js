@@ -1,4 +1,5 @@
-import { getServiceCodes, currentUser, clinicId, getPractitioners,
+import {
+    getServiceCodes, currentUser, clinicId, getPractitioners,
     storeStuff, getStore, clearStore,
     missingProvidersKey, missingItemsKey, missingServiceCodes, noItemNrs, fileContentsKey, fileNameKey
 } from './firebase.js';
@@ -29,8 +30,7 @@ dropZone.addEventListener('drop', function (e) {
     }
 });
 
-document.getElementById('uploadButton').addEventListener('click', function () {
-    const fileInput = document.getElementById('csvFile');
+fileInput.addEventListener('change', function () {
     const file = fileInput.files[0];
     if (file) {
         handleInputFile(file)
@@ -78,6 +78,10 @@ function clearOutput() {
     document.getElementById('missingProviders').classList.add('hidden');
     document.getElementById('missingItems').classList.add('hidden');
     document.getElementById('missingServiceCodes').classList.add('hidden');
+    const providerList = document.getElementById('providerList');
+    while (providerList.firstChild) {
+        providerList.removeChild(providerList.firstChild);
+    }
 }
 /*
 json payload
@@ -178,41 +182,6 @@ function processFile(fileContents) {
             if (dataMap instanceof Map && dataMap.size > 0) {
                 generateProviderList(dataMap);
             }
- /*            if (Array.isArray(data)) {
-                let table = document.createElement('table');
-                let headerRow = document.createElement('tr');
-                for (let key in data[0]) {
-                    if (key === 'msg') {
-                        continue;
-                    }
-                    let headerCell = document.createElement('th');
-                    headerCell.innerHTML = key;
-                    headerRow.appendChild(headerCell);
-                }
-                table.appendChild(headerRow);
-
-                data.forEach(item => {
-                    if (item.msg) {
-                        output += '&nbsp;' + item.msg + '<br>';
-                    } else {
-                        let row = document.createElement('tr');
-                        for (let key in item) {
-                            let cell = document.createElement('td');
-                            if (key === 'error') {
-                                continue;
-                            } else if (key === 'service') {
-                                cell.innerHTML = 'Code: ' + item[key].code + ', Percentage: ' + item[key].percentage;
-                            } else {
-                                cell.innerHTML = item[key];
-                            }
-                            row.appendChild(cell);
-                        }
-                        table.appendChild(row);
-                    }
-                });
-                resultOutput.appendChild(table);
-                messageOutput.innerHTML = output;
-            }*/
             if (Object.keys(fileResult.missingProviders).length > 0) {
                 document.getElementById('missingProvidersTxt').textContent = 'There are missing providers in the file';
                 document.getElementById('missingProviders').classList.remove('hidden');
@@ -223,7 +192,7 @@ function processFile(fileContents) {
                 const storeVal = fileResult.noItemNrs
                 storeStuff(noItemNrs, JSON.stringify(storeVal));
             }
-            if (Object.keys(fileResult.missingItemNrs).length > 0){
+            if (Object.keys(fileResult.missingItemNrs).length > 0) {
                 const storeVal = fileResult.missingItemNrs
                 storeStuff(missingItemsKey, JSON.stringify(storeVal));
             }
@@ -280,26 +249,50 @@ async function getProviderDetails(userId, clinicId) {
 function generateProviderList(data) {
     const providerListElement = document.getElementById('providerList');
     data.forEach((value, key) => {
-        const providerElement = document.createElement('div');
-        providerElement.innerText = key;
+        const providerContainer = document.createElement('div');
+        providerContainer.className = 'provider-container';
 
-        const viewPdfButton = document.createElement('button');
-        viewPdfButton.innerText = 'View PDF';
-        const classesToAdd = ['bg-black', 'hover:bg-blue-500', 'text-white', 'font-bold', 'py-2', 'px-4', 'rounded', 'shadow-lg'];
-        classesToAdd.forEach(cls => viewPdfButton.classList.add(cls));
-        viewPdfButton.onclick = () => {
-            const binaryString = atob(value.invoice);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-            const pdfUrl = URL.createObjectURL(blob);        
-            window.open(pdfUrl, '_blank');
-        };
+        const providerName = document.createElement('div');
+        providerName.innerText = key;
+        providerName.className = 'provider-name';
+        providerContainer.appendChild(providerName);
 
-        providerElement.appendChild(viewPdfButton);
-        providerListElement.appendChild(providerElement);
+        if (value.invoice && value.invoice.length > 0) {
+            const viewPdfButton = document.createElement('button');
+            viewPdfButton.innerText = 'View PDF';
+            viewPdfButton.className = 'button';
+            viewPdfButton.onclick = () => {
+                const dataUrl = 'data:application/pdf;base64,' + value.invoice;
+                fetch(dataUrl).then(res => res.blob()).then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    window.open(url, '_blank');
+                });
+            };
+            providerContainer.appendChild(viewPdfButton);
+ 
+            const adjustmentsButton = document.createElement('button');
+            adjustmentsButton.innerText = 'Add Adjustments';
+            adjustmentsButton.className = 'button';
+            adjustmentsButton.onclick = () => { };
+            providerContainer.appendChild(adjustmentsButton);
+        }
+        else {
+            messageOutput.innerText =
+                "Error: No invoice pdf returned";
+        }
+        providerListElement.appendChild(providerContainer);
     });
 }
+
+function anotherBlobUrl(invoice) {
+    const binaryString = atob(value.invoice);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const pdfUrl = URL.createObjectURL(blob);
+    return pdfUrl;
+}
+
