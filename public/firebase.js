@@ -189,14 +189,22 @@ export async function setServiceCodes(userId, clinicId, serviceCodesMap) {
             deleteDoc(docRef);
         })).catch(error => console.error('Failed to delete some service codes:', error));
 
+        const serviceCodes = [];
         // Update the documents that are in the serviceCodes array
-        serviceCodesMap.forEach(async (value, key) => {
+        for (const [key, value] of serviceCodesMap) {
             const docRef = doc(serviceCodesRef, key);
-            setDoc(docRef, {
+            await setDoc(docRef, {
                 description: value.description
             });
-        });
-        const serviceCodes = Array.from(serviceCodesMap.values());
+
+            // Add the item to the serviceCodes array
+            serviceCodes.push({
+                id: key,
+                description: value.description,
+                itemList: value.itemList // Assuming itemList is a property of value
+            });
+        }
+
         await setItemNumbers(serviceCodesRef, serviceCodes, false);
 
         return "";
@@ -321,35 +329,40 @@ export async function updateItemNumbers(userId, clinicId, serviceCodes) {
 }
 
 async function setItemNumbers(serviceCodesRef, serviceCodes, updateItems = false) {
-    await Promise.all(serviceCodes.map(async serviceCode => {
-        const docRef = doc(serviceCodesRef, serviceCode.id);
-        const itemListRef = collection(docRef, 'itemList');
-        const itemListSnapshot = await getDocs(itemListRef);
-        const itemsInFirestore = itemListSnapshot.docs.map(doc => doc.id);
+    try {
+        await Promise.all(serviceCodes.map(async serviceCode => {
+            const docRef = doc(serviceCodesRef, serviceCode.id);
+            const itemListRef = collection(docRef, 'itemList');
+            const itemListSnapshot = await getDocs(itemListRef);
+            const itemsInFirestore = itemListSnapshot.docs.map(doc => doc.id);
 
-        // If updateItems is true, add the items from the service code list to the existing items
-        if (updateItems) {
-            const existingItems = itemsInFirestore.map(itemId => parseInt(itemId));
-            const newItems = serviceCode.itemList.filter(item => !existingItems.includes(item));
+            // If updateItems is true, add the items from the service code list to the existing items
+            if (updateItems) {
+                const existingItems = itemsInFirestore.map(itemId => parseInt(itemId));
+                const newItems = serviceCode.itemList.filter(item => !existingItems.includes(item));
 
-            // Add new items to the itemList collection
-            await Promise.all(newItems.map(item =>
-                addDoc(itemListRef, {
-                    value: item
-                })
-            ));
-        } else {
-            // Delete all documents in the itemList collection
-            await Promise.all(itemsInFirestore.map(itemId => deleteDoc(doc(itemListRef, itemId))));
+                // Add new items to the itemList collection
+                await Promise.all(newItems.map(item =>
+                    addDoc(itemListRef, {
+                        value: item
+                    })
+                ));
+            } else {
+                // Delete all documents in the itemList collection
+                await Promise.all(itemsInFirestore.map(itemId => deleteDoc(doc(itemListRef, itemId))));
 
-            // Add each number in itemList as a document to the itemList collection
-            await Promise.all(serviceCode.itemList.map(item =>
-                addDoc(itemListRef, {
-                    value: item
-                })
-            ));
-        }
-    }));
+                // Add each number in itemList as a document to the itemList collection
+                await Promise.all(serviceCode.itemList.map(item =>
+                    addDoc(itemListRef, {
+                        value: item
+                    })
+                ));
+            }
+        }));
+    } catch (error) {
+        console.error('Error in setItemNumbers:', error);
+    }
+
 }
 
 export async function getServiceCodeByItemNumber(userId, itemNumber) {
