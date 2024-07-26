@@ -157,12 +157,15 @@ function processFile(fileContents) {
                 },
                 body: JSON.stringify(paymentFile)
             });
+            console.timeEnd(APICall);
+            progressBar.style.display = 'none';
 
             if (!response.ok) {
                 response.text().then(text => {
                     messageOutput.innerHTML =
-                        "HTTP error: " + response.status + "<br>"
-                        + "Reason: " + text;
+                        "HTTP error: " + response.status + " " + response.statusText + "<br>"
+                         + "Reason: " + text;
+  
                 });
                 return;
             }
@@ -173,14 +176,12 @@ function processFile(fileContents) {
             } catch (error) {
                 console.error('Error:', error);
             }
-            console.timeEnd(APICall);
-            progressBar.style.display = 'none';
-
+ 
             let data = fileResult.chargeDetail
             let output = '';
             let dataMap = new Map(Object.entries(data));
             if (dataMap instanceof Map && dataMap.size > 0) {
-                generateProviderList(dataMap);
+                    generateProviderList(dataMap);
             }
             if (Object.keys(fileResult.missingProviders).length > 0) {
                 document.getElementById('missingProvidersTxt').textContent = 'There are missing providers in the file';
@@ -269,7 +270,7 @@ function generateProviderList(data) {
                 });
             };
             providerContainer.appendChild(viewPdfButton);
- 
+
             const adjustmentsButton = document.createElement('button');
             adjustmentsButton.innerText = 'Add Adjustments';
             adjustmentsButton.className = 'button';
@@ -283,16 +284,3 @@ function generateProviderList(data) {
         providerListElement.appendChild(providerContainer);
     });
 }
-
-function anotherBlobUrl(invoice) {
-    const binaryString = atob(value.invoice);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-    }
-    const blob = new Blob([bytes], { type: 'application/pdf' });
-    const pdfUrl = URL.createObjectURL(blob);
-    return pdfUrl;
-}
-
