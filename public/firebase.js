@@ -24,12 +24,18 @@ import {
     getDoc,
     deleteDoc,
     collection,
+    collectionGroup,
+    query,
+    where,
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js'
 
 export const db = getFirestore(app);
 if (isLocal) {
     connectFirestoreEmulator(db, 'localhost', 8080)
 }
+import { getPerformance, trace }
+    from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-performance.js';
+const perf = getPerformance(app);
 
 export const clinicId = 'clinicId';
 export const currentUserName = 'currentUser'
@@ -49,6 +55,16 @@ export function clearStore(key) {
 }
 export function getStore(key) {
     return sessionStorage.getItem(key);
+}
+export function startTrace(name) {
+    const customTrace = trace(perf, name);
+    console.time(name);
+    customTrace.start();
+    return customTrace;
+}
+export function stopTrace(customTrace, name) {
+    customTrace.stop();
+    console.timeEnd(name);
 }
 
 export async function getClinics(userId) {
@@ -146,22 +162,74 @@ async function getOnlyServiceCodes(userId, clinicId) {
     return querySnapshot
 }
 
-export async function getServiceCodes(userId, clinicId) {
+const getServiceCodeTrace2 = 'getServiceCodes2'
+export async function getServiceCodes2(userId, clinicId) {
+    const gst = startTrace(getServiceCodeTrace2);
     try {
-        const querySnapshot = await getOnlyServiceCodes(userId, clinicId)
-        if (querySnapshot.empty) {
+        // Step 1: Retrieve service codes
+        const serviceCodesRef = collection(db, "users", userId, "companyDetails", clinicId, "serviceCodes");
+        const serviceCodesSnapshot = await getDocs(serviceCodesRef);
+
+        if (serviceCodesSnapshot.empty) {
             return { data: [], error: "" };
         }
-        const serviceCodes = [];
-        for (const doc of querySnapshot.docs) {
-            const itemListRef = collection(doc.ref, 'itemList');
-            const itemListSnapshot = await getDocs(itemListRef);
-            const itemList = itemListSnapshot.docs.map(doc => doc.data().value);
-            serviceCodes.push({ id: doc.id, itemList: itemList, ...doc.data() });
-        }
+
+        // Step 2: Retrieve all item lists
+        const itemListRef = collectionGroup(db, 'itemList');
+        const itemListSnapshot = await getDocs(itemListRef);
+
+        // Step 3: Create a map of service code IDs to their item values
+        const itemListMap = new Map();
+        itemListSnapshot.forEach(doc => {
+            const pathParts = doc.ref.path.split('/');
+            if (pathParts[1] === userId && pathParts[3] === clinicId) {
+                const serviceCodeId = pathParts[5]; // Get the service code ID from the path
+                if (!itemListMap.has(serviceCodeId)) {
+                    itemListMap.set(serviceCodeId, []);
+                }
+                itemListMap.get(serviceCodeId).push(doc.data().value);
+            }
+        });
+
+        // Step 4: Combine service codes with their item lists
+        const serviceCodes = serviceCodesSnapshot.docs.map(doc => ({
+            id: doc.id,
+            description: doc.data().description,
+            itemList: itemListMap.get(doc.id) || []
+        }));
+
         return { data: serviceCodes, error: "" };
     } catch (error) {
         return { data: [], error: error.message };
+    } finally {
+        stopTrace(gst, getServiceCodeTrace2);
+    }
+}
+const getServiceCodeTrace = 'getServiceCodes'
+export async function getServiceCodes(userId, clinicId) {
+    const gst = startTrace(getServiceCodeTrace);
+    try {
+        const serviceCodesSnapshot = await getOnlyServiceCodes(userId, clinicId)
+        if (serviceCodesSnapshot.empty) {
+            return { data: [], error: "" };
+        }
+
+        const serviceCodes = await Promise.all(serviceCodesSnapshot.docs.map(async (doc) => {
+            const itemListRef = collection(doc.ref, 'itemList');
+            const itemListSnapshot = await getDocs(itemListRef);
+            const itemList = itemListSnapshot.docs.map(itemDoc => itemDoc.data().value);
+
+            return {
+                id: doc.id,
+                itemList: itemList,
+                ...doc.data()
+            };
+        }));
+        return { data: serviceCodes, error: "" };
+    } catch (error) {
+        return { data: [], error: error.message };
+    } finally {
+        stopTrace(gst, getServiceCodeTrace);
     }
 }
 //
@@ -258,11 +326,11 @@ async function getProviders(userId, clinicId) {
         const providersRef = collection(db, "users", userId, "companyDetails", clinicId, "practitioners");
         const snapshot = await getDocs(providersRef);
         if (snapshot.empty) {
-            return { ref: providersRef, data: [], error: "" };
+            return { snap: providersRef, data: [], error: "" };
         }
-        return { ref: providersRef, data: Array.from(snapshot.docs, doc => ({ id: doc.id, ...doc.data() })), error: "" };
+        return { snap: snapshot, error: "" };
     } catch (error) {
-        return { ref: providersRef, data: [], error: error.message };
+        return { snap: snapshot, error: error.message };
     }
 }
 
@@ -271,18 +339,70 @@ export async function hasProviders(userId, clinicId) {
     if (providers.error) {
         alert(providers.error);
     }
-    return providers && providers.data.length > 0;
+    return providers && !providers.snap.empty;
 }
+//
+// This query version is faster, but does not return the providers service fee
+//
+const getPractitionersTrace2 = 'getPractitioners2'
+export async function getPractitioners2(userId, clinicId) {
 
-export async function getPractitioners(userId, clinicId) {
+    const getPractitionersT = startTrace(getPractitionersTrace2);
     try {
         const providers = await getProviders(userId, clinicId);
         if (providers.error) {
             return { data: null, error: providers.error };
         }
-        const snapshot = await getDocs(providers.ref);
-        const practitioners = [];
-        for (const doc of snapshot.docs) {
+
+        // Fetch all services using collectionGroup
+        const servicesRef = collectionGroup(db, 'services');
+        const servicesSnapshot = await getDocs(servicesRef);
+
+        // Create a map of practitioner IDs to their services
+        const servicesMap = new Map();
+        servicesSnapshot.forEach(doc => {
+            const pathParts = doc.ref.path.split('/');
+            // Check if this service belongs to the correct user and clinic
+            if (pathParts[1] === userId && pathParts[3] === clinicId && pathParts[5] === 'practitioners') {
+                const practitionerId = pathParts[6];
+                if (!servicesMap.has(practitionerId)) {
+                    servicesMap.set(practitionerId, []);
+                }
+                servicesMap.get(practitionerId).push({
+                    id: doc.id,
+                    value: doc.data().value // Ensure we're getting the 'value' field
+                });
+            }
+        });
+
+        // Combine practitioners with their services
+        const practitioners = providers.snap.docs.map(doc => {
+            const practitionerData = doc.data();
+            return {
+                id: doc.id,
+                name: practitionerData.name,
+                services: servicesMap.get(doc.id) || []
+            };
+        });
+        return { data: practitioners, error: null };
+    } catch (error) {
+        return { data: [], error: error.message };
+    } finally {
+        stopTrace(getPractitionersT, getPractitionersTrace2);
+    }
+}
+
+const getPractitionersTrace = 'getPractitioners'
+export async function getPractitioners(userId, clinicId) {
+   
+    const getPractitionersT = startTrace(getPractitionersTrace);
+    try {
+        const providers = await getProviders(userId, clinicId);
+        if (providers.error) {
+            return { data: null, error: providers.error };
+        }
+
+        const practitionersPromises = providers.snap.docs.map(async (doc) => {
             const practitionerData = doc.data();
             const servicesRef = collection(doc.ref, "services");
             const servicesSnapshot = await getDocs(servicesRef);
@@ -292,17 +412,22 @@ export async function getPractitioners(userId, clinicId) {
                 value: serviceDoc.data().value
             }));
 
-            practitioners.push({
+            return {
                 id: doc.id,
                 name: practitionerData.name,
                 services: services
-            });
-        }
-        return { data: practitioners, error: null };
+            };
+        });
+
+        const practitioners = await Promise.all(practitionersPromises);
+
+        return { data: practitioners, error: "" };
     } catch (error) {
         return { data: [], error: error.message };
+    } finally {
+        stopTrace(getPractitionersT, getPractitionersTrace);
     }
-}
+ }
 
 export async function getPractitionerByPracId(userId, clinicId, pracId) {
     try {
