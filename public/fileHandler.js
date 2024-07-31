@@ -1,7 +1,8 @@
 import {
     getServiceCodes, currentUser, clinicId, getPractitioners,
     storeStuff, getStore, clearStore,
-    missingProvidersKey, missingItemsKey, missingServiceCodes, noItemNrs, fileContentsKey, fileNameKey
+    missingProvidersKey, missingItemsKey, missingServiceCodes, noItemNrs,
+    fileContentsKey, fileNameKey, startTrace, stopTrace
 } from './firebase.js';
 import { cloudServiceConfig } from './config.js';
 
@@ -43,7 +44,6 @@ document.getElementById('rerunButton').addEventListener('click', function () {
     const fileContents = getStore(fileContentsKey);
     if (fileContents && fileContents !== 'null'
         && fileContents.length > 0 && fileContents !== 'undefined') {
-        clearOutput();
         processFile(fileContents);
     }
     else {
@@ -126,104 +126,118 @@ async function handleInputFile(file) {
     }
 }
 
-const getDetails = "GetDetails";
-const APICall = "APICall";
-function processFile(fileContents) {
-    console.time(getDetails);
+async function processFile(fileContents) {
+    clearOutput();
     var progressBar = document.getElementById('progress-bar');
     progressBar.style.display = 'block';
+    const err = await callDataProcessor(fileContents);
+    if (err && err !== '') {
+        messageOutput.innerHTML = err;
+    }
+    progressBar.style.display = 'none';
+}
 
-    getProviderDetails(currentUser.email, localStorage.getItem(clinicId)).then(async (result) => {
-        if (result.error) {
-            alert(result.error);
-            return
-        }
-        const companyName = getCompanyName();
-        if (result.codeMap && result.procMap) {
-            const paymentFile = {
-                FileContent: fileContents,
-                CsvLineStart: 16,
-                CompanyName: companyName,
-                CodeMap: result.codeMap,
-                PracMap: result.procMap
-            };
-            console.timeEnd(getDetails);
-            console.time(APICall);
+const getDetails = "getProviderDetails";
+const APICall = "APICall";
 
-            const response = await fetch(cloudServiceConfig.processFileUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(paymentFile)
-            });
-            console.timeEnd(APICall);
-            progressBar.style.display = 'none';
-
-            if (!response.ok) {
-                response.text().then(text => {
-                    messageOutput.innerHTML =
-                        "HTTP error: " + response.status + " " + response.statusText + "<br>"
-                         + "Reason: " + text;
-  
-                });
-                return;
+async function callDataProcessor(fileContents) {
+    const getDetailsTrace = startTrace(getDetails);
+    return await getProviderDetails(currentUser.email, localStorage.getItem(clinicId))
+        .then(async (result) => {
+            stopTrace(getDetailsTrace, getDetails);
+            if (result.error) {
+                return result.error;
             }
+            const companyName = getCompanyName();
+            if (result.codeMap && result.procMap) {
+                const paymentFile = {
+                    FileContent: fileContents,
+                    CsvLineStart: 16,
+                    CompanyName: companyName,
+                    CodeMap: result.codeMap,
+                    PracMap: result.procMap
+                };
+   
+                let fileResult = null;
+                const apiCallTrace = startTrace(APICall);
+                try {
+                    const response = await fetch(cloudServiceConfig.processFileUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(paymentFile)
+                    });
+                    stopTrace(apiCallTrace, APICall);
+                    if (!response.ok) {
+                        response.text().then(text => {
+                            return "HTTP error: " + response.status + " "
+                                + response.statusText + "<br>"
+                                + "Reason: " + text;
+                        });
+                    }
+                    try {
+                        fileResult = await response.json();
+                    } catch (error) {
+                        return "Returned data is invalid " + error.message;
+                    }
 
-            let fileResult
-            try {
-                fileResult = await response.json();
-            } catch (error) {
-                console.error('Error:', error);
-            }
- 
-            let data = fileResult.chargeDetail
-            let output = '';
-            let dataMap = new Map(Object.entries(data));
-            if (dataMap instanceof Map && dataMap.size > 0) {
+                } catch (error) {
+                    stopTrace(apiCallTrace, APICall);
+                    return "Failed to call server: " + error.message;
+                }
+
+                let data = fileResult.chargeDetail
+                let dataMap = new Map(Object.entries(data));
+                if (dataMap instanceof Map && dataMap.size > 0) {
                     generateProviderList(dataMap);
+                }
+                if (Object.keys(fileResult.missingProviders).length > 0) {
+                    document.getElementById('missingProvidersTxt').textContent = 'There are missing providers in the file';
+                    document.getElementById('missingProviders').classList.remove('hidden');
+                    const storeVal = fileResult.missingProviders
+                    storeStuff(missingProvidersKey, JSON.stringify(storeVal));
+                }
+                if (Object.keys(fileResult.noItemNrs).length > 0) {
+                    const storeVal = fileResult.noItemNrs
+                    storeStuff(noItemNrs, JSON.stringify(storeVal));
+                }
+                if (Object.keys(fileResult.missingItemNrs).length > 0) {
+                    const storeVal = fileResult.missingItemNrs
+                    storeStuff(missingItemsKey, JSON.stringify(storeVal));
+                }
+                if (Object.keys(fileResult.missingItemNrs).length > 0 || Object.keys(fileResult.noItemNrs).length > 0) {
+                    document.getElementById('missingItemsTxt').textContent = 'There are missing items in the file';
+                    document.getElementById('missingItems').classList.remove('hidden');
+                }
+                if (Object.keys(fileResult.missingServiceCodes).length > 0) {
+                    document.getElementById('missingServiceCodesTxt').textContent = 'There are missing service code cuts in the file';
+                    document.getElementById('missingServiceCodes').classList.remove('hidden');
+                    const storeVal = fileResult.missingServiceCodes
+                    storeStuff(missingServiceCodes, JSON.stringify(storeVal));
+                }
             }
-            if (Object.keys(fileResult.missingProviders).length > 0) {
-                document.getElementById('missingProvidersTxt').textContent = 'There are missing providers in the file';
-                document.getElementById('missingProviders').classList.remove('hidden');
-                const storeVal = fileResult.missingProviders
-                storeStuff(missingProvidersKey, JSON.stringify(storeVal));
-            }
-            if (Object.keys(fileResult.noItemNrs).length > 0) {
-                const storeVal = fileResult.noItemNrs
-                storeStuff(noItemNrs, JSON.stringify(storeVal));
-            }
-            if (Object.keys(fileResult.missingItemNrs).length > 0) {
-                const storeVal = fileResult.missingItemNrs
-                storeStuff(missingItemsKey, JSON.stringify(storeVal));
-            }
-            if (Object.keys(fileResult.missingItemNrs).length > 0 || Object.keys(fileResult.noItemNrs).length > 0) {
-                document.getElementById('missingItemsTxt').textContent = 'There are missing items in the file';
-                document.getElementById('missingItems').classList.remove('hidden');
-            }
-            if (Object.keys(fileResult.missingServiceCodes).length > 0) {
-                document.getElementById('missingServiceCodesTxt').textContent = 'There are missing service code cuts in the file';
-                document.getElementById('missingServiceCodes').classList.remove('hidden');
-                const storeVal = fileResult.missingServiceCodes
-                storeStuff(missingServiceCodes, JSON.stringify(storeVal));
-            }
-        }
-    });
+            return ""
+        });
 }
 
 async function getProviderDetails(userId, clinicId) {
     try {
-        // Fetch practitioners
-        const practitionersResult = await getPractitioners(userId, clinicId);
+        // Run getPractitioners and getServiceCodes in parallel
+        const [practitionersResult, serviceCodesResult] = await Promise.all([
+            getPractitioners(userId, clinicId),
+            getServiceCodes(userId, clinicId)
+        ]);
+
+        // Check for errors
         if (practitionersResult.error) {
             return { codeMap: null, procMap: null, error: practitionersResult.error };
         }
-        const practitioners = practitionersResult.data;
-        // Fetch service codes
-        const serviceCodesResult = await getServiceCodes(userId, clinicId);
         if (serviceCodesResult.error) {
             return { codeMap: null, procMap: null, error: serviceCodesResult.error };
         }
+
+        const practitioners = practitionersResult.data;
         const serviceCodes = serviceCodesResult.data;
 
         // Format practitioners data for PracMap
@@ -235,12 +249,13 @@ async function getProviderDetails(userId, clinicId) {
             });
             PracMap[practitioner.name] = services;
         });
+
         // Format service codes data for CodeMap
-        // as a map of service code id to an array of item codes
         const CodeMap = serviceCodes.reduce((map, serviceCode) => {
             map[serviceCode.id] = serviceCode.itemList.map(item => item.toString());
             return map;
         }, {});
+
         return { codeMap: CodeMap, procMap: PracMap, error: null };
     } catch (errorRes) {
         return { codeMap: null, procMap: null, error: errorRes };
