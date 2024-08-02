@@ -55,20 +55,12 @@ table.addEventListener('click', function (event) {
 });
 
 async function populateServiceCodes() {
-    let data = [
-        { id: 'EPC', description: 'EPC Items' },
-        { id: 'UVB', description: 'Ultraviolet Phototherapy' },
-        { id: 'DEF', description: 'Default' },
-        // more data...
-    ];
     let cId = localStorage.getItem(clinicId);
     const result = await getServiceCodes(currentUser.email, cId);
     if (result.error) {
         alert(`Error getting service codes: ${result.error}`);
     }
-    if (result.data && result.data.length > 0) {
-        data = result.data;
-    }
+    const data = result.data;
     let tableBody = document.getElementById('servicesTable').getElementsByTagName('tbody')[0];
 
     data.forEach(item => {
