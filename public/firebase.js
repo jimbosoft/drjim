@@ -76,11 +76,17 @@ export function cacheOut(key) {
         }
         clearStore(key);
     }
-    console.log('Missed cache:', key);
+    //console.log('Missed cache:', key);
     return null;
 }
 export function clearCache(key) {
     clearStore(key);
+}
+export function clearAllCache(key) {
+    clearStore(getClinicsLabel);
+    clearStore(getServiceCodeLabel);
+    clearStore(getProvidersLabel);
+    clearStore(getPractitionersLabel);
 }
 export function startTrace(name) {
     const customTrace = trace(perf, name);
@@ -92,12 +98,13 @@ export function stopTrace(customTrace, name) {
     customTrace.stop();
     console.timeEnd(name);
 }
-const getClinicsTrace = 'getClinics'
+const getClinicsLabel = 'getClinics'
 export async function getClinics(userId) {
-    const ct = startTrace(getClinicsTrace);
+    let ct = null;
     try {
-        let clinics = cacheOut(getClinicsTrace);
-        if (clinics) { return { data: clinics, error: "" };}
+        let clinics = cacheOut(getClinicsLabel);
+        if (clinics) { return { data: clinics, error: "" }; }
+        ct = startTrace(getClinicsLabel);
 
         const clinicsRef = collection(db, "users", userId, "companyDetails");
 
@@ -109,12 +116,12 @@ export async function getClinics(userId) {
         }
         const listRef = await querySnapshot.docs
         clinics = Array.from(querySnapshot.docs, doc => ({ id: doc.id, ...doc.data() }))
-        cacheIn(getClinicsTrace, clinics)
+        cacheIn(getClinicsLabel, clinics)
         return { data: clinics, error: "" };
     } catch (error) {
         return { data: null, error: error.message };
     } finally {
-        stopTrace(ct, getClinicsTrace);
+        if (ct) { stopTrace(ct, getClinicsLabel); }
     }
 }
 //
@@ -123,7 +130,7 @@ export async function getClinics(userId) {
 //
 export async function setClinics(userId, clinicList, userEmail) {
     try {
-        clearCache(getClinicsTrace);
+        clearCache(getClinicsLabel);
         const userRef = doc(db, "users", userId);
         const clinicsRef = collection(userRef, "companyDetails");
 
@@ -199,16 +206,18 @@ export async function getOnlyServiceCodes(userId, clinicId) {
     const querySnapshot = await getDocs(serviceCodesRef);
     return querySnapshot.docs.map(doc => ({
         id: doc.id,
-        description: doc.data().description}));
+        description: doc.data().description
+    }));
 }
 
 const getServiceCodeTrace2 = 'getServiceCodes2'
 export async function getServiceCodes2(userId, clinicId) {
-    const gst = startTrace(getServiceCodeTrace2);
+    let gst = startTrace(getServiceCodeTrace2);
     try {
         // Step 1: Retrieve service codes
         const serviceCodesRef = collection(db, "users", userId, "companyDetails", clinicId, "serviceCodes");
         const serviceCodesSnapshot = await getDocs(serviceCodesRef);
+        gst = startTrace(getServiceCodeTrace2);
 
         if (serviceCodesSnapshot.empty) {
             return { data: [], error: "" };
@@ -242,19 +251,23 @@ export async function getServiceCodes2(userId, clinicId) {
     } catch (error) {
         return { data: [], error: error.message };
     } finally {
-        stopTrace(gst, getServiceCodeTrace2);
+        if (gst) { stopTrace(gst, getServiceCodeTrace2); }
     }
 }
-const getServiceCodeTrace = 'getServiceCodes'
+const getServiceCodeLabel = 'getServiceCodes'
 export async function getServiceCodes(userId, clinicId) {
-    const gst = startTrace(getServiceCodeTrace);
+    let gst = null;
     try {
+        let serviceCodes = cacheOut(getServiceCodeLabel);
+        if (serviceCodes) { return { data: serviceCodes, error: "" }; }
+        gst = startTrace(getServiceCodeLabel);
+
         const serviceCodesList = await getOnlyServiceCodes(userId, clinicId)
         if (serviceCodesList.length === 0) {
             return { data: [], error: "" };
         }
 
-        const serviceCodes = await Promise.all(serviceCodesList.map(async (doc) => {
+        serviceCodes = await Promise.all(serviceCodesList.map(async (doc) => {
             const itemListRef = collection(db, "users", userId, "companyDetails", clinicId, "serviceCodes", doc.id, 'itemList');
             const itemListSnapshot = await getDocs(itemListRef);
             const itemList = itemListSnapshot.docs.map(itemDoc => itemDoc.data().value);
@@ -265,11 +278,12 @@ export async function getServiceCodes(userId, clinicId) {
                 ...doc
             };
         }));
+        cacheIn(getServiceCodeLabel, serviceCodes)
         return { data: serviceCodes, error: "" };
     } catch (error) {
         return { data: [], error: error.message };
     } finally {
-        stopTrace(gst, getServiceCodeTrace);
+        if (gst) { stopTrace(gst, getServiceCodeLabel); }
     }
 }
 //
@@ -278,6 +292,7 @@ export async function getServiceCodes(userId, clinicId) {
 //
 export async function setServiceCodes(userId, clinicId, serviceCodesMap) {
     try {
+        clearCache(getServiceCodeLabel);
         const serviceCodesRef = collection(db, "users", userId, "companyDetails", clinicId, "serviceCodes");
         // Fetch all documents in the serviceCodes collection
         const snapshot = await getDocs(serviceCodesRef);
@@ -295,7 +310,7 @@ export async function setServiceCodes(userId, clinicId, serviceCodesMap) {
                 deleteDoc(doc.ref);
             })
             deleteDoc(docRef);
-        })).catch(error => { return `Failed to delete some service codes: ${error}`});
+        })).catch(error => { return `Failed to delete some service codes: ${error}` });
 
         const serviceCodes = [];
         // Update the documents that are in the serviceCodes array
@@ -321,8 +336,11 @@ export async function setServiceCodes(userId, clinicId, serviceCodesMap) {
     }
 }
 
-export async function setPractitioners(userId, clinicId, practitioners) {
+export async function setProviders(userId, clinicId, practitioners) {
     try {
+        clearCache(getProvidersLabel);
+        clearCache(getPractitionersLabel);
+
         const practitionersRef = collection(db, "users", userId, "companyDetails", clinicId, "practitioners");
 
         // Fetch all documents in the practitioners collection
@@ -350,13 +368,13 @@ export async function setPractitioners(userId, clinicId, practitioners) {
                 await setDoc(providerDetails, {
                     name: practitioner.name,
                 }, { merge: true });
-             } catch (error) {
+            } catch (error) {
                 return `Error setting document for practitioner: ${practitioner.name}  ${error}`;
             }
 
             // Store services as a collection against each practitioner
             const servicesRef = collection(providerDetails, "services");
-             await Promise.all(practitioner.services.map(async service => {
+            await Promise.all(practitioner.services.map(async service => {
                 await setDoc(doc(servicesRef, service.id), { value: service.value });
             }));
         }));
@@ -365,16 +383,27 @@ export async function setPractitioners(userId, clinicId, practitioners) {
         return error.message;
     }
 }
+const getProvidersLabel = 'getProviders'
 async function getProviders(userId, clinicId) {
+    let gpt = null;
     try {
+        let providers = cacheOut(getProvidersLabel);
+        if (providers) { return { data: providers, error: "" }; }
+        gpt = startTrace(getProvidersLabel);
+
         const providersRef = collection(db, "users", userId, "companyDetails", clinicId, "practitioners");
         const snapshot = await getDocs(providersRef);
         if (snapshot.empty) {
             return { data: [], error: "" };
         }
-        return { data: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })), error: "" };
+        providers = Array.from(snapshot.docs, doc => ({ id: doc.id, ...doc.data() }));
+        cacheIn(getProvidersLabel, providers)
+        return { data: providers, error: "" };
     } catch (error) {
         return { data: [], error: error.message };
+    }
+    finally {
+        if (gpt) { stopTrace(gpt, getProvidersLabel); }
     }
 }
 
@@ -386,11 +415,14 @@ export async function hasProviders(userId, clinicId) {
     return providers && !providers.data ? false : providers.data.length > 0;
 }
 
-const getPractitionersTrace = 'getPractitioners'
+const getPractitionersLabel = 'getPractitioners'
 export async function getPractitioners(userId, clinicId) {
-   
-    const getPractitionersT = startTrace(getPractitionersTrace);
+    let getPractitionersT = null;
     try {
+        let practitioners = cacheOut(getPractitionersLabel);
+        if (practitioners) { return { data: practitioners, error: "" }; }
+        getPractitionersT = startTrace(getPractitionersLabel);
+
         const providers = await getProviders(userId, clinicId);
         if (providers.error) {
             return { data: null, error: providers.error };
@@ -412,15 +444,16 @@ export async function getPractitioners(userId, clinicId) {
             };
         });
 
-        const practitioners = await Promise.all(practitionersPromises);
-
+        practitioners = await Promise.all(practitionersPromises);
+        cacheIn(getPractitionersLabel, practitioners)
         return { data: practitioners, error: "" };
+
     } catch (error) {
         return { data: [], error: error.message };
     } finally {
-        stopTrace(getPractitionersT, getPractitionersTrace);
+        if (getPractitionersT) { stopTrace(getPractitionersT, getPractitionersLabel); }
     }
- }
+}
 
 export async function getPractitionerByPracId(userId, clinicId, pracId) {
     try {
@@ -438,6 +471,7 @@ export async function getPractitionerByPracId(userId, clinicId, pracId) {
 
 export async function updateItemNumbers(userId, clinicId, serviceCodes) {
     try {
+        clearCache(getServiceCodeLabel);
         const serviceCodesRef = collection(db, "users", userId, "companyDetails", clinicId, "serviceCodes");
         await setItemNumbers(serviceCodesRef, serviceCodes, true);
         return "";
