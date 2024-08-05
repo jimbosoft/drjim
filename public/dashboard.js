@@ -115,4 +115,5 @@ function companySelected(companyId) {
 
 function displayErrors(error) {
     messageOutput.innerText = error
+    messageOutput.style.color = 'red';
  }
