@@ -375,7 +375,12 @@ export async function setProviders(userId, clinicId, practitioners) {
             // Store services as a collection against each practitioner
             const servicesRef = collection(providerDetails, "services");
             await Promise.all(practitioner.services.map(async service => {
-                await setDoc(doc(servicesRef, service.id), { value: service.value });
+                if (service.value === "") {
+                    // Remove the service if value is an empty string
+                    await deleteDoc(doc(servicesRef, service.id));
+                } else {
+                        await setDoc(doc(servicesRef, service.id), { value: service.value });
+                }
             }));
         }));
         return "";
