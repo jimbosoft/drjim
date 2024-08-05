@@ -192,6 +192,7 @@ submitButton.addEventListener('click', async (e) => {
     const providerRows = document.getElementsByClassName('providerRow');
     const providers = [];
 
+    let clearToClear = true;
     for (let i = 0; i < providerRows.length; i++) {
         const nameInput = providerRows[i].getElementsByClassName('name-input')[0];
         let idValue = nameInput.getAttribute('data-id');
@@ -208,22 +209,34 @@ submitButton.addEventListener('click', async (e) => {
             const serviceNumbers = providerRows[i].getElementsByClassName('percentage-number');
 
             for (let j = 0; j < serviceCodeInputs.length; j++) {
-                if (serviceNumbers[j].value !== '') {
+                const value = serviceNumbers[j].value;
+                let notError = true
+                if (value !== '') {
+                    const numericValue = parseFloat(value);
+                    if (isNaN(numericValue) || numericValue < 0 || numericValue > 100) {
+                        // Highlight the field with the error
+                        serviceNumbers[j].style.backgroundColor = 'red';
+                        displayErrors(`Error: Service number value must be blank or between 0 and 100. Found: ${value}`);
+                        notError = false;
+                        clearToClear = false;
+                    }
+                }
+                if (notError) {
+                    serviceNumbers[j].style.backgroundColor = '';
                     providerData.services.push({
                         id: serviceCodeInputs[j].id,
-                        value: serviceNumbers[j].value
+                        value: value
                     });
                 }
             }
             providers.push(providerData);
         }
     }
-
     const cId = localStorage.getItem(clinicId);
     const userId = currentUser.email;
     setProviders(userId, cId, providers)
-        .then(() => entryComplete())
-        .catch(error => alert(`Error setting practitioners: ${error}`));
+        .then(() => { if (clearToClear) { entryComplete() } })
+        .catch(error => displayErrors(`Error setting practitioners: ${error}`));
 });
 
 cancelButton.addEventListener('click', async (e) => {
@@ -233,5 +246,9 @@ cancelButton.addEventListener('click', async (e) => {
 
 function entryComplete() {
     window.location.href = '/dashboard.html';
+}
+function displayErrors(error) {
+    messageOutput.innerText = error
+    messageOutput.style.color = 'red';
 }
 
