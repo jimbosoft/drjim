@@ -137,15 +137,12 @@ async function processFile(fileContents) {
     progressBar.style.display = 'none';
 }
 
-const getDetails = "getProviderDetails";
 const APICall = "APICall";
 
 async function callDataProcessor(fileContents) {
-    const getDetailsTrace = startTrace(getDetails);
-    return await getProviderDetails(currentUser.email, localStorage.getItem(clinicId))
+     return await getProviderDetails(currentUser.email, localStorage.getItem(clinicId))
         .then(async (result) => {
-            stopTrace(getDetailsTrace, getDetails);
-            if (result.error) {
+             if (result.error) {
                 return result.error;
             }
             const companyName = getCompanyName();
@@ -186,17 +183,13 @@ async function callDataProcessor(fileContents) {
                     stopTrace(apiCallTrace, APICall);
                     return "Failed to call server: " + error.message;
                 }
-
-                let data = fileResult.chargeDetail
-                let dataMap = new Map(Object.entries(data));
-                if (dataMap instanceof Map && dataMap.size > 0) {
-                    generateProviderList(dataMap);
-                }
+                let stuffMissing = false;
                 if (Object.keys(fileResult.missingProviders).length > 0) {
                     document.getElementById('missingProvidersTxt').textContent = 'There are missing providers in the file';
                     document.getElementById('missingProviders').classList.remove('hidden');
                     const storeVal = fileResult.missingProviders
                     storeStuff(missingProvidersKey, JSON.stringify(storeVal));
+                    stuffMissing = true;
                 }
                 if (Object.keys(fileResult.noItemNrs).length > 0) {
                     const storeVal = fileResult.noItemNrs
@@ -209,13 +202,21 @@ async function callDataProcessor(fileContents) {
                 if (Object.keys(fileResult.missingItemNrs).length > 0 || Object.keys(fileResult.noItemNrs).length > 0) {
                     document.getElementById('missingItemsTxt').textContent = 'There are missing items in the file';
                     document.getElementById('missingItems').classList.remove('hidden');
+                    stuffMissing = true;
                 }
                 if (Object.keys(fileResult.missingServiceCodes).length > 0) {
                     document.getElementById('missingServiceCodesTxt').textContent = 'There are missing service code cuts in the file';
                     document.getElementById('missingServiceCodes').classList.remove('hidden');
                     const storeVal = fileResult.missingServiceCodes
                     storeStuff(missingServiceCodes, JSON.stringify(storeVal));
+                    stuffMissing = true;
                 }
+                const data = fileResult.chargeDetail
+                let dataMap = new Map(Object.entries(data));
+                if (dataMap instanceof Map && dataMap.size > 0) {
+                    generateProviderList(dataMap, stuffMissing);
+                }
+
             }
             return ""
         });
@@ -262,7 +263,7 @@ async function getProviderDetails(userId, clinicId) {
     }
 }
 
-function generateProviderList(data) {
+function generateProviderList(data, stuffMissing) {
     const providerListElement = document.getElementById('providerList');
     data.forEach((value, key) => {
         const providerContainer = document.createElement('div');
@@ -292,7 +293,7 @@ function generateProviderList(data) {
             adjustmentsButton.onclick = () => { };
             providerContainer.appendChild(adjustmentsButton);
         }
-        else {
+        else if (!stuffMissing) {
             messageOutput.innerText =
                 "Error: No invoice pdf returned";
         }
