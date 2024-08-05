@@ -1,6 +1,8 @@
-import { auth, setUser, currentUser, setPractitioners, getPractitioners, getServiceCodes, clinicId,
+import {
+    auth, setUser, currentUser, setProviders, getPractitioners, getServiceCodes, clinicId,
     getStore, clearStore,
-    missingProvidersKey, missingServiceCodes } from './firebase.js';
+    missingProvidersKey, missingServiceCodes
+} from './firebase.js';
 import {
     islogoutButtonPressed,
     resetlogoutButtonPressed,
@@ -219,7 +221,7 @@ submitButton.addEventListener('click', async (e) => {
 
     const cId = localStorage.getItem(clinicId);
     const userId = currentUser.email;
-    setPractitioners(userId, cId, providers)
+    setProviders(userId, cId, providers)
         .then(() => entryComplete())
         .catch(error => alert(`Error setting practitioners: ${error}`));
 });
