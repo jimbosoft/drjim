@@ -56,21 +56,23 @@ export function clearStore(key) {
 export function getStore(key) {
     return sessionStorage.getItem(key);
 }
-export function cacheIn(key, value) {
+export function cacheIn(key, userId, clinicId, value) {
     const dataToStore = {
         data: value,
+        user: userId,
+        clinic: clinicId,
         timestamp: Date.now()
     };
     const jsonString = JSON.stringify(dataToStore);
     storeStuff(key, jsonString);
 }
 
-export function cacheOut(key) {
+export function cacheOut(key, userId, clinicId) {
     const jsonString = getStore(key);
     if (jsonString) {
         const val = JSON.parse(jsonString);
         const old = Date.now() - 5 * 60 * 1000
-        if (val.timestamp > old) {
+        if (val.user === userId && val.clinic === clinicId && val.timestamp > old) {
             console.log('Found in cache:', key);
             return val.data;
         }
@@ -102,7 +104,7 @@ const getClinicsLabel = 'getClinics'
 export async function getClinics(userId) {
     let ct = null;
     try {
-        let clinics = cacheOut(getClinicsLabel);
+        let clinics = cacheOut(getClinicsLabel, userId, ""); ;
         if (clinics) { return { data: clinics, error: "" }; }
         ct = startTrace(getClinicsLabel);
 
@@ -116,7 +118,7 @@ export async function getClinics(userId) {
         }
         const listRef = await querySnapshot.docs
         clinics = Array.from(querySnapshot.docs, doc => ({ id: doc.id, ...doc.data() }))
-        cacheIn(getClinicsLabel, clinics)
+        cacheIn(getClinicsLabel, userId, "", clinics)
         return { data: clinics, error: "" };
     } catch (error) {
         return { data: null, error: error.message };
@@ -258,7 +260,7 @@ const getServiceCodeLabel = 'getServiceCodes'
 export async function getServiceCodes(userId, clinicId) {
     let gst = null;
     try {
-        let serviceCodes = cacheOut(getServiceCodeLabel);
+        let serviceCodes = cacheOut(getServiceCodeLabel, userId, clinicId);
         if (serviceCodes) { return { data: serviceCodes, error: "" }; }
         gst = startTrace(getServiceCodeLabel);
 
@@ -278,7 +280,7 @@ export async function getServiceCodes(userId, clinicId) {
                 ...doc
             };
         }));
-        cacheIn(getServiceCodeLabel, serviceCodes)
+        cacheIn(getServiceCodeLabel, userId, clinicId, serviceCodes)
         return { data: serviceCodes, error: "" };
     } catch (error) {
         return { data: [], error: error.message };
@@ -392,7 +394,7 @@ const getProvidersLabel = 'getProviders'
 async function getProviders(userId, clinicId) {
     let gpt = null;
     try {
-        let providers = cacheOut(getProvidersLabel);
+        let providers = cacheOut(getProvidersLabel, userId, clinicId);
         if (providers) { return { data: providers, error: "" }; }
         gpt = startTrace(getProvidersLabel);
 
@@ -402,7 +404,7 @@ async function getProviders(userId, clinicId) {
             return { data: [], error: "" };
         }
         providers = Array.from(snapshot.docs, doc => ({ id: doc.id, ...doc.data() }));
-        cacheIn(getProvidersLabel, providers)
+        cacheIn(getProvidersLabel, userId, clinicId, providers)
         return { data: providers, error: "" };
     } catch (error) {
         return { data: [], error: error.message };
@@ -424,7 +426,7 @@ const getPractitionersLabel = 'getPractitioners'
 export async function getPractitioners(userId, clinicId) {
     let getPractitionersT = null;
     try {
-        let practitioners = cacheOut(getPractitionersLabel);
+        let practitioners = cacheOut(getPractitionersLabel, userId, clinicId);
         if (practitioners) { return { data: practitioners, error: "" }; }
         getPractitionersT = startTrace(getPractitionersLabel);
 
@@ -450,7 +452,7 @@ export async function getPractitioners(userId, clinicId) {
         });
 
         practitioners = await Promise.all(practitionersPromises);
-        cacheIn(getPractitionersLabel, practitioners)
+        cacheIn(getPractitionersLabel, userId, clinicId, practitioners)
         return { data: practitioners, error: "" };
 
     } catch (error) {
