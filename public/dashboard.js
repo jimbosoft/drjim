@@ -1,5 +1,5 @@
 
-import { auth, setUser, getClinics, getServiceCodes, currentUser, clinicId } from './firebase.js';
+import { auth, setUser, getClinics, getOnlyServiceCodes, currentUser, clinicId } from './firebase.js';
 import { islogoutButtonPressed, resetlogoutButtonPressed, showLoginScreen, showUser } from './footer.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { showLastLoad } from './fileHandler.js';
@@ -48,7 +48,7 @@ function initClinics() {
 
     getClinics(currentUser.email).then((result) => {
         if (result.error) {
-            alert(result.error);
+            displayErrors(result.error);
         }
         const clinics = result.data;
         if (clinics && clinics.length > 0) {
@@ -86,8 +86,7 @@ function populateClinic(clinics) {
         option.dataset.id = clinic.id;
         if (clinic.id === lastSelected) {
             option.selected = true;
-            serviceCodesSet(clinic.id)
-        }
+         }
         clinicDropdown.appendChild(option);
     }
 
@@ -100,7 +99,6 @@ function populateClinic(clinics) {
         let selectedOption = clinicDropdown.options[selectedIndex];
         let selectedId = selectedOption.dataset.id;
         localStorage.setItem(clinicId, selectedId);
-        serviceCodesSet(selectedId);
         companySelected(selectedId);
     });
 }
@@ -110,26 +108,12 @@ function companyWasSetup() {
 }
 
 function companySelected(companyId) {
-    serviceCodes.classList.remove('hidden');
-    const fileProcessing = document.getElementById('file-processing');
-    fileProcessing.classList.remove('hidden');
+    document.getElementById('serviceCodes').classList.remove('hidden');
+    document.getElementById('practitioners').classList.remove('hidden');
+    document.getElementById('file-processing').classList.remove('hidden');
 }
 
-const providerButton = document.getElementById('practitioners');
-
-function serviceCodesSet(clinicId) {
-    getServiceCodes(currentUser.email, clinicId)
-        .then(result => {
-            if (result.error) {
-                alert(`Error getting service codes: ${result.error}`);
-            }
-            if (Array.isArray(result.data) && result.data.length > 0) {
-                providerButton.classList.remove('hidden');
-            } else {
-                providerButton.classList.add('hidden');
-            }
-        })
-        .catch(error => {
-            console.error(`Error getting service codes: ${error}`);
-        });
-}
+function displayErrors(error) {
+    messageOutput.innerText = error
+    messageOutput.style.color = 'red';
+ }

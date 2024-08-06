@@ -1,6 +1,8 @@
-import { getServiceCodes, currentUser, clinicId, getPractitioners,
+import {
+    getServiceCodes, currentUser, clinicId, getPractitioners,
     storeStuff, getStore, clearStore,
-    missingProvidersKey, missingItemsKey, missingServiceCodes, noItemNrs, fileContentsKey, fileNameKey
+    missingProvidersKey, missingItemsKey, missingServiceCodes, noItemNrs,
+    fileContentsKey, fileNameKey, startTrace, stopTrace
 } from './firebase.js';
 import { cloudServiceConfig } from './config.js';
 
@@ -29,8 +31,7 @@ dropZone.addEventListener('drop', function (e) {
     }
 });
 
-document.getElementById('uploadButton').addEventListener('click', function () {
-    const fileInput = document.getElementById('csvFile');
+fileInput.addEventListener('change', function () {
     const file = fileInput.files[0];
     if (file) {
         handleInputFile(file)
@@ -43,7 +44,6 @@ document.getElementById('rerunButton').addEventListener('click', function () {
     const fileContents = getStore(fileContentsKey);
     if (fileContents && fileContents !== 'null'
         && fileContents.length > 0 && fileContents !== 'undefined') {
-        clearOutput();
         processFile(fileContents);
     }
     else {
@@ -78,6 +78,10 @@ function clearOutput() {
     document.getElementById('missingProviders').classList.add('hidden');
     document.getElementById('missingItems').classList.add('hidden');
     document.getElementById('missingServiceCodes').classList.add('hidden');
+    const providerList = document.getElementById('providerList');
+    while (providerList.firstChild) {
+        providerList.removeChild(providerList.firstChild);
+    }
 }
 /*
 json payload
@@ -122,134 +126,119 @@ async function handleInputFile(file) {
     }
 }
 
-const getDetails = "GetDetails";
-const APICall = "APICall";
-function processFile(fileContents) {
-    console.time(getDetails);
+async function processFile(fileContents) {
+    clearOutput();
     var progressBar = document.getElementById('progress-bar');
     progressBar.style.display = 'block';
+    const err = await callDataProcessor(fileContents);
+    if (err && err !== '') {
+        messageOutput.innerHTML = err;
+    }
+    progressBar.style.display = 'none';
+}
 
-    getProviderDetails(currentUser.email, localStorage.getItem(clinicId)).then(async (result) => {
-        if (result.error) {
-            alert(result.error);
-            return
-        }
-        const companyName = getCompanyName();
-        if (result.codeMap && result.procMap) {
-            const paymentFile = {
-                FileContent: fileContents,
-                CsvLineStart: 16,
-                CompanyName: companyName,
-                CodeMap: result.codeMap,
-                PracMap: result.procMap
-            };
-            console.timeEnd(getDetails);
-            console.time(APICall);
- 
-            const response = await fetch(cloudServiceConfig.processFileUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(paymentFile)
-            });
+const APICall = "APICall";
 
-            if (!response.ok) {
-                response.text().then(text => {
-                    messageOutput.innerHTML =
-                        "HTTP error: " + response.status + "<br>"
-                        + "Reason: " + text;
-                });
-                return;
+async function callDataProcessor(fileContents) {
+     return await getProviderDetails(currentUser.email, localStorage.getItem(clinicId))
+        .then(async (result) => {
+             if (result.error) {
+                return result.error;
             }
-
-            let fileResult
-            try {
-                fileResult = await response.json();
-            } catch (error) {
-                console.error('Error:', error);
-            }
-            console.timeEnd(APICall);
-            progressBar.style.display = 'none';
-    
-            let data = fileResult.chargeDetail
-            let output = '';
-            if (Array.isArray(data)) {
-                let table = document.createElement('table');
-                let headerRow = document.createElement('tr');
-                for (let key in data[0]) {
-                    if (key === 'msg') {
-                        continue;
+            const companyName = getCompanyName();
+            if (result.codeMap && result.procMap) {
+                const paymentFile = {
+                    FileContent: fileContents,
+                    CsvLineStart: 16,
+                    CompanyName: companyName,
+                    CodeMap: result.codeMap,
+                    PracMap: result.procMap
+                };
+   
+                let fileResult = null;
+                const apiCallTrace = startTrace(APICall);
+                try {
+                    const response = await fetch(cloudServiceConfig.processFileUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(paymentFile)
+                    });
+                    stopTrace(apiCallTrace, APICall);
+                    if (!response.ok) {
+                        response.text().then(text => {
+                            return "HTTP error: " + response.status + " "
+                                + response.statusText + "<br>"
+                                + "Reason: " + text;
+                        });
                     }
-                    let headerCell = document.createElement('th');
-                    headerCell.innerHTML = key;
-                    headerRow.appendChild(headerCell);
+                    try {
+                        fileResult = await response.json();
+                    } catch (error) {
+                        return "Returned data is invalid " + error.message;
+                    }
+
+                } catch (error) {
+                    stopTrace(apiCallTrace, APICall);
+                    return "Failed to call server: " + error.message;
                 }
-                table.appendChild(headerRow);
+                let stuffMissing = false;
+                if (Object.keys(fileResult.missingProviders).length > 0) {
+                    document.getElementById('missingProvidersTxt').textContent = 'There are missing providers in the file';
+                    document.getElementById('missingProviders').classList.remove('hidden');
+                    const storeVal = fileResult.missingProviders
+                    storeStuff(missingProvidersKey, JSON.stringify(storeVal));
+                    stuffMissing = true;
+                }
+                if (Object.keys(fileResult.noItemNrs).length > 0) {
+                    const storeVal = fileResult.noItemNrs
+                    storeStuff(noItemNrs, JSON.stringify(storeVal));
+                }
+                if (Object.keys(fileResult.missingItemNrs).length > 0) {
+                    const storeVal = fileResult.missingItemNrs
+                    storeStuff(missingItemsKey, JSON.stringify(storeVal));
+                }
+                if (Object.keys(fileResult.missingItemNrs).length > 0 || Object.keys(fileResult.noItemNrs).length > 0) {
+                    document.getElementById('missingItemsTxt').textContent = 'There are missing items in the file';
+                    document.getElementById('missingItems').classList.remove('hidden');
+                    stuffMissing = true;
+                }
+                if (Object.keys(fileResult.missingServiceCodes).length > 0) {
+                    document.getElementById('missingServiceCodesTxt').textContent = 'There are missing service code cuts in the file';
+                    document.getElementById('missingServiceCodes').classList.remove('hidden');
+                    const storeVal = fileResult.missingServiceCodes
+                    storeStuff(missingServiceCodes, JSON.stringify(storeVal));
+                    stuffMissing = true;
+                }
+                const data = fileResult.chargeDetail
+                let dataMap = new Map(Object.entries(data));
+                if (dataMap instanceof Map && dataMap.size > 0) {
+                    generateProviderList(dataMap, stuffMissing);
+                }
 
-                data.forEach(item => {
-                    if (item.msg) {
-                        output += '&nbsp;' + item.msg + '<br>';
-                    } else {
-                        let row = document.createElement('tr');
-                        for (let key in item) {
-                            let cell = document.createElement('td');
-                            if (key === 'error') {
-                                continue;
-                            } else if (key === 'service') {
-                                cell.innerHTML = 'Code: ' + item[key].code + ', Percentage: ' + item[key].percentage;
-                            } else {
-                                cell.innerHTML = item[key];
-                            }
-                            row.appendChild(cell);
-                        }
-                        table.appendChild(row);
-                    }
-                });
-                resultOutput.appendChild(table);
-                messageOutput.innerHTML = output;
             }
-            if (Object.keys(fileResult.missingProviders).length > 0) {
-                document.getElementById('missingProvidersTxt').textContent = 'There are missing providers in the file';
-                document.getElementById('missingProviders').classList.remove('hidden');
-                const storeVal = fileResult.missingProviders
-                storeStuff(missingProvidersKey, JSON.stringify(storeVal));
-            }
-            if (Object.keys(fileResult.noItemNrs).length > 0) {
-                const storeVal = fileResult.noItemNrs
-                storeStuff(noItemNrs, JSON.stringify(storeVal));
-            }
-            if (Object.keys(fileResult.missingItemNrs).length > 0){
-                const storeVal = fileResult.missingItemNrs
-                storeStuff(missingItemsKey, JSON.stringify(storeVal));
-            }
-            if (Object.keys(fileResult.missingItemNrs).length > 0 || Object.keys(fileResult.noItemNrs).length > 0) {
-                document.getElementById('missingItemsTxt').textContent = 'There are missing items in the file';
-                document.getElementById('missingItems').classList.remove('hidden');
-            }
-            if (Object.keys(fileResult.missingServiceCodes).length > 0) {
-                document.getElementById('missingServiceCodesTxt').textContent = 'There are missing service code cuts in the file';
-                document.getElementById('missingServiceCodes').classList.remove('hidden');
-                const storeVal = fileResult.missingServiceCodes
-                storeStuff(missingServiceCodes, JSON.stringify(storeVal));
-            }
-        }
-    });
+            return ""
+        });
 }
 
 async function getProviderDetails(userId, clinicId) {
     try {
-        // Fetch practitioners
-        const practitionersResult = await getPractitioners(userId, clinicId);
+        // Run getPractitioners and getServiceCodes in parallel
+        const [practitionersResult, serviceCodesResult] = await Promise.all([
+            getPractitioners(userId, clinicId),
+            getServiceCodes(userId, clinicId)
+        ]);
+
+        // Check for errors
         if (practitionersResult.error) {
             return { codeMap: null, procMap: null, error: practitionersResult.error };
         }
-        const practitioners = practitionersResult.data;
-        // Fetch service codes
-        const serviceCodesResult = await getServiceCodes(userId, clinicId);
         if (serviceCodesResult.error) {
             return { codeMap: null, procMap: null, error: serviceCodesResult.error };
         }
+
+        const practitioners = practitionersResult.data;
         const serviceCodes = serviceCodesResult.data;
 
         // Format practitioners data for PracMap
@@ -261,14 +250,53 @@ async function getProviderDetails(userId, clinicId) {
             });
             PracMap[practitioner.name] = services;
         });
+
         // Format service codes data for CodeMap
-        // as a map of service code id to an array of item codes
         const CodeMap = serviceCodes.reduce((map, serviceCode) => {
             map[serviceCode.id] = serviceCode.itemList.map(item => item.toString());
             return map;
         }, {});
+
         return { codeMap: CodeMap, procMap: PracMap, error: null };
     } catch (errorRes) {
         return { codeMap: null, procMap: null, error: errorRes };
     }
+}
+
+function generateProviderList(data, stuffMissing) {
+    const providerListElement = document.getElementById('providerList');
+    data.forEach((value, key) => {
+        const providerContainer = document.createElement('div');
+        providerContainer.className = 'provider-container';
+
+        const providerName = document.createElement('div');
+        providerName.innerText = key;
+        providerName.className = 'provider-name';
+        providerContainer.appendChild(providerName);
+
+        if (value.invoice && value.invoice.length > 0) {
+            const viewPdfButton = document.createElement('button');
+            viewPdfButton.innerText = 'View PDF';
+            viewPdfButton.className = 'button';
+            viewPdfButton.onclick = () => {
+                const dataUrl = 'data:application/pdf;base64,' + value.invoice;
+                fetch(dataUrl).then(res => res.blob()).then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    window.open(url, '_blank');
+                });
+            };
+            providerContainer.appendChild(viewPdfButton);
+
+            const adjustmentsButton = document.createElement('button');
+            adjustmentsButton.innerText = 'Add Adjustments';
+            adjustmentsButton.className = 'button';
+            adjustmentsButton.onclick = () => { };
+            providerContainer.appendChild(adjustmentsButton);
+        }
+        else if (!stuffMissing) {
+            messageOutput.innerText =
+                "Error: No invoice pdf returned";
+        }
+        providerListElement.appendChild(providerContainer);
+    });
 }
