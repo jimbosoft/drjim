@@ -101,19 +101,20 @@ function highlightMissingServiceCodes() {
 const providerRow = 'providerRow';
 const serviceCodeEntry = 'service-code-entry';
 const providerForm = 'provider-form';
+const bottomMargin = 'bottom-margin';
 const submitButton = document.getElementById('submitButton');
 const cancelButton = document.getElementById('cancelButton');
 
 function fillPracs(pid, pname, servicesMap) {
     const section = document.createElement('div');
-    section.classList.add(providerRow);
-    section.style.display = 'inline-flex';
+    section.style.display = 'flex';
     section.style.flexWrap = 'wrap';
-
+    section.classList.add(providerRow);
+ 
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
-    nameInput.className = 'name-input';
-    nameInput.style.marginBottom = '10px';
+    nameInput.classList.add('name-input');
+    nameInput.classList.add(bottomMargin);
     if (pname) {
         nameInput.value = pname;
     }
@@ -127,12 +128,34 @@ function fillPracs(pid, pname, servicesMap) {
     // Create a new button element
     const buttonElement = document.createElement('button');
     buttonElement.textContent = 'Delete';
-    buttonElement.style.marginBottom = '10px';
+    buttonElement.classList.add(bottomMargin);
     addDeleteButtonHandler(buttonElement, form.childElementCount);
     section.appendChild(buttonElement);
 
+    // show address details
+    const detailsButton = document.createElement('button');
+    detailsButton.textContent = 'Show Details';
+    detailsButton.classList.add(bottomMargin);
+    section.appendChild(detailsButton);
+
+    const addressContainer = addAddressEntry();
+    serviceCodeInput.parentNode.insertBefore(addressContainer, detailsButton.nextSibling);
+    addDetailsButtonHandler(detailsButton, addressContainer);
+
     const nameEntry = document.getElementById(providerForm);
     nameEntry.appendChild(section);
+}
+
+function addDetailsButtonHandler(detailsButton, addressDetailsContainer) {
+    detailsButton.addEventListener('click', function () {
+        if (addressDetailsContainer.style.display === 'none') {
+            addressDetailsContainer.style.display = 'block';
+            detailsButton.innerText = 'Hide Details';
+        } else {
+            addressDetailsContainer.style.display = 'none';
+            detailsButton.innerText = 'Show Details';
+        }
+    });
 }
 
 function addDeleteButtonHandler(deleteButton, index) {
@@ -153,10 +176,10 @@ function addServiceCode(servicesMap) {
     for (const id in serviceCodes) {
         const inputContainer = document.createElement('div');
         inputContainer.style.display = 'inline-block';
-        inputContainer.style.marginBottom = '10px';
-
+             
         const serviceCodeInput = document.createElement('label');
         serviceCodeInput.className = 'service-code';
+        serviceCodeInput.classList.add(bottomMargin);
         serviceCodeInput.textContent = serviceCodes[id].id + "-" + serviceCodes[id].description;
         serviceCodeInput.setAttribute('id', serviceCodes[id].id);
         inputContainer.appendChild(serviceCodeInput);
@@ -164,17 +187,73 @@ function addServiceCode(servicesMap) {
         const newServiceNumber = document.createElement('input');
         newServiceNumber.type = 'number';
         newServiceNumber.classList.add('percentage-number');
+        newServiceNumber.classList.add(bottomMargin);
         newServiceNumber.value = servicesMap ? servicesMap[serviceCodes[id].id] : '';
         inputContainer.appendChild(newServiceNumber);
 
         const percentageSymbol = document.createElement('span');
         percentageSymbol.textContent = ' %';
+        percentageSymbol.classList.add(bottomMargin);
         inputContainer.appendChild(percentageSymbol);
         newSection.appendChild(inputContainer);
     }
     return newSection;
 }
 
+function addAddressEntry() {
+    const section = document.createElement('div');
+    section.style.display = 'inline-block';
+    section.style.display = 'none'; // Initially hidden
+
+    const streetInput = document.createElement('label');
+    streetInput.textContent = "Street Nr and Name"
+    streetInput.className = 'address-entry';
+    streetInput.classList.add(bottomMargin);
+    section.appendChild(streetInput);
+
+    const streetName = document.createElement('input');
+    streetName.type = 'text';
+    streetName.classList.add('address');
+    streetName.classList.add(bottomMargin);
+
+    section.appendChild(streetName);
+
+    const burbContainer = document.createElement('div');
+    burbContainer.style.display = 'inline-block';
+ 
+    const suburb = document.createElement('label');
+    suburb.classList.add('address');
+    suburb.textContent = "Suburb, State, Postcode"
+    suburb.classList.add(bottomMargin);
+    burbContainer.appendChild(suburb);
+
+    const suburbName = document.createElement('input');
+    suburbName.type = 'text';
+    suburbName.classList.add('address');
+    suburbName.classList.add(bottomMargin);
+    burbContainer.appendChild(suburbName);
+
+    section.appendChild(burbContainer);
+
+    const abnContainer = document.createElement('div');
+    abnContainer.style.display = 'inline-block';
+ 
+    const abnLabel = document.createElement('label');
+    abnLabel.classList.add('address');
+    abnLabel.textContent = "ABN"
+    abnLabel.classList.add(bottomMargin);
+    abnContainer.appendChild(abnLabel);
+
+    const abn = document.createElement('input');
+    abn.type = 'text';
+    abn.classList.add('abn', 'address');
+    abn.classList.add(bottomMargin);
+    abnContainer.appendChild(abn);
+
+    section.appendChild(abnContainer);
+
+    return section;
+}
 const form = document.getElementById(providerForm);
 document.addEventListener('input', function (event) {
     // If the input event was triggered by a name input field
