@@ -49,12 +49,12 @@ function populatePracs() {
                             return map;
                         }, {});
                     }
-                    fillPracs(provider.id, provider.name, provider, serviceMap)
+                    fillPracs(provider.id, provider.name, provider, serviceMap, false)
                 }
             }
             populateMissingPracs();
             highlightMissingServiceCodes();
-            fillPracs(null, null, null, null)
+            fillPracs(null, null, null, null, false)
         });
     })
 }
@@ -62,10 +62,11 @@ function populatePracs() {
 function populateMissingPracs() {
     const missing = getStore(missingProvidersKey);
     if (missing && missing !== 'null' && missing !== 'undefined') {
+        displayErrors("Please complete providers details")
         const missingProviders = JSON.parse(missing);
         if (missingProviders && Object.keys(missingProviders).length > 0) {
             for (const key of Object.keys(missingProviders)) {
-                fillPracs(null, key, null, null)
+                fillPracs(null, key, null, null, true)
             }
         }
     }
@@ -105,7 +106,7 @@ const bottomMargin = 'bottom-margin';
 const submitButton = document.getElementById('submitButton');
 const cancelButton = document.getElementById('cancelButton');
 
-function fillPracs(pid, pname, details, servicesMap) {
+function fillPracs(pid, pname, details, servicesMap, showAddress) {
     const section = document.createElement('div');
     section.style.display = 'flex';
     section.style.flexWrap = 'wrap';
@@ -117,6 +118,9 @@ function fillPracs(pid, pname, details, servicesMap) {
     nameInput.classList.add(bottomMargin);
     if (pname) {
         nameInput.value = pname;
+        if (showAddress) {
+            nameInput.style.backgroundColor = 'yellow';
+        }
     }
     nameInput.setAttribute('data-id', pid);
     section.appendChild(nameInput);
@@ -138,7 +142,7 @@ function fillPracs(pid, pname, details, servicesMap) {
     detailsButton.classList.add(bottomMargin);
     section.appendChild(detailsButton);
 
-    const addressContainer = addAddressEntry(details);
+    const addressContainer = addAddressEntry(details, showAddress);
     serviceCodeInput.parentNode.insertBefore(addressContainer, detailsButton.nextSibling);
     addDetailsButtonHandler(detailsButton, addressContainer);
 
@@ -202,10 +206,14 @@ function addServiceCode(servicesMap) {
     return newSection;
 }
 
-function addAddressEntry(details) {
+const addressForm = 'address-form';
+function addAddressEntry(details, showAddress) {
     const section = document.createElement('div');
     section.style.display = 'inline-block';
-    section.style.display = 'none'; // Initially hidden
+    section.classList.add(addressForm);
+    if (!showAddress) {
+        section.style.display = 'none'; // Initially hidden
+    }
 
     const streetInput = document.createElement('label');
     streetInput.textContent = "Street Nr and Name"
@@ -285,10 +293,11 @@ const form = document.getElementById(providerForm);
 document.addEventListener('input', function (event) {
     // If the input event was triggered by a name input field
     if (event.target.classList.contains('name-input')) {
+        addressForm.style.display = 'block';
         const section = event.target.parentElement;
         // If the input is filled in and the section is the last one
         if (event.target.value && section === form.lastElementChild) {
-            fillPracs(null, null, null, null);
+            fillPracs(null, null, null, null, false);
         }
     }
 });
