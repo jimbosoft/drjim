@@ -40,16 +40,26 @@
     input[type="number"] {
       -moz-appearance: textfield;
     }
- 
+
     .service-code {
       width: 200px;
-      margin-left: 10px;
-      margin-top: 10px;
     }
-
+    
     .percentage-number {
       width: 30px;
       margin-left: 5px;
+    }
+
+    .bottom-margin {
+      margin-bottom: 10px;
+    }
+
+    .left-margin {
+      margin-left: 10px;
+    }
+
+    .abn {
+      width: 100px;
     }
 
     button {
@@ -71,17 +81,8 @@
 <body>
   <div id="messageOutput" class="ml-72 overflow-auto max-h-48 mb-4"></div>
   <h2>Providers:</h2>
-  <div id="provider-form">
- <!--    <div class="providerRow" style="display: flex">
-      <input type="text" class="name-input" placeholder="Enter new name">
-      <div class="service-code-entry">
-        <label class="service-code">service-code</label>
-        <input type="number" class="percentage-number">
-        <span>%</span>
-      </div>
-      <button>Delete</button>
- -->    </div>
-  </div>
+  <div id="provider-form"></div>
+
   <div id="button-container">
     <button id="submitButton" style>Submit</button>
     <button id="cancelButton">Cancel</button>
@@ -93,4 +94,6 @@
   </div>
 
 </body>
+
 </html>
+

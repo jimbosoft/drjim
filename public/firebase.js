@@ -369,6 +369,11 @@ export async function setProviders(userId, clinicId, practitioners) {
             try {
                 await setDoc(providerDetails, {
                     name: practitioner.name,
+                    street: practitioner.street,
+                    burb: practitioner.burb,
+                    email: practitioner.email,
+                    abn: practitioner.abn,
+    
                 }, { merge: true });
             } catch (error) {
                 return `Error setting document for practitioner: ${practitioner.name}  ${error}`;
@@ -447,6 +452,10 @@ export async function getPractitioners(userId, clinicId) {
             return {
                 id: doc.id,
                 name: doc.name,
+                street: doc.street,
+                burb: doc.burb,
+                email: doc.email,
+                abn: doc.abn,
                 services: services
             };
         });
