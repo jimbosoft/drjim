@@ -140,9 +140,9 @@ async function processFile(fileContents) {
 const APICall = "APICall";
 
 async function callDataProcessor(fileContents) {
-     return await getProviderDetails(currentUser.email, localStorage.getItem(clinicId))
+    return await getProviderDetails(currentUser.email, localStorage.getItem(clinicId))
         .then(async (result) => {
-             if (result.error) {
+            if (result.error) {
                 return result.error;
             }
             const companyName = getCompanyName();
@@ -154,35 +154,41 @@ async function callDataProcessor(fileContents) {
                     CodeMap: result.codeMap,
                     PracMap: result.procMap
                 };
-   
+
                 let fileResult = null;
                 const apiCallTrace = startTrace(APICall);
+                let response = { ok: true };
                 try {
-                    const response = await fetch(cloudServiceConfig.processFileUrl, {
+                    response = await fetch(cloudServiceConfig.processFileUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify(paymentFile)
                     });
-                    stopTrace(apiCallTrace, APICall);
-                    if (!response.ok) {
-                        response.text().then(text => {
-                            return "HTTP error: " + response.status + " "
-                                + response.statusText + "<br>"
-                                + "Reason: " + text;
-                        });
-                    }
-                    try {
-                        fileResult = await response.json();
-                    } catch (error) {
-                        return "Returned data is invalid " + error.message;
-                    }
-
                 } catch (error) {
                     stopTrace(apiCallTrace, APICall);
                     return "Failed to call server: " + error.message;
                 }
+                try {
+                    stopTrace(apiCallTrace, APICall);
+                    if (!response.ok) {
+                        let errorMessage = "HTTP error: " + response.status + " " + response.statusText;
+                        const errorText = await response.text();
+                        if (errorText) {
+                            errorMessage += "<br>" + errorText;
+                        }
+                        return errorMessage;
+                    }
+                } catch (error) {
+                    return "Failed to process error response " + response.status + " Error: " + error.message;
+                }
+                try {
+                    fileResult = await response.json();
+                } catch (error) {
+                    return "Returned data is invalid " + error.message;
+                }
+
                 let stuffMissing = false;
                 if (Object.keys(fileResult.missingProviders).length > 0) {
                     document.getElementById('missingProvidersTxt').textContent = 'There are missing providers in the file';
