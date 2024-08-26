@@ -46,6 +46,7 @@ export const noItemNrs = 'noItemNrs'
 export const missingServiceCodes = 'missingServiceCodes'
 export const fileContentsKey = 'fileContents';
 export const fileNameKey = 'fileName';
+export const adjustmentKey = 'adjustments';
 
 export function storeStuff(key, value) {
     sessionStorage.setItem(key, value);
@@ -55,6 +56,50 @@ export function clearStore(key) {
 }
 export function getStore(key) {
     return sessionStorage.getItem(key);
+}
+export function storeAdjustments(provider, desc, val) {
+    let adj = JSON.parse(sessionStorage.getItem(adjustmentKey));
+    if (!adj) {
+        adj = {};
+    }
+    if (!adj[provider]) {
+        adj[provider] = [];
+    }
+    adj[provider].push({ description: desc.trim(), amount: val });
+    sessionStorage.setItem(adjustmentKey, JSON.stringify(adj));
+}
+// Pass no, one or two parameters, js magic
+export function getAdjustments(provider, description) {
+    let adj = JSON.parse(sessionStorage.getItem(adjustmentKey));
+    if (!adj) {
+        return null;
+    }
+    if (provider === undefined) {
+        // No provider specified, return all adjustments
+        return adj;
+    }
+    if (!adj[provider]) {
+        return null;
+    }
+    if (description === undefined) {
+        // Provider specified, but no description, return all adjustments for the provider
+        return adj[provider];
+    }
+    // console.log('a:', a.description, ' description:', description)
+     // Both provider and description specified, return the specific adjustment
+     const adjustments = adj[provider];
+     return adjustments.find(a => a.description === description) || null;
+ }
+export function removeAdjustment(provider, desc) {
+    let adj = JSON.parse(sessionStorage.getItem(adjustmentKey));
+    if (!adj || !adj[provider]) {
+        return;
+    }
+    adj[provider] = adj[provider].filter(a => a.description !== desc);
+    if (adj[provider].length === 0) {
+        delete adj[provider];
+    }
+    sessionStorage.setItem(adjustmentKey, JSON.stringify(adj));
 }
 export function cacheIn(key, userId, clinicId, value) {
     const dataToStore = {
@@ -104,7 +149,7 @@ const getClinicsLabel = 'getClinics'
 export async function getClinics(userId) {
     let ct = null;
     try {
-        let clinics = cacheOut(getClinicsLabel, userId, ""); ;
+        let clinics = cacheOut(getClinicsLabel, userId, "");
         if (clinics) { return { data: clinics, error: "" }; }
         ct = startTrace(getClinicsLabel);
 
@@ -373,7 +418,7 @@ export async function setProviders(userId, clinicId, practitioners) {
                     burb: practitioner.burb,
                     email: practitioner.email,
                     abn: practitioner.abn,
-    
+
                 }, { merge: true });
             } catch (error) {
                 return `Error setting document for practitioner: ${practitioner.name}  ${error}`;
@@ -386,7 +431,7 @@ export async function setProviders(userId, clinicId, practitioners) {
                     // Remove the service if value is an empty string
                     await deleteDoc(doc(servicesRef, service.id));
                 } else {
-                        await setDoc(doc(servicesRef, service.id), { value: service.value });
+                    await setDoc(doc(servicesRef, service.id), { value: service.value });
                 }
             }));
         }));
