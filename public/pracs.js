@@ -133,6 +133,7 @@ function fillPracs(pid, pname, details, servicesMap, showAddress) {
     const buttonElement = document.createElement('button');
     buttonElement.textContent = 'Delete';
     buttonElement.classList.add(bottomMargin);
+    buttonElement.classList.add('button');
     addDeleteButtonHandler(buttonElement, form.childElementCount);
     section.appendChild(buttonElement);
 
@@ -140,6 +141,7 @@ function fillPracs(pid, pname, details, servicesMap, showAddress) {
     const detailsButton = document.createElement('button');
     detailsButton.textContent = 'Show Details';
     detailsButton.classList.add(bottomMargin);
+    detailsButton.classList.add('button');
     section.appendChild(detailsButton);
 
     const addressContainer = addAddressEntry(details, showAddress);
