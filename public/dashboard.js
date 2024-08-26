@@ -122,3 +122,4 @@ export function displayErrors(error) {
 export function clearErrors() {
     document.getElementById("messageOutput").innerText = '';
 }
+
