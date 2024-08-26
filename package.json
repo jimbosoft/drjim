@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "@google-cloud/trace-agent": "^8.0.0",
     "firebase": "^10.8.0",
     "firebase-tools": "^13.11.4",
     "firebaseui": "^6.1.0"

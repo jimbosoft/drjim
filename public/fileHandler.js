@@ -2,9 +2,11 @@ import {
     getServiceCodes, currentUser, clinicId, getPractitioners,
     storeStuff, getStore, clearStore,
     missingProvidersKey, missingItemsKey, missingServiceCodes, noItemNrs,
-    fileContentsKey, fileNameKey, startTrace, stopTrace
+    fileContentsKey, fileNameKey, adjustmentKey, startTrace, stopTrace,
+    storeAdjustments, getAdjustments, removeAdjustment
 } from './firebase.js';
 import { cloudServiceConfig } from './config.js';
+import { displayErrors, clearErrors } from './dashboard.js';
 
 var clinicDropdown = document.getElementById('clinicDropdown');
 
@@ -71,10 +73,7 @@ function getCompanyName() {
 }
 
 function clearOutput() {
-    messageOutput.innerHTML = '';
-    if (resultOutput.firstChild) {
-        resultOutput.removeChild(resultOutput.firstChild);
-    }
+    clearErrors();
     document.getElementById('missingProviders').classList.add('hidden');
     document.getElementById('missingItems').classList.add('hidden');
     document.getElementById('missingServiceCodes').classList.add('hidden');
@@ -83,29 +82,7 @@ function clearOutput() {
         providerList.removeChild(providerList.firstChild);
     }
 }
-/*
-json payload
-    {
-        "FileContent": "your_file_content",
-        "CsvLineStart": 16,
-        "CompanyName": "Vermont Medical Clinic",
-        "CodeMap": [
-            {
-                "code1": ["123", "456"]
-            },
-            {
-                "code2": ["789", "012"]
-            }
-        ],
-        "PracMap":
-          {
-            "Doctor1": {"code1":"50", "code2":"20"},
-            "DOctor2": {"code1":"40", "code2":"30"}
-          }
-    }
-*/
-const messageOutput = document.getElementById("messageOutput")
-const resultOutput = document.getElementById("resultOutput")
+
 async function handleInputFile(file) {
     if (file) {
         clearOutput();
@@ -117,6 +94,7 @@ async function handleInputFile(file) {
             const fileContents = e.target.result;
             storeStuff(fileContentsKey, fileContents);
             storeStuff(fileNameKey, file.name);
+            clearStore(adjustmentKey)
             showLastLoad();
             processFile(fileContents);
         };
@@ -132,7 +110,7 @@ async function processFile(fileContents) {
     progressBar.style.display = 'block';
     const err = await callDataProcessor(fileContents);
     if (err && err !== '') {
-        messageOutput.innerHTML = err;
+        displayErrors(err);
     }
     progressBar.style.display = 'none';
 }
@@ -152,7 +130,8 @@ async function callDataProcessor(fileContents) {
                     CsvLineStart: 16,
                     CompanyName: companyName,
                     CodeMap: result.codeMap,
-                    PracMap: result.procMap
+                    PracMap: result.procMap,
+                    AdjustMap: getAdjustments()
                 };
 
                 let fileResult = null;
@@ -222,7 +201,6 @@ async function callDataProcessor(fileContents) {
                 if (dataMap instanceof Map && dataMap.size > 0) {
                     generateProviderList(dataMap, stuffMissing);
                 }
-
             }
             return ""
         });
@@ -273,11 +251,14 @@ function generateProviderList(data, stuffMissing) {
     const providerListElement = document.getElementById('providerList');
     data.forEach((value, key) => {
         const providerContainer = document.createElement('div');
-        providerContainer.className = 'provider-container';
+        providerContainer.style.display = 'flex';
+        providerContainer.style.flexWrap = 'wrap';
+        providerContainer.style.marginTop = '10px';
+        providerContainer.style.gap = '10px';
 
-        const providerName = document.createElement('div');
+        const providerName = document.createElement('label');
+        providerName.style.minWidth = '300px';
         providerName.innerText = key;
-        providerName.className = 'provider-name';
         providerContainer.appendChild(providerName);
 
         if (value.invoice && value.invoice.length > 0) {
@@ -296,13 +277,122 @@ function generateProviderList(data, stuffMissing) {
             const adjustmentsButton = document.createElement('button');
             adjustmentsButton.innerText = 'Add Adjustments';
             adjustmentsButton.className = 'button';
-            adjustmentsButton.onclick = () => { };
             providerContainer.appendChild(adjustmentsButton);
+            const adjustmentsContainer = document.createElement('div');
+            // initial condition, don't display
+            adjustmentsContainer.style.display = 'none';
+            // force it being on a new line
+            adjustmentsContainer.style.width = '100%';
+            providerContainer.appendChild(adjustmentsContainer);
+            addAdjustmentsButtonHandler(key, adjustmentsButton, adjustmentsContainer, viewPdfButton);
         }
         else if (!stuffMissing) {
-            messageOutput.innerText =
-                "Error: No invoice pdf returned";
+            displayErrors("Error: No invoice pdf returned");
         }
         providerListElement.appendChild(providerContainer);
+    });
+}
+function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfButton) {
+    const newRow = document.createElement('div');
+    newRow.style.display = 'block';
+
+    // Create Description label and input
+    const descriptionLabel = document.createElement('label');
+    descriptionLabel.textContent = 'Description';
+    descriptionLabel.classList.add('marginer');
+    newRow.appendChild(descriptionLabel);
+
+    const descriptionInput = document.createElement('input');
+    descriptionInput.type = 'text';
+    descriptionInput.setAttribute('id', provider);
+    if (desc) {
+        descriptionInput.value = desc;
+        descriptionInput.readOnly = true;
+        descriptionInput.classList.add('readOnly');
+    }
+    descriptionInput.classList.add('adjustmentDescription', 'marginer');
+    newRow.appendChild(descriptionInput);
+
+    // Create Amount label and input
+    const amountLabel = document.createElement('label');
+    amountLabel.textContent = 'Amount';
+    amountLabel.classList.add('marginer');
+    newRow.appendChild(amountLabel);
+
+    const amountInput = document.createElement('input');
+    amountInput.type = 'number';
+    if (amount) {
+        amountInput.value = amount;
+        amountInput.readOnly = true;
+        amountInput.classList.add('readOnly');
+    }
+    amountInput.classList.add('adjustmentAmount', 'marginer');
+    newRow.appendChild(amountInput);
+
+    const addButton = document.createElement('button');
+    addButton.innerText = 'Add';
+    if (desc) {
+        addButton.innerText = 'Delete';
+    }
+    addButton.className = 'button';
+    addButton.style.width = '80px';
+    addButton.onclick = () => {
+        clearErrors();
+        const provider = descriptionInput.id;
+        const description = descriptionInput.value.trim();
+        const amount = amountInput.value.trim();
+        const dollarRegex = /^\$?\d+(\.\d{2})?$/;
+
+        if (addButton.innerText === 'Add') {
+            if (description && amount && dollarRegex.test(amount)) {
+                if (getAdjustments(provider, description) !== null) {
+                    displayErrors('Adjustment already exists');
+                    return;
+                }
+                // Convert the amount to cents as an integer
+                const amountInCents = Math.round(parseFloat(amount.replace('$', '')) * 100);
+                storeAdjustments(provider, description, amountInCents);
+                descriptionInput.readOnly = true;
+                descriptionInput.style.color = 'grey';
+                descriptionInput.classList.add('readOnly');
+                amountInput.readOnly = true;
+                amountInput.classList.add('readOnly');
+                viewPdfButton.style.display = 'none';
+                fillAdjustments(adjustmentsContainer, provider, null, null, viewPdfButton);
+                addButton.innerText = 'Delete';
+            } else {
+                displayErrors('Please enter a valid description and dollar amount.');
+            }
+        } else if (addButton.innerText === 'Delete') {
+            if (description) {
+                removeAdjustment(provider, description);
+                newRow.remove();
+                addButton.innerText = 'Add';
+            }
+        }
+    };
+    addButton.classList.add('adjustmentAddButton', 'marginer');
+    newRow.appendChild(addButton);
+    adjustmentsContainer.appendChild(newRow);
+}
+
+function addAdjustmentsButtonHandler(provider, detailsButton, detailsContainer, viewPdfButton) {
+    detailsButton.addEventListener('click', function () {
+        if (detailsContainer.style.display === 'none') {
+            detailsContainer.style.display = 'block';
+            detailsButton.innerText = 'Hide Adjustments';
+            const adjustments = getAdjustments(provider);
+            if (adjustments && adjustments.length > 0) {
+                adjustments.forEach(adjustment => {
+                    fillAdjustments(detailsContainer, provider, 
+                        adjustment.description, adjustment.amount, viewPdfButton);
+                });
+            }
+            fillAdjustments(detailsContainer, provider, null, null, viewPdfButton)
+        } else {
+            detailsContainer.style.display = 'none';
+            detailsButton.innerText = 'Add Adjustments';
+            detailsContainer.innerHTML = '';
+        }
     });
 }

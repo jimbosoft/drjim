@@ -86,7 +86,7 @@ function populateClinic(clinics) {
         option.dataset.id = clinic.id;
         if (clinic.id === lastSelected) {
             option.selected = true;
-         }
+        }
         clinicDropdown.appendChild(option);
     }
 
@@ -113,7 +113,13 @@ function companySelected(companyId) {
     document.getElementById('file-processing').classList.remove('hidden');
 }
 
-function displayErrors(error) {
+export function displayErrors(error) {
+    const messageOutput = document.getElementById("messageOutput")
     messageOutput.innerText = error
     messageOutput.style.color = 'red';
- }
+    messageOutput.style.diplay = 'block';
+}
+export function clearErrors() {
+    document.getElementById("messageOutput").innerText = '';
+}
+
