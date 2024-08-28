@@ -3,7 +3,8 @@ import {
     storeStuff, getStore, clearStore,
     missingProvidersKey, missingItemsKey, missingServiceCodes, noItemNrs,
     fileContentsKey, fileNameKey, adjustmentKey, startTrace, stopTrace,
-    storeAdjustments, getAdjustments, removeAdjustment
+    storeAdjustments, getAdjustments, removeAdjustment,
+    getClinics
 } from './firebase.js';
 import { cloudServiceConfig } from './config.js';
 import { displayErrors, clearErrors } from './dashboard.js';
@@ -67,9 +68,26 @@ export function showLastLoad() {
     }
 }
 
-function getCompanyName() {
+async function getCompanyDetails(userId) {
     const selectedOption = clinicDropdown.options[clinicDropdown.selectedIndex];
-    return selectedOption.textContent;
+    const clinics = await getClinics(userId); 
+    if (clinics.error) {
+        displayErrors("Retrieving company details failed: " + result.error.message);
+        return null;
+    }
+
+    for (const clinic of clinics.data) {
+        if (clinic.id === selectedOption.dataset.id) {
+            return {
+                Name: clinic.name,
+                StreetAddress: clinic.address,
+                City: clinic.postcode,
+                ABN: clinic.abn,
+                Email: ""
+            };
+        }
+    }
+    return null;
 }
 
 function clearOutput() {
@@ -110,7 +128,7 @@ async function processFile(fileContents) {
     progressBar.style.display = 'block';
     const err = await callDataProcessor(fileContents);
     if (err && err !== '') {
-        displayErrors(err);
+        displayErrors("Calling invoice processor failed with: " + err);
     }
     progressBar.style.display = 'none';
 }
@@ -123,14 +141,15 @@ async function callDataProcessor(fileContents) {
             if (result.error) {
                 return result.error;
             }
-            const companyName = getCompanyName();
+            const companyDetails = await getCompanyDetails(currentUser.email)
             if (result.codeMap && result.procMap) {
                 const paymentFile = {
                     FileContent: fileContents,
                     CsvLineStart: 16,
-                    CompanyName: companyName,
+                    CompanyDetails: companyDetails,
                     CodeMap: result.codeMap,
                     PracMap: result.procMap,
+                    PracDetails: result.pracDetails,
                     AdjustMap: getAdjustments()
                 };
 
@@ -227,7 +246,15 @@ async function getProviderDetails(userId, clinicId) {
 
         // Format practitioners data for PracMap
         const PracMap = {};
+        const PracDetails = {};
         practitioners.forEach(practitioner => {
+            PracDetails[practitioner.name] = {
+                Name: practitioner.name,
+                StreetAddress: practitioner.street,
+                City: practitioner.burb,
+                ABN: practitioner.abn,
+                Email: practitioner.email
+            };
             const services = {};
             practitioner.services.forEach(service => {
                 services[service.id] = service.value;
@@ -241,7 +268,7 @@ async function getProviderDetails(userId, clinicId) {
             return map;
         }, {});
 
-        return { codeMap: CodeMap, procMap: PracMap, error: null };
+        return { codeMap: CodeMap, procMap: PracMap, pracDetails: PracDetails, error: null };
     } catch (errorRes) {
         return { codeMap: null, procMap: null, error: errorRes };
     }
