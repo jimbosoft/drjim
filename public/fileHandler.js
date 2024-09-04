@@ -368,7 +368,7 @@ function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfBu
         const provider = descriptionInput.id;
         const description = descriptionInput.value.trim();
         const amount = amountInput.value.trim();
-        const dollarRegex = /^\$?\d+(\.\d{2})?$/;
+        const dollarRegex = /^-?\$?\d+(\.\d{2})?$/;
 
         if (addButton.innerText === 'Add') {
             if (description && amount && dollarRegex.test(amount)) {
