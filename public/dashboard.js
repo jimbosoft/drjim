@@ -115,7 +115,7 @@ function companySelected(companyId) {
 
 export function displayErrors(error) {
     const messageOutput = document.getElementById("messageOutput")
-    messageOutput.innerText = error
+    messageOutput.innerHTML = error
     messageOutput.style.color = 'red';
     messageOutput.style.diplay = 'block';
 }
