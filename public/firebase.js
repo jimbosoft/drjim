@@ -86,10 +86,10 @@ export function getAdjustments(provider, description) {
         return adj[provider];
     }
     // console.log('a:', a.description, ' description:', description)
-     // Both provider and description specified, return the specific adjustment
-     const adjustments = adj[provider];
-     return adjustments.find(a => a.description === description) || null;
- }
+    // Both provider and description specified, return the specific adjustment
+    const adjustments = adj[provider];
+    return adjustments.find(a => a.description === description) || null;
+}
 export function removeAdjustment(provider, desc) {
     let adj = JSON.parse(sessionStorage.getItem(adjustmentKey));
     if (!adj || !adj[provider]) {
@@ -145,6 +145,29 @@ export function stopTrace(customTrace, name) {
     customTrace.stop();
     console.timeEnd(name);
 }
+//
+// if decimalPlaces is negative, ignore
+// 
+export function parseValidFloat(value, decimalPlaces, lowerLimit, upperLimit) {
+    if (value === "") {
+        return "";
+    }
+    const validNumberRegex = /^-?\d+(\.\d+)?$/;
+
+    if (!validNumberRegex.test(value)) {
+        return NaN; 
+    }
+    let num = parseFloat(value);
+    if (decimalPlaces >= 0) {
+        num = parseFloat(num.toFixed(decimalPlaces));
+    }
+    if ((lowerLimit !== undefined && num < lowerLimit) || 
+        (upperLimit !== undefined && num > upperLimit)) {
+        return NaN;
+    }
+    return num;
+}
+
 const getClinicsLabel = 'getClinics'
 export async function getClinics(userId) {
     let ct = null;
