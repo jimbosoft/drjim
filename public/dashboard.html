@@ -12,12 +12,12 @@
     <title>Setup Companies</title>
 </head>
 <style>
-     .hidden-zero-space {
-            height: 0;
-            padding: 0;
-            margin: 0;
-            overflow: hidden;
-        }
+    .hidden-zero-space {
+        height: 0;
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+    }
     /* --------------------------------------------------- */
     /* Removes the up/down arrows from number input */
     input[type="number"]::-webkit-inner-spin-button,
@@ -37,10 +37,12 @@
     .adjustmentAmount {
         width: 70px;
     }
+
     .readOnly {
         background-color: white;
         color: grey;
     }
+
     .adjustmentAddButton {
         border-radius: 5px;
         width: 100px;
@@ -51,6 +53,7 @@
         margin-bottom: 10px;
         margin-right: 10px;
     }
+
     /* --------------------------------------------------- */
     #progress-bar {
         width: 300px;
@@ -82,11 +85,11 @@
         background-color: black;
         color: white;
         font-weight: bold;
-        padding-top: 0.2rem;   
+        padding-top: 0.2rem;
         padding-bottom: 0.2rem;
-        padding-left: 1rem;    
-        padding-right: 1rem; 
-        border-radius: 0.25rem; 
+        padding-left: 1rem;
+        padding-right: 1rem;
+        border-radius: 0.25rem;
     }
 
     .button:hover {
@@ -125,7 +128,7 @@
             <div class="pt-28 ml-64 p-4 grid gap-4">
                 <div id="dropZone" class="flex items-center gap-4 border-2 border-gray-300 p-4">
                     <p>Or drag and drop a file here or </p>
-                    <input type="file" id="csvFile" accept=".csv" style="display:none;"/>
+                    <input type="file" id="csvFile" accept=".csv" style="display:none;" />
                     <label for="csvFile" class="button">Upload</label>
                 </div>
                 <div id="rerunContainer" class="hidden flex items-center gap-4">

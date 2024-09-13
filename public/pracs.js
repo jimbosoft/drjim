@@ -1,7 +1,8 @@
 import {
     auth, setUser, currentUser, setProviders, getPractitioners, getServiceCodes, clinicId,
     getStore, clearStore,
-    missingProvidersKey, missingServiceCodes
+    missingProvidersKey, missingServiceCodes,
+    parseValidFloat
 } from './firebase.js';
 import {
     islogoutButtonPressed,
@@ -196,7 +197,13 @@ function addServiceCode(servicesMap) {
         newServiceNumber.type = 'number';
         newServiceNumber.classList.add('percentage-number');
         newServiceNumber.classList.add(bottomMargin, leftMargin);
-        newServiceNumber.value = servicesMap ? servicesMap[serviceCodes[id].id] : '';
+        newServiceNumber.value = servicesMap && servicesMap[serviceCodes[id].id] !== undefined ? servicesMap[serviceCodes[id].id] : '';
+        // Add event listener to prevent arrow key from incrementing/decrementing
+        newServiceNumber.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+                event.preventDefault();
+            }
+        });
         inputContainer.appendChild(newServiceNumber);
 
         const percentageSymbol = document.createElement('span');
@@ -337,23 +344,21 @@ submitButton.addEventListener('click', async (e) => {
 
             for (let j = 0; j < serviceCodeInputs.length; j++) {
                 const value = serviceNumbers[j].value;
-                let notError = true
                 if (value !== '') {
-                    const numericValue = parseFloat(value);
-                    if (isNaN(numericValue) || numericValue < 0 || numericValue > 100) {
+                    const numericValue = parseValidFloat(value, 2, 0, 100);
+                    if (isNaN(numericValue)) {
                         // Highlight the field with the error
                         serviceNumbers[j].style.backgroundColor = 'red';
                         displayErrors(`Error: Service number value must be blank or between 0 and 100. Found: ${value}`);
                         notError = false;
                         clearToClear = false;
+                    } else {
+                        serviceNumbers[j].style.backgroundColor = '';
+                        providerData.services.push({
+                            id: serviceCodeInputs[j].id,
+                            value: value
+                        });
                     }
-                }
-                if (notError) {
-                    serviceNumbers[j].style.backgroundColor = '';
-                    providerData.services.push({
-                        id: serviceCodeInputs[j].id,
-                        value: value
-                    });
                 }
             }
             providers.push(providerData);

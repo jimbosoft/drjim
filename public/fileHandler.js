@@ -70,7 +70,7 @@ export function showLastLoad() {
 
 async function getCompanyDetails(userId) {
     const selectedOption = clinicDropdown.options[clinicDropdown.selectedIndex];
-    const clinics = await getClinics(userId); 
+    const clinics = await getClinics(userId);
     if (clinics.error) {
         displayErrors("Retrieving company details failed: " + result.error.message);
         return null;
@@ -354,6 +354,13 @@ function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfBu
         amountInput.classList.add('readOnly');
     }
     amountInput.classList.add('adjustmentAmount', 'marginer');
+    // Add event listener to prevent arrow key from incrementing/decrementing
+    amountInput.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+            event.preventDefault();
+        }
+    });
+
     newRow.appendChild(amountInput);
 
     const addButton = document.createElement('button');
@@ -368,7 +375,7 @@ function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfBu
         const provider = descriptionInput.id;
         const description = descriptionInput.value.trim();
         const amount = amountInput.value.trim();
-        const dollarRegex = /^\$?\d+(\.\d{2})?$/;
+        const dollarRegex = /^-?\$?\d+(\.\d{2})?$/;
 
         if (addButton.innerText === 'Add') {
             if (description && amount && dollarRegex.test(amount)) {
@@ -388,7 +395,7 @@ function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfBu
                 fillAdjustments(adjustmentsContainer, provider, null, null, viewPdfButton);
                 addButton.innerText = 'Delete';
             } else {
-                displayErrors('Please enter a valid description and dollar amount.');
+                displayErrors('Please enter a valid description and dollar amount with no more then 2 digital places.');
             }
         } else if (addButton.innerText === 'Delete') {
             if (description) {
@@ -411,7 +418,7 @@ function addAdjustmentsButtonHandler(provider, detailsButton, detailsContainer, 
             const adjustments = getAdjustments(provider);
             if (adjustments && adjustments.length > 0) {
                 adjustments.forEach(adjustment => {
-                    fillAdjustments(detailsContainer, provider, 
+                    fillAdjustments(detailsContainer, provider,
                         adjustment.description, adjustment.amount, viewPdfButton);
                 });
             }
