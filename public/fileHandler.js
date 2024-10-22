@@ -276,22 +276,20 @@ async function getProviderDetails(userId, clinicId) {
 
 function generateProviderList(data, stuffMissing) {
     const providerListElement = document.getElementById('providerList');
+    providerListElement.innerHTML = ''; // Clear existing content
     data.forEach((value, key) => {
-        const providerContainer = document.createElement('div');
-        providerContainer.style.display = 'flex';
-        providerContainer.style.flexWrap = 'wrap';
-        providerContainer.style.marginTop = '10px';
-        providerContainer.style.gap = '10px';
+        const providerItem = document.createElement('div');
+        providerItem.className = 'bg-white p-4 rounded shadow';
 
-        const providerName = document.createElement('label');
-        providerName.style.minWidth = '300px';
-        providerName.innerText = key;
-        providerContainer.appendChild(providerName);
+        const providerName = document.createElement('h3');
+        providerName.textContent = key;
+        providerName.className = 'text-lg font-semibold mb-2';
+        providerItem.appendChild(providerName);
 
         if (value.invoice && value.invoice.length > 0) {
             const viewPdfButton = document.createElement('button');
-            viewPdfButton.innerText = 'View PDF';
-            viewPdfButton.className = 'button';
+            viewPdfButton.textContent = 'View PDF';
+            viewPdfButton.className = 'btn btn-primary mr-2';
             viewPdfButton.onclick = () => {
                 const dataUrl = 'data:application/pdf;base64,' + value.invoice;
                 fetch(dataUrl).then(res => res.blob()).then(blob => {
@@ -299,77 +297,65 @@ function generateProviderList(data, stuffMissing) {
                     window.open(url, '_blank');
                 });
             };
-            providerContainer.appendChild(viewPdfButton);
+            providerItem.appendChild(viewPdfButton);
 
             const adjustmentsButton = document.createElement('button');
-            adjustmentsButton.innerText = 'Add Adjustments';
-            adjustmentsButton.className = 'button';
-            providerContainer.appendChild(adjustmentsButton);
+            adjustmentsButton.textContent = 'Add Adjustments';
+            adjustmentsButton.className = 'btn btn-secondary';
+            providerItem.appendChild(adjustmentsButton);
+
             const adjustmentsContainer = document.createElement('div');
-            // initial condition, don't display
             adjustmentsContainer.style.display = 'none';
-            // force it being on a new line
-            adjustmentsContainer.style.width = '100%';
-            providerContainer.appendChild(adjustmentsContainer);
+            adjustmentsContainer.className = 'mt-4';
+            providerItem.appendChild(adjustmentsContainer);
+
             addAdjustmentsButtonHandler(key, adjustmentsButton, adjustmentsContainer, viewPdfButton);
         }
         else if (!stuffMissing) {
-            displayErrors("Error: No invoice pdf returned");
+            const errorMessage = document.createElement('p');
+            errorMessage.textContent = "Error: No invoice pdf returned";
+            errorMessage.className = 'text-red-500';
+            providerItem.appendChild(errorMessage);
         }
-        providerListElement.appendChild(providerContainer);
+        providerListElement.appendChild(providerItem);
     });
 }
-function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfButton) {
-    const newRow = document.createElement('div');
-    newRow.style.display = 'block';
 
-    // Create Description label and input
-    const descriptionLabel = document.createElement('label');
-    descriptionLabel.textContent = 'Description';
-    descriptionLabel.classList.add('marginer');
-    newRow.appendChild(descriptionLabel);
+function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfButton) {
+    adjustmentsContainer.innerHTML = '';
+    const newRow = document.createElement('div');
+    newRow.className = 'flex items-center mb-2';
 
     const descriptionInput = document.createElement('input');
     descriptionInput.type = 'text';
-    descriptionInput.setAttribute('id', provider);
+    descriptionInput.className = 'input mr-2 flex-grow';
+    descriptionInput.placeholder = 'Description';
+    descriptionInput.id = provider;
     if (desc) {
         descriptionInput.value = desc;
         descriptionInput.readOnly = true;
-        descriptionInput.classList.add('readOnly');
+        descriptionInput.classList.add('bg-gray-100');
     }
-    descriptionInput.classList.add('adjustmentDescription', 'marginer');
     newRow.appendChild(descriptionInput);
 
-    // Create Amount label and input
-    const amountLabel = document.createElement('label');
-    amountLabel.textContent = 'Amount';
-    amountLabel.classList.add('marginer');
-    newRow.appendChild(amountLabel);
-
     const amountInput = document.createElement('input');
-    amountInput.type = 'number';
+    amountInput.type = 'text';
+    amountInput.className = 'input mr-2 w-24';
+    amountInput.placeholder = 'Amount';
     if (amount) {
-        amountInput.value = amount;
+        amountInput.value = '$' + (amount / 100).toFixed(2);
         amountInput.readOnly = true;
-        amountInput.classList.add('readOnly');
+        amountInput.classList.add('bg-gray-100');
     }
-    amountInput.classList.add('adjustmentAmount', 'marginer');
-    // Add event listener to prevent arrow key from incrementing/decrementing
-    amountInput.addEventListener('keydown', (event) => {
-        if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-            event.preventDefault();
-        }
-    });
-
     newRow.appendChild(amountInput);
 
     const addButton = document.createElement('button');
-    addButton.innerText = 'Add';
-    if (desc) {
-        addButton.innerText = 'Delete';
-    }
-    addButton.className = 'button';
-    addButton.style.width = '80px';
+    addButton.className = 'btn btn-primary';
+    addButton.innerText = desc ? 'Delete' : 'Add';
+    newRow.appendChild(addButton);
+
+    adjustmentsContainer.appendChild(newRow);
+
     addButton.onclick = () => {
         clearErrors();
         const provider = descriptionInput.id;
@@ -383,19 +369,17 @@ function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfBu
                     displayErrors('Adjustment already exists');
                     return;
                 }
-                // Convert the amount to cents as an integer
                 const amountInCents = Math.round(parseFloat(amount.replace('$', '')) * 100);
                 storeAdjustments(provider, description, amountInCents);
                 descriptionInput.readOnly = true;
-                descriptionInput.style.color = 'grey';
-                descriptionInput.classList.add('readOnly');
+                descriptionInput.classList.add('bg-gray-100');
                 amountInput.readOnly = true;
-                amountInput.classList.add('readOnly');
+                amountInput.classList.add('bg-gray-100');
                 viewPdfButton.style.display = 'none';
                 fillAdjustments(adjustmentsContainer, provider, null, null, viewPdfButton);
                 addButton.innerText = 'Delete';
             } else {
-                displayErrors('Please enter a valid description and dollar amount with no more then 2 digital places.');
+                displayErrors('Please enter a valid description and dollar amount with no more than 2 decimal places.');
             }
         } else if (addButton.innerText === 'Delete') {
             if (description) {
@@ -404,10 +388,7 @@ function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfBu
                 addButton.innerText = 'Add';
             }
         }
-    };
-    addButton.classList.add('adjustmentAddButton', 'marginer');
-    newRow.appendChild(addButton);
-    adjustmentsContainer.appendChild(newRow);
+    }
 }
 
 function addAdjustmentsButtonHandler(provider, detailsButton, detailsContainer, viewPdfButton) {

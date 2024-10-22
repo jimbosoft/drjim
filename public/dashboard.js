@@ -123,3 +123,4 @@ export function clearErrors() {
     document.getElementById("messageOutput").innerText = '';
 }
 
+

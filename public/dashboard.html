@@ -1,178 +1,90 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="./footer.js" type="module"></script>
-    <script src="./dashboard.js" type="module"></script>
-    <script src="./fileHandler.js" type="module"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRIMS Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <title>Setup Companies</title>
-</head>
-<style>
-    .hidden-zero-space {
-        height: 0;
-        padding: 0;
-        margin: 0;
-        overflow: hidden;
-    }
-    /* --------------------------------------------------- */
-    /* Removes the up/down arrows from number input */
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-        -webkit-appearance: none;
-    }
-
-    input[type="text"],
-    input[type="number"] {
-        border: 1px solid black;
-    }
-
-    .adjustmentDescription {
-        width: 250px;
-    }
-
-    .adjustmentAmount {
-        width: 70px;
-    }
-
-    .readOnly {
-        background-color: white;
-        color: grey;
-    }
-
-    .adjustmentAddButton {
-        border-radius: 5px;
-        width: 100px;
-    }
-
-    .marginer {
-        padding-left: 5px;
-        margin-bottom: 10px;
-        margin-right: 10px;
-    }
-
-    /* --------------------------------------------------- */
-    #progress-bar {
-        width: 300px;
-        height: 20px;
-        background-color: #faf7f7;
-        border-radius: 10px;
-        overflow: hidden;
-    }
-
-    #progress {
-        width: 0;
-        height: 100%;
-        background-color: #4CAF50;
-        animation: progressMove 5s linear infinite;
-    }
-
-    @keyframes progressMove {
-        0% {
-            width: 0%;
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
-
-        100% {
+        .content-wrapper {
+            display: flex;
+            flex: 1;
+        }
+        main {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .footer {
+            position: sticky;
+            bottom: 0;
             width: 100%;
+            background-color: var(--secondary-color);
+            color: white;
+            z-index: 10;
         }
-    }
-
-    /* --------------------------------------------------- */
-    .button {
-        background-color: black;
-        color: white;
-        font-weight: bold;
-        padding-top: 0.2rem;
-        padding-bottom: 0.2rem;
-        padding-left: 1rem;
-        padding-right: 1rem;
-        border-radius: 0.25rem;
-    }
-
-    .button:hover {
-        background-color: #3b82f6;
-        /* hover:bg-blue-500 */
-    }
-</style>
-
-<body class="flex flex-col min-h-screen">
-    <div class="flex-grow">
-        <div class="w-full bg-blue-500 text-white p-4 fixed top-0">
-            <h1 class="text-3xl font-bold mb-4">Dr Jim app 🩻</h1>
+    </style>
+</head>
+<body>
+    <nav class="navbar fixed w-full z-20 flex items-center justify-between px-6 py-3">
+        <a href="index.html" class="text-2xl font-semibold text-gray-800">PRIMS</a>
+        <div id="authState" class="flex items-center">
+            <button id="logoutButton" class="btn btn-secondary ml-4">Log out</button>
         </div>
+    </nav>
 
-        <div class="fixed left-0 top-16 h-full w-64 bg-blue-500 p-4 text-black p-4">
-            <div id="SetupClinic" class="mb-4">
-                <button id="clinicSetup" type="button"
-                    class="text-blue-500 bg-white rounded px-4 py-2 w-full h-12">Setup
-                    Companies Details</button>
+    <div class="content-wrapper pt-16">
+        <aside class="sidebar w-64 fixed h-full pt-4 overflow-y-auto">
+            <div class="px-4 py-6">
+                <button id="clinicSetup" class="btn btn-secondary w-full mb-4">Setup Companies Details</button>
+                <select id="clinicDropdown" class="input w-full mb-4 hidden"></select>
+                <button id="serviceCodes" class="btn btn-secondary w-full mb-4 hidden">Review Service Codes</button>
+                <button id="practitioners" class="btn btn-secondary w-full mb-4 hidden">Review Practitioners</button>
             </div>
-            <div id="selectClinic" class="mb-4 w-full">
-                <select id="clinicDropdown" class="hidden w-full text-blue-500 bg-white h-12 text-center"></select>
-            </div>
-            <div id="serviceCodesDisplay" class="mb-4">
-                <button id="serviceCodes" type="button"
-                    class="hidden text-blue-500 bg-white rounded px-4 py-2 w-full h-12">Review
-                    Service Codes</button>
-            </div>
-            <div id="practitionersDisplay" class="mb-4">
-                <button id="practitioners" type="button"
-                    class="hidden text-blue-500 bg-white rounded px-4 py-2 w-full h-12">Review
-                    Practitioners</button>
-            </div>
-        </div>
-        <div id="file-processing" class="hidden">
-            <div class="pt-28 ml-64 p-4 grid gap-4">
-                <div id="dropZone" class="flex items-center gap-4 border-2 border-gray-300 p-4">
-                    <p>Or drag and drop a file here or </p>
-                    <input type="file" id="csvFile" accept=".csv" style="display:none;" />
-                    <label for="csvFile" class="button">Upload</label>
+        </aside>
+
+        <main class="flex-1 ml-64 px-8 pb-16">
+            <div id="file-processing" class="hidden">
+                <div id="dropZone" class="border-2 border-dashed border-gray-300 p-8 mb-4 text-center">
+                    <p class="mb-2">Drag and drop a file here or</p>
+                    <input type="file" id="csvFile" accept=".csv" class="hidden" />
+                    <label for="csvFile" class="btn btn-primary cursor-pointer">Upload</label>
                 </div>
-                <div id="rerunContainer" class="hidden flex items-center gap-4">
-                    <label id="fileName" class="mr-2"></label>
-                    <button id="rerunButton" class="button" style="padding-top: 0.5rem; padding-bottom: 0.5rem;">
-                        Process
-                    </button>
+                <div id="rerunContainer" class="hidden mb-4">
+                    <p id="fileName" class="mb-2"></p>
+                    <button id="rerunButton" class="btn btn-primary">Process</button>
                 </div>
-                <div id="progress-bar" style="display: none;">
-                    <div id="progress"></div>
+                <div id="progress-bar" class="hidden w-full h-2 bg-gray-200 rounded-full">
+                    <div id="progress" class="h-full bg-blue-500 rounded-full"></div>
                 </div>
             </div>
-        </div>
 
-        <div id="messageOutput" class="ml-72 overflow-auto max-h-48 mb-4"></div>
+            <div id="messageOutput" class="mb-4"></div>
 
-        <div id="missingProviders" class="ml-64 px-4 mb-2 hidden flex items-center space-x-4">
-            <p id="missingProvidersTxt"></p>
-            <button id="missingProvidersButton"
-                class="bg-black hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-lg">
-                Add Now
-            </button>
-        </div>
-        <div id="missingItems" class="ml-64 px-4 mb-2 hidden flex items-center space-x-4">
-            <p id="missingItemsTxt"></p>
-            <button id="missingItemsButton"
-                class="bg-black hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-lg">
-                Add Now
-            </button>
-        </div>
-        <div id="missingServiceCodes" class="ml-64 px-4 mb-2 hidden flex items-center space-x-4">
-            <p id="missingServiceCodesTxt"></p>
-            <button id="missingServiceCodesButton"
-                class="bg-black hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-lg">
-                Add Now
-            </button>
-        </div>
-        <div id="providerList" class="ml-72 overflow-auto mb-4"></div>
-    </div>
-    <div id="footerId" class="w-full text-center bg-gray-800 text-white py-8" style="max-height: 200px;">
-        <div id="authState"></div>
-        <button id="logoutButton" type="button" class="bg-red-500 rounded px-4 py-2">Log out</button>
+            <div id="missingProviders" class="hidden mb-4">
+                <p id="missingProvidersTxt" class="mb-2"></p>
+                <button id="missingProvidersButton" class="btn btn-primary">Add Now</button>
+            </div>
+            <div id="missingItems" class="hidden mb-4">
+                <p id="missingItemsTxt" class="mb-2"></p>
+                <button id="missingItemsButton" class="btn btn-primary">Add Now</button>
+            </div>
+            <div id="missingServiceCodes" class="hidden mb-4">
+                <p id="missingServiceCodesTxt" class="mb-2"></p>
+                <button id="missingServiceCodesButton" class="btn btn-primary">Add Now</button>
+            </div>
+
+            <div id="providerList" class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3"></div>
+        </main>
     </div>
 
+    <script src="script.js" type="module"></script>
+    <script src="dashboard.js" type="module"></script>
+    <script src="fileHandler.js" type="module"></script>
 </body>
-
 </html>
