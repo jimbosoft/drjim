@@ -242,7 +242,8 @@ export async function setClinics(userId, clinicList, userEmail) {
 
         // Find the documents that are not in the clinicList
         const docsToRemove = docsInFirestore.filter(docId => !clinicList.some(clinic => clinic.id === docId));
-
+        // Delete all the attached service codes, which stops dangling referrences when the company is deleted
+        await Promise.all(docsToRemove.map(docId => setServiceCodes(userId, docId, new Map())));
         // Delete the documents that are not in the clinicList
         await Promise.all(docsToRemove.map(docId => deleteDoc(doc(clinicsRef, docId))));
 
@@ -427,9 +428,7 @@ export async function setServiceCodes(userId, clinicId, serviceCodesMap) {
                 itemList: value.itemList // Assuming itemList is a property of value
             });
         }
-
         await setItemNumbers(serviceCodesRef, serviceCodes, false);
-
         return "";
     } catch (error) {
         return error.message;
