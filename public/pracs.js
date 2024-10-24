@@ -2,7 +2,7 @@ import {
     auth, setUser, currentUser, setProviders, getPractitioners, getServiceCodes, clinicId,
     getStore, clearStore,
     missingProvidersKey, missingServiceCodes,
-    parseValidFloat
+    parseValidFloat, createEntryField, leftMargin, bottomMargin
 } from './firebase.js';
 import {
     islogoutButtonPressed,
@@ -103,7 +103,6 @@ function highlightMissingServiceCodes() {
 const providerRow = 'providerRow';
 const serviceCodeEntry = 'service-code-entry';
 const providerForm = 'provider-form';
-const bottomMargin = 'bottom-margin';
 const submitButton = document.getElementById('submitButton');
 const cancelButton = document.getElementById('cancelButton');
 
@@ -111,7 +110,7 @@ function fillPracs(pid, pname, details, servicesMap, showAddress) {
     const section = document.createElement('div');
     section.style.display = 'flex';
     section.style.flexWrap = 'wrap';
-    section.classList.add(providerRow);
+    section.classList.add(providerRow, 'row');
 
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
@@ -133,16 +132,14 @@ function fillPracs(pid, pname, details, servicesMap, showAddress) {
     // Create a new button element
     const buttonElement = document.createElement('button');
     buttonElement.textContent = 'Delete';
-    buttonElement.classList.add(bottomMargin);
-    buttonElement.classList.add('button');
+    buttonElement.classList.add('delete', 'button', leftMargin, bottomMargin);
     addDeleteButtonHandler(buttonElement, form.childElementCount);
     section.appendChild(buttonElement);
 
     // show address details
     const detailsButton = document.createElement('button');
     detailsButton.textContent = 'Show Details';
-    detailsButton.classList.add(bottomMargin);
-    detailsButton.classList.add('button');
+    detailsButton.classList.add('details', 'button', leftMargin, bottomMargin);
     section.appendChild(detailsButton);
 
     const addressContainer = addAddressEntry(details, showAddress);
@@ -151,6 +148,20 @@ function fillPracs(pid, pname, details, servicesMap, showAddress) {
 
     const nameEntry = document.getElementById(providerForm);
     nameEntry.appendChild(section);
+
+    // Apply alternating background colors
+    const rows = nameEntry.getElementsByClassName('row');
+    for (let i = 0; i < rows.length; i++) {
+        if (i % 2 === 0) {
+            rows[i].classList.add('even-row');
+        } else {
+            rows[i].classList.add('odd-row');
+        }
+    }
+
+    const blankLine = document.createElement('div');
+    blankLine.classList.add(bottomMargin);
+    nameEntry.appendChild(blankLine);
 }
 
 function addDetailsButtonHandler(detailsButton, addressDetailsContainer) {
@@ -175,8 +186,6 @@ function addDeleteButtonHandler(deleteButton, index) {
         }
     });
 }
-
-const leftMargin = 'left-margin';
 
 function addServiceCode(servicesMap) {
     const newSection = document.createElement('div');
@@ -223,89 +232,33 @@ function addAddressEntry(details, showAddress) {
     if (!showAddress) {
         section.style.display = 'none'; // Initially hidden
     }
-
-    const streetInput = document.createElement('label');
-    streetInput.textContent = "Street Nr and Name"
-    streetInput.classList.add(bottomMargin);
-    section.appendChild(streetInput);
-
-    const streetName = document.createElement('input');
-    streetName.type = 'text';
-    if (details && details.street) {
-        streetName.value = details.street;
+    if (details) {
+        addAddressDetail(section, details.street, details.burb, details.email, details.abn)
+    } else {
+        addAddressDetail(section, '', '', '', '')
     }
-    streetName.classList.add('street');
-    streetName.classList.add(bottomMargin, leftMargin);
-
-    section.appendChild(streetName);
-
-    const burbContainer = document.createElement('div');
-    burbContainer.style.display = 'inline-block';
-
-    const suburb = document.createElement('label');
-    suburb.textContent = "Suburb, State, Postcode"
-    suburb.classList.add(bottomMargin, leftMargin);
-    burbContainer.appendChild(suburb);
-
-    const suburbName = document.createElement('input');
-    suburbName.type = 'text';
-    if (details && details.burb) {
-        suburbName.value = details.burb;
-    }
-    suburbName.classList.add('burb');
-    suburbName.classList.add(bottomMargin, leftMargin);
-    burbContainer.appendChild(suburbName);
-
-    section.appendChild(burbContainer);
-
-    const emailContainer = document.createElement('div');
-    emailContainer.style.display = 'inline-block';
-
-    const emailLabel = document.createElement('label');
-    emailLabel.textContent = "Email"
-    emailLabel.classList.add(bottomMargin, leftMargin);
-    emailContainer.appendChild(emailLabel);
-
-    const email = document.createElement('input');
-    email.type = 'text';
-    if (details && details.email) {
-        email.value = details.email;
-    }
-    email.classList.add('email');
-    email.classList.add(bottomMargin, leftMargin);
-    emailContainer.appendChild(email);
-
-    section.appendChild(emailContainer);
-
-    const abnContainer = document.createElement('div');
-    abnContainer.style.display = 'inline-block';
-
-    const abnLabel = document.createElement('label');
-    abnLabel.textContent = "ABN"
-    abnLabel.classList.add(bottomMargin, leftMargin);
-    abnContainer.appendChild(abnLabel);
-
-    const abn = document.createElement('input');
-    abn.type = 'text';
-    if (details && details.abn) {
-        abn.value = details.abn;
-    }
-    abn.classList.add('abn');
-    abn.classList.add(bottomMargin, leftMargin);
-    abnContainer.appendChild(abn);
-
-    section.appendChild(abnContainer);
-
-    return section;
+    return section
 }
+
+function addAddressDetail(parent, street, suburb, email, abn) {
+    createEntryField(parent, "street", "Street Nr and Name", street, false)
+    createEntryField(parent, "burb", "Suburb, State, Postcode", suburb)
+    createEntryField(parent, "email", "Email", email)
+    createEntryField(parent, "abn", "ABN", abn)
+}
+
 const form = document.getElementById(providerForm);
-document.addEventListener('input', function (event) {
+document.addEventListener('input', function (e) {
     // If the input event was triggered by a name input field
-    if (event.target.classList.contains('name-input')) {
-        addressForm.style.display = 'block';
-        const section = event.target.parentElement;
+    if (e.target.classList.contains('name-input')) {
+
+        const section = e.target.closest('.providerRow');
+        // Get all 'section' elements
+        const sections = form.getElementsByClassName(providerRow);
+        const lastSection = sections[sections.length - 1];
+
         // If the input is filled in and the section is the last one
-        if (event.target.value && section === form.lastElementChild) {
+        if (e.target.value && section === lastSection) {
             fillPracs(null, null, null, null, false);
         }
     }
@@ -313,7 +266,7 @@ document.addEventListener('input', function (event) {
 
 submitButton.addEventListener('click', async (e) => {
     e.preventDefault();
-    const providerRows = document.getElementsByClassName('providerRow');
+    const providerRows = document.getElementsByClassName(providerRow);
     const providers = [];
 
     let clearToClear = true;
@@ -383,4 +336,3 @@ function displayErrors(error) {
     messageOutput.innerText = error
     messageOutput.style.color = 'red';
 }
-

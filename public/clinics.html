@@ -6,47 +6,25 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="clinics.js" type="module"></script>
+  <link rel="stylesheet" href="styles.css">
   <title>PRIMS</title>
   <style>
-    .hidden {
-      display: none;
-    }
-
-    .footer {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      text-align: center;
-      background-color: darkgrey;
-      height: 60px;
-    }
-
-    body {
-      margin: 0;
-      padding: 20px;
-      padding-bottom: 140px;
-    }
-
-    #submit-button {
-      margin-right: 40px;
-    }
   </style>
 </head>
 
 <body>
-
   <h2>Clinics:</h2>
   <div id="company-form"></div>
+
   <div id="button-container">
-    <button id="submitButton" style>Submit</button>
-    <button id="cancelButton">Cancel</button>
+    <button id="submitButton" class="button">Submit</button>
+    <button id="cancelButton" class="button">Cancel</button>
   </div>
 
   <div id="appScreen" class="footer" style="padding: 30px;">
     <div id="authState"></div>
     <button id="logoutButton" type="button">Log out</button>
   </div>
-
 </body>
 
 </html>
