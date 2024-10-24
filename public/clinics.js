@@ -7,6 +7,7 @@ import {
     showUser
 } from './footer.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+import { clinicId } from './storage.js';
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -53,6 +54,14 @@ function createCompanyAddressSection(index, id, name, address, abn, postcode, em
     const section = document.createElement('div');
     section.classList.add(addressSection, 'row');
 
+    // don't remove this, it stores the id in a invisible label
+    const documentIdLabel = document.createElement('label');
+    documentIdLabel.textContent = id;
+    documentIdLabel.style.display = 'none';
+    documentIdLabel.classList.add('docId');
+    section.appendChild(documentIdLabel);
+    section.appendChild(document.createElement('br'));
+
     const companyNameContainer = document.createElement('div');
     const companyNameLabel = document.createElement('label');
     companyNameLabel.textContent = 'Clinic Name:';
@@ -78,7 +87,7 @@ function createCompanyAddressSection(index, id, name, address, abn, postcode, em
     deleteButton.textContent = 'Delete';
     deleteButton.classList.add('delete', leftMargin, bottomMargin);
     companyNameContainer.appendChild(deleteButton);
-    addDeleteButtonHandler(deleteButton, index);
+    addDeleteButtonHandler(deleteButton, index, id);
 
     const div = document.getElementById('company-form');
     div.appendChild(section);
@@ -99,11 +108,14 @@ function createCompanyAddressSection(index, id, name, address, abn, postcode, em
     return section;
 }
 
-function addDeleteButtonHandler(deleteButton, index) {
+function addDeleteButtonHandler(deleteButton, index, id) {
     deleteButton.addEventListener('click', async () => {
         const sections = Array.from(form.getElementsByClassName(addressSection));
         if (index < sections.length - 1) {
             sections[index].parentElement.removeChild(sections[index]);
+            if (localStorage.getItem(clinicId) === id) {
+                localStorage.removeItem(clinicId)
+            }
         } else {
             alert('Please select a filled in clinic to delete');
         }
