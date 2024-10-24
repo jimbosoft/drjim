@@ -85,7 +85,7 @@ function createCompanyAddressSection(index, id, name, address, abn, postcode, em
     const deleteButton = document.createElement('button');
     deleteButton.type = 'button';
     deleteButton.textContent = 'Delete';
-    deleteButton.classList.add('delete', leftMargin, bottomMargin);
+    deleteButton.classList.add('delete', leftMargin, bottomMargin, 'button');
     companyNameContainer.appendChild(deleteButton);
     addDeleteButtonHandler(deleteButton, index, id);
 
