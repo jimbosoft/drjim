@@ -167,7 +167,36 @@ export function parseValidFloat(value, decimalPlaces, lowerLimit, upperLimit) {
     }
     return num;
 }
+export const leftMargin = 'left-margin';
+export const bottomMargin = 'bottom-margin'
+export function createEntryField(parent, fieldName, labelText, fieldValue, addLeftMargin = true) {
+    const container = document.createElement('div');
+    container.style.display = 'inline-block';
 
+    const label = document.createElement('label');
+    label.textContent = labelText;
+    label.classList.add(bottomMargin);
+    if (addLeftMargin) {
+        label.classList.add(leftMargin)
+    }
+    container.appendChild(label);
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = fieldName;
+    if (fieldValue) {
+        input.value = fieldValue;
+    }
+    input.classList.add(fieldName.toLowerCase().replace(/ /g, '-'));
+    input.classList.add(bottomMargin, leftMargin);
+    container.appendChild(input);
+    if (parent) {
+        parent.appendChild(container)
+    }
+    return container;
+}
+
+//-------------------- firestore from here --------------------
 const getClinicsLabel = 'getClinics'
 export async function getClinics(userId) {
     let ct = null;
@@ -213,7 +242,11 @@ export async function setClinics(userId, clinicList, userEmail) {
 
         // Find the documents that are not in the clinicList
         const docsToRemove = docsInFirestore.filter(docId => !clinicList.some(clinic => clinic.id === docId));
-
+        // Delete all the attached service codes and providers in parallel.
+        // This stops dangling referrences when the company is deleted
+        const serviceCodePromises = docsToRemove.map(docId => setServiceCodes(userId, docId, new Map()));
+        const providerPromises = docsToRemove.map(docId => setProviders(userId, docId, [])); 
+        await Promise.all([...serviceCodePromises, ...providerPromises]);        
         // Delete the documents that are not in the clinicList
         await Promise.all(docsToRemove.map(docId => deleteDoc(doc(clinicsRef, docId))));
 
@@ -226,7 +259,8 @@ export async function setClinics(userId, clinicList, userEmail) {
                 address: clinic.address,
                 abn: clinic.abn,
                 postcode: clinic.postcode,
-                accountingLine: clinic.accountingLine
+                accountingLine: clinic.accountingLine,
+                email: clinic.email
             }, { merge: true });
             //
             // Make sure every clininc has default service codes associated with it
@@ -397,9 +431,7 @@ export async function setServiceCodes(userId, clinicId, serviceCodesMap) {
                 itemList: value.itemList // Assuming itemList is a property of value
             });
         }
-
         await setItemNumbers(serviceCodesRef, serviceCodes, false);
-
         return "";
     } catch (error) {
         return error.message;
