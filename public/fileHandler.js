@@ -218,7 +218,7 @@ async function callDataProcessor(fileContents) {
                 const data = fileResult.chargeDetail
                 let dataMap = new Map(Object.entries(data));
                 if (dataMap instanceof Map && dataMap.size > 0) {
-                    generateProviderList(dataMap, stuffMissing);
+                    generateProviderList(dataMap, fileResult.invoicePackage, stuffMissing);
                 }
             }
             return ""
@@ -273,33 +273,61 @@ async function getProviderDetails(userId, clinicId) {
         return { codeMap: null, procMap: null, error: errorRes };
     }
 }
-
-function generateProviderList(data, stuffMissing) {
+const wrapSection = 'flex-wrap-section';
+const bottomMargin = 'bottom-margin';
+function generateProviderList(data, zipFile, stuffMissing) {
     const providerListElement = document.getElementById('providerList');
+
+    const providerContainer = document.createElement('div');
+    providerContainer.classList.add(wrapSection, bottomMargin);
+
+    if (zipFile) {
+        const downloadAll = document.createElement('button');
+        downloadAll.innerText = 'Download All';
+        downloadAll.className = 'button';
+        downloadAll.onclick = () => {
+            const dataUrl = 'data:application/zip;base64,' + zipFile;
+            fetch(dataUrl).then(res => res.blob()).then(blob => {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'invoices.zip';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            });
+        };
+        providerContainer.appendChild(downloadAll);
+    }
+    const emailAll = document.createElement('button');
+    emailAll.innerText = 'Email All';
+    emailAll.className = 'button';
+    providerContainer.appendChild(emailAll);
+    providerListElement.appendChild(providerContainer);
+
+    const blankline = document.createElement('div');
+    blankline.style.height = '20px';
+    providerListElement.appendChild(blankline);
+
     data.forEach((value, key) => {
         const providerContainer = document.createElement('div');
-        providerContainer.style.display = 'flex';
-        providerContainer.style.flexWrap = 'wrap';
-        providerContainer.style.marginTop = '10px';
-        providerContainer.style.gap = '10px';
-
-        const providerName = document.createElement('label');
-        providerName.style.minWidth = '300px';
-        providerName.innerText = key;
-        providerContainer.appendChild(providerName);
+        providerContainer.classList.add(wrapSection, bottomMargin);
 
         if (value.invoice && value.invoice.length > 0) {
-            const viewPdfButton = document.createElement('button');
-            viewPdfButton.innerText = 'View PDF';
-            viewPdfButton.className = 'button';
-            viewPdfButton.onclick = () => {
+            const viewPdfLink = document.createElement('a');
+            viewPdfLink.innerText = key;
+            viewPdfLink.className = 'invoiceLink'; // You can style this as needed
+            viewPdfLink.href = '#'; // This prevents the default link behavior
+            viewPdfLink.onclick = (event) => {
+                event.preventDefault(); // Prevent the default link action
                 const dataUrl = 'data:application/pdf;base64,' + value.invoice;
                 fetch(dataUrl).then(res => res.blob()).then(blob => {
                     const url = URL.createObjectURL(blob);
                     window.open(url, '_blank');
+                    URL.revokeObjectURL(url);
                 });
             };
-            providerContainer.appendChild(viewPdfButton);
+            providerContainer.appendChild(viewPdfLink);
 
             const adjustmentsButton = document.createElement('button');
             adjustmentsButton.innerText = 'Add Adjustments';
@@ -311,7 +339,12 @@ function generateProviderList(data, stuffMissing) {
             // force it being on a new line
             adjustmentsContainer.style.width = '100%';
             providerContainer.appendChild(adjustmentsContainer);
-            addAdjustmentsButtonHandler(key, adjustmentsButton, adjustmentsContainer, viewPdfButton);
+            addAdjustmentsButtonHandler(key, adjustmentsButton, adjustmentsContainer, viewPdfLink);
+            const mailButton = document.createElement('button');
+            mailButton.innerText = 'Email';
+            mailButton.className = 'button';
+            providerContainer.appendChild(mailButton);
+            addEmailButtonHandler(mailButton);
         }
         else if (!stuffMissing) {
             displayErrors("Error: No invoice pdf returned");
@@ -319,7 +352,7 @@ function generateProviderList(data, stuffMissing) {
         providerListElement.appendChild(providerContainer);
     });
 }
-function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfButton) {
+function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfLink) {
     const newRow = document.createElement('div');
     newRow.style.display = 'block';
 
@@ -391,8 +424,8 @@ function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfBu
                 descriptionInput.classList.add('readOnly');
                 amountInput.readOnly = true;
                 amountInput.classList.add('readOnly');
-                viewPdfButton.style.display = 'none';
-                fillAdjustments(adjustmentsContainer, provider, null, null, viewPdfButton);
+                viewPdfLink.classList.add('disabled'); 
+                fillAdjustments(adjustmentsContainer, provider, null, null, viewPdfLink);
                 addButton.innerText = 'Delete';
             } else {
                 displayErrors('Please enter a valid description and dollar amount with no more then 2 digital places.');
@@ -400,6 +433,7 @@ function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfBu
         } else if (addButton.innerText === 'Delete') {
             if (description) {
                 removeAdjustment(provider, description);
+                viewPdfLink.classList.add('disabled'); 
                 newRow.remove();
                 addButton.innerText = 'Add';
             }
@@ -410,7 +444,7 @@ function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfBu
     adjustmentsContainer.appendChild(newRow);
 }
 
-function addAdjustmentsButtonHandler(provider, detailsButton, detailsContainer, viewPdfButton) {
+function addAdjustmentsButtonHandler(provider, detailsButton, detailsContainer, viewPdfLink) {
     detailsButton.addEventListener('click', function () {
         if (detailsContainer.style.display === 'none') {
             detailsContainer.style.display = 'block';
@@ -419,14 +453,19 @@ function addAdjustmentsButtonHandler(provider, detailsButton, detailsContainer, 
             if (adjustments && adjustments.length > 0) {
                 adjustments.forEach(adjustment => {
                     fillAdjustments(detailsContainer, provider,
-                        adjustment.description, adjustment.amount, viewPdfButton);
+                        adjustment.description, adjustment.amount, viewPdfLink);
                 });
             }
-            fillAdjustments(detailsContainer, provider, null, null, viewPdfButton)
+            fillAdjustments(detailsContainer, provider, null, null, viewPdfLink)
         } else {
             detailsContainer.style.display = 'none';
             detailsButton.innerText = 'Add Adjustments';
             detailsContainer.innerHTML = '';
         }
+    });
+}
+
+function addEmailButtonHandler(mailButton) {
+    mailButton.addEventListener('click', function () {
     });
 }
