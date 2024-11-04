@@ -2,13 +2,14 @@
     display: none;
 }
 
-.footer {
+#footer {
     position: fixed;
     bottom: 0;
     width: 100%;
     text-align: center;
     background-color: darkgrey;
     height: 60px;
+    padding: 30px;
 }
 
 body {
@@ -29,6 +30,33 @@ input[type="number"]::-webkit-outer-spin-button {
 
 input[type="number"] {
     -moz-appearance: textfield;
+}
+
+.flex-wrap-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.gap-10 {
+    gap: 10px;
+}
+
+a.invoiceLink {
+    display: inline-block;
+    min-width: 100px;
+    max-width: 200px;
+    width: 100%; 
+    color: #0000FF; /* Blue color for the link */
+    text-decoration: underline; /* Underline to indicate it's a link */
+    cursor: pointer; /* Change cursor to pointer on hover */
+}
+
+a.invoiceLink.disabled {
+    color: #000000; /* Black color for disabled state */
+    text-decoration: none; /* Remove underline */
+    cursor: default; /* Change cursor back to default */
+    pointer-events: none; /* Prevent clicking */
 }
 
 .bottom-margin {
