@@ -2,7 +2,7 @@
 import { auth, setUser, getClinics, getOnlyServiceCodes, currentUser, clinicId } from './firebase.js';
 import { islogoutButtonPressed, resetlogoutButtonPressed, showLoginScreen, showUser } from './footer.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-import { showLastLoad } from './fileHandler.js';
+import { showLastLoad, clearFileDetails } from './fileHandler.js';
 onAuthStateChanged(auth, (user) => {
     if (user) {
         setUser(user);
@@ -95,6 +95,7 @@ function populateClinic(clinics) {
         if (defaultOption.parentNode) {
             defaultOption.remove();
         }
+        clearFileDetails();
         let selectedIndex = clinicDropdown.selectedIndex;
         let selectedOption = clinicDropdown.options[selectedIndex];
         let selectedId = selectedOption.dataset.id;

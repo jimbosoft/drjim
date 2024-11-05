@@ -57,6 +57,16 @@ export function clearStore(key) {
 export function getStore(key) {
     return sessionStorage.getItem(key);
 }
+export function clearAllFileDetails() {
+    clearStore(fileContentsKey);
+    clearStore(fileNameKey);
+    clearStore(adjustmentKey);   
+
+    clearStore(missingServiceCodes);    
+    clearStore(noItemNrs);    
+    clearStore(missingItemsKey);    
+    clearStore(missingProvidersKey);    
+ }
 export function storeAdjustments(provider, desc, val) {
     let adj = JSON.parse(sessionStorage.getItem(adjustmentKey));
     if (!adj) {

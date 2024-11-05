@@ -1,6 +1,6 @@
 import {
     getServiceCodes, currentUser, clinicId, getPractitioners,
-    storeStuff, getStore, clearStore,
+    storeStuff, getStore, clearStore, clearAllFileDetails,
     missingProvidersKey, missingItemsKey, missingServiceCodes, noItemNrs,
     fileContentsKey, fileNameKey, adjustmentKey, startTrace, stopTrace,
     storeAdjustments, getAdjustments, removeAdjustment,
@@ -90,6 +90,12 @@ async function getCompanyDetails(userId) {
     return null;
 }
 
+export function clearFileDetails() {
+    clearOutput();
+    clearAllFileDetails();
+    document.getElementById('rerunContainer').classList.add('hidden');
+}
+
 function clearOutput() {
     clearErrors();
     document.getElementById('missingProviders').classList.add('hidden');
@@ -103,16 +109,13 @@ function clearOutput() {
 
 async function handleInputFile(file) {
     if (file) {
-        clearOutput();
-        clearStore(missingProvidersKey);
-        clearStore(missingItemsKey);
+        clearFileDetails();
 
         const reader = new FileReader();
         reader.onload = async function (e) {
             const fileContents = e.target.result;
             storeStuff(fileContentsKey, fileContents);
             storeStuff(fileNameKey, file.name);
-            clearStore(adjustmentKey)
             showLastLoad();
             processFile(fileContents);
         };
@@ -281,33 +284,35 @@ function generateProviderList(data, zipFile, stuffMissing) {
     const providerContainer = document.createElement('div');
     providerContainer.classList.add(wrapSection, bottomMargin);
 
-    if (zipFile) {
-        const downloadAll = document.createElement('button');
-        downloadAll.innerText = 'Download All';
-        downloadAll.className = 'button';
-        downloadAll.onclick = () => {
-            const dataUrl = 'data:application/zip;base64,' + zipFile;
-            fetch(dataUrl).then(res => res.blob()).then(blob => {
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'invoices.zip';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(link.href);
-            });
-        };
-        providerContainer.appendChild(downloadAll);
-    }
-    const emailAll = document.createElement('button');
-    emailAll.innerText = 'Email All';
-    emailAll.className = 'button';
-    providerContainer.appendChild(emailAll);
-    providerListElement.appendChild(providerContainer);
+    if (!stuffMissing) {
+        if (zipFile) {
+            const downloadAll = document.createElement('button');
+            downloadAll.innerText = 'Download All';
+            downloadAll.className = 'button';
+            downloadAll.onclick = () => {
+                const dataUrl = 'data:application/zip;base64,' + zipFile;
+                fetch(dataUrl).then(res => res.blob()).then(blob => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'invoices.zip';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(link.href);
+                });
+            };
+            providerContainer.appendChild(downloadAll);
+        }
+        const emailAll = document.createElement('button');
+        emailAll.innerText = 'Email All';
+        emailAll.className = 'button';
+        providerContainer.appendChild(emailAll);
+        providerListElement.appendChild(providerContainer);
 
-    const blankline = document.createElement('div');
-    blankline.style.height = '20px';
-    providerListElement.appendChild(blankline);
+        const blankline = document.createElement('div');
+        blankline.style.height = '20px';
+        providerListElement.appendChild(blankline);
+    }
 
     data.forEach((value, key) => {
         const providerContainer = document.createElement('div');
@@ -424,7 +429,7 @@ function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfLi
                 descriptionInput.classList.add('readOnly');
                 amountInput.readOnly = true;
                 amountInput.classList.add('readOnly');
-                viewPdfLink.classList.add('disabled'); 
+                viewPdfLink.classList.add('disabled');
                 fillAdjustments(adjustmentsContainer, provider, null, null, viewPdfLink);
                 addButton.innerText = 'Delete';
             } else {
@@ -433,7 +438,7 @@ function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfLi
         } else if (addButton.innerText === 'Delete') {
             if (description) {
                 removeAdjustment(provider, description);
-                viewPdfLink.classList.add('disabled'); 
+                viewPdfLink.classList.add('disabled');
                 newRow.remove();
                 addButton.innerText = 'Add';
             }
