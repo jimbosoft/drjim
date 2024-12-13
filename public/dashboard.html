@@ -9,6 +9,7 @@
     <script src="./dashboard.js" type="module"></script>
     <script src="./fileHandler.js" type="module"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
     <title>Setup Companies</title>
 </head>
 <style>
@@ -17,12 +18,6 @@
         padding: 0;
         margin: 0;
         overflow: hidden;
-    }
-    /* --------------------------------------------------- */
-    /* Removes the up/down arrows from number input */
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-        -webkit-appearance: none;
     }
 
     input[type="text"],
@@ -79,29 +74,12 @@
             width: 100%;
         }
     }
-
-    /* --------------------------------------------------- */
-    .button {
-        background-color: black;
-        color: white;
-        font-weight: bold;
-        padding-top: 0.2rem;
-        padding-bottom: 0.2rem;
-        padding-left: 1rem;
-        padding-right: 1rem;
-        border-radius: 0.25rem;
-    }
-
-    .button:hover {
-        background-color: #3b82f6;
-        /* hover:bg-blue-500 */
-    }
 </style>
 
-<body class="flex flex-col min-h-screen">
+<body class="flex flex-col min-h-screen p-0 pb-40">
     <div class="flex-grow">
         <div class="w-full bg-blue-500 text-white p-4 fixed top-0">
-            <h1 class="text-3xl font-bold mb-4">Dr Jim app 🩻</h1>
+            <h1 class="text-3xl font-bold mb-4"> Dr Jim app</h1>
         </div>
 
         <div class="fixed left-0 top-16 h-full w-64 bg-blue-500 p-4 text-black p-4">
@@ -168,9 +146,9 @@
         </div>
         <div id="providerList" class="ml-72 overflow-auto mb-4"></div>
     </div>
-    <div id="footerId" class="w-full text-center bg-gray-800 text-white py-8" style="max-height: 200px;">
+    <div id="footerId" class="w-full text-center bg-blue-500 text-white p-4 fixed bottom-0 h-28">
         <div id="authState"></div>
-        <button id="logoutButton" type="button" class="bg-red-500 rounded px-4 py-2">Log out</button>
+        <button id="logoutButton" class="button">Log out</button>
     </div>
 
 </body>
