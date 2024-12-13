@@ -2,12 +2,7 @@
 
 ## TODO
 * hermit
-* authenticate with email and google
 * identify single site or multi site user
-* upload a csv, parse and put into firestore
-* display content
-* modify content an load down again
-
 * preview channels
 
 ## insane things about javascript
@@ -23,7 +18,7 @@
  init                 start new project
 
  emulators:start      run locally
- deploy               --only hosting 
+ emulators:deploy     --only hosting 
 
  ## Firebase SDK
  Copy the dependancies into index.js:
