@@ -5,14 +5,13 @@ export { currentUser, setUser } from './storage.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 export const app = initializeApp(firebaseConfig);
 
-import {
-    getAuth, connectAuthEmulator
-} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-export const auth = getAuth(app);
+import { getStorage, ref, uploadBytes, getDownloadURL, getMetadata, deleteObject, connectStorageEmulator }
+    from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
+export const storage = getStorage(app);
 
-if (isLocal) {
-    connectAuthEmulator(auth, "http://localhost:9099");
-}
+import { getAuth, connectAuthEmulator }
+    from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+export const auth = getAuth(app);
 
 import {
     connectFirestoreEmulator,
@@ -25,14 +24,17 @@ import {
     deleteDoc,
     collection,
     collectionGroup,
-    query,
     where,
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js'
 
 export const db = getFirestore(app);
+
 if (isLocal) {
+    connectAuthEmulator(auth, "http://localhost:9099");
+    connectStorageEmulator(storage, '127.0.0.1', 9199)
     connectFirestoreEmulator(db, 'localhost', 8080)
 }
+
 import { getPerformance, trace }
     from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-performance.js';
 const perf = getPerformance(app);
@@ -60,13 +62,13 @@ export function getStore(key) {
 export function clearAllFileDetails() {
     clearStore(fileContentsKey);
     clearStore(fileNameKey);
-    clearStore(adjustmentKey);   
+    clearStore(adjustmentKey);
 
-    clearStore(missingServiceCodes);    
-    clearStore(noItemNrs);    
-    clearStore(missingItemsKey);    
-    clearStore(missingProvidersKey);    
- }
+    clearStore(missingServiceCodes);
+    clearStore(noItemNrs);
+    clearStore(missingItemsKey);
+    clearStore(missingProvidersKey);
+}
 export function storeAdjustments(provider, desc, val) {
     let adj = JSON.parse(sessionStorage.getItem(adjustmentKey));
     if (!adj) {
@@ -145,6 +147,55 @@ export function clearAllCache(key) {
     clearStore(getProvidersLabel);
     clearStore(getPractitionersLabel);
 }
+//////// Funky file caching /////////////////////
+async function cacheFileIn(key, id, file) {
+    const dataToStore = {
+        name: file.name,
+        data: await fileToBase64(file),
+        timestamp: Date.now()
+    };
+    const jsonString = JSON.stringify(dataToStore);
+    key = key + id.replace(/\s+/g, '_');;
+    storeStuff(key, jsonString);
+
+}
+function cacheFileOut(key, id) {
+    key = key + id.replace(/\s+/g, '_');
+    const jsonString = getStore(key);
+    if (jsonString) {
+        const val = JSON.parse(jsonString);
+        const old = Date.now() - 5 * 60 * 1000
+        if (val.timestamp > old) {
+            console.log('Found in cache:', key);
+            return base64ToFile(val.data, val.name);
+        }
+        clearStore(key);
+    }
+    return null;
+}
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            resolve(reader.result);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+function base64ToFile(base64, fileName) {
+    const arr = base64.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], fileName, { type: mime });
+}
+///////////////////////////////////////////////////////////////
 export function startTrace(name) {
     const customTrace = trace(perf, name);
     console.time(name);
@@ -165,13 +216,13 @@ export function parseValidFloat(value, decimalPlaces, lowerLimit, upperLimit) {
     const validNumberRegex = /^-?\d+(\.\d+)?$/;
 
     if (!validNumberRegex.test(value)) {
-        return NaN; 
+        return NaN;
     }
     let num = parseFloat(value);
     if (decimalPlaces >= 0) {
         num = parseFloat(num.toFixed(decimalPlaces));
     }
-    if ((lowerLimit !== undefined && num < lowerLimit) || 
+    if ((lowerLimit !== undefined && num < lowerLimit) ||
         (upperLimit !== undefined && num > upperLimit)) {
         return NaN;
     }
@@ -197,7 +248,7 @@ export function createEntryField(parent, fieldName, labelText, fieldValue, addLe
     if (fieldValue) {
         input.value = fieldValue;
     }
-    input.classList.add(fieldName.toLowerCase().replace(/ /g, '-'));
+    input.classList.add(fieldName)
     input.classList.add(bottomMargin, leftMargin);
     container.appendChild(input);
     if (parent) {
@@ -225,6 +276,9 @@ export async function getClinics(userId) {
         }
         const listRef = await querySnapshot.docs
         clinics = Array.from(querySnapshot.docs, doc => ({ id: doc.id, ...doc.data() }))
+
+        await Promise.all(clinics.map((clinic) => { getFile(clinic.id, clinic.logoUrl) }));
+
         cacheIn(getClinicsLabel, userId, "", clinics)
         return { data: clinics, error: "" };
     } catch (error) {
@@ -242,7 +296,6 @@ export async function setClinics(userId, clinicList, userEmail) {
         clearCache(getClinicsLabel);
         const userRef = doc(db, "users", userId);
         const clinicsRef = collection(userRef, "companyDetails");
-
         // Save the user's email
         await setDoc(userRef, { name: userEmail }, { merge: true });
 
@@ -255,33 +308,43 @@ export async function setClinics(userId, clinicList, userEmail) {
         // Delete all the attached service codes and providers in parallel.
         // This stops dangling referrences when the company is deleted
         const serviceCodePromises = docsToRemove.map(docId => setServiceCodes(userId, docId, new Map()));
-        const providerPromises = docsToRemove.map(docId => setProviders(userId, docId, [])); 
-        await Promise.all([...serviceCodePromises, ...providerPromises]);        
+        const providerPromises = docsToRemove.map(docId => setProviders(userId, docId, []));
+        await Promise.all([...serviceCodePromises, ...providerPromises]);
         // Delete the documents that are not in the clinicList
         await Promise.all(docsToRemove.map(docId => deleteDoc(doc(clinicsRef, docId))));
-
         // Update the documents that are in the clinicList
-        await Promise.all(clinicList.map(clinic => {
+        await Promise.all(clinicList.map(async clinic => {
             const clinicDetails = clinic.id ? doc(clinicsRef, clinic.id) : doc(clinicsRef);
-
             return setDoc(clinicDetails, {
                 name: clinic.name,
                 address: clinic.address,
                 abn: clinic.abn,
                 postcode: clinic.postcode,
                 accountingLine: clinic.accountingLine,
-                email: clinic.email
+                email: clinic.email,
+                logoUrl: ""
             }, { merge: true });
-            //
-            // Make sure every clininc has default service codes associated with it
-            //
         }));
+        //
+        // Make sure every clininc has default service codes associated with it
+        //
         const querySnapshot = await getDocs(clinicsRef);
-        for (const doc of querySnapshot.docs) {
-            const clinicId = doc.id;
+        for (const clinicDoc of querySnapshot.docs) {
+            //
+            // Attach the default service codes to the clinic
+            // 
+            const clinicId = clinicDoc.id;
             const error = await defaultServiceCodes(userId, clinicId);
             if (error) {
                 return error;
+            }
+            // Now get the logo and store it
+            //
+            const fileUrl = await getFileFromCacheAndStore(clinicId, clinicDoc.data().name);
+            if (fileUrl) {
+                // Update the document with the new logo URL
+                const clinicRef = doc(clinicsRef, clinicId);
+                await setDoc(clinicRef, { logoUrl: fileUrl }, { merge: true });
             }
         };
         return "";
@@ -289,7 +352,97 @@ export async function setClinics(userId, clinicList, userEmail) {
         return error.message;
     }
 }
+////////////// logo file handling //////////////////////////
+export async function getFileFromCacheAndStore(clinicId, companyName) {
+    // Is there a file stored under the clinicId
+    let logo = getLogo(clinicId, "")
+    if (logo.error) {
+        console.log(logo.error)
+        return "";
+    }
+    // If no, check under company name as new records do not have an id
+    if (!logo.data) {
+        logo = getLogo("", companyName);
+        if (logo.error) {
+            console.log(logo.error)
+            return "";
+        }
+    }
+    if (logo.data) {
+        // check if it has changed
+        const res = await storeFile(logo.data, clinicId)
+        if (res.error) {
+            console.log(res.error)
+        }
+        return res.link;
+    }
+    return "";
+}
 
+export async function storeFile(file, companyId) {
+    if (!file) {
+        return { link: "", error: null };
+    }
+    try {
+        const fname = file.name.replace(/\s+/g, '_');
+        const storageRef = ref(storage, `user/${companyId}/${fname}`);
+        await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(storageRef);
+        return { link: url, error: null };
+    } catch (error) {
+        return { link: "", error: error.message };
+    }
+}
+export async function deleteStoreFile(file, clinicId) {
+    const storageRef = ref(storage, `user/${clinicId}/${file.name}`);
+    try {
+        await deleteObject(storageRef);
+    } catch (error) {
+        if (error.code !== 'storage/object-not-found') {
+            console.log(`Error deleting stored file: ${error.message}`);
+        }
+    }
+}
+export async function getFile(clinicId, fileUrl) {
+    if (!fileUrl) {
+        return { file: "", error: "" };
+    }
+    try {
+        const storageRef = ref(storage, fileUrl);
+
+        // Fetch the file metadata to get the filename
+        const metadata = await getMetadata(storageRef);
+        const fileName = metadata.name;
+
+        const response = await fetch(fileUrl);
+        if (!response.ok) {
+            return { file: "", error: new Error(`Failed to fetch file: ${response.statusText}`) };
+        }
+        const fileBlob = await response.blob();
+        const file = new File([fileBlob], fileName, { type: fileBlob.type });
+        await setLogo(clinicId, "", file);
+        return { file: fileBlob, error: null };
+    } catch (error) {
+        return { file: null, error: error.message };
+    }
+}
+
+export const logoLabel = 'logoLabel';
+export function getLogo(clinicId, companyName) {
+    const key = clinicId ? clinicId : companyName;
+    const logo = cacheFileOut(logoLabel, key);
+    if (logo) { return { data: logo, error: "" }; }
+    return { data: "", error: "" };
+}
+
+export async function setLogo(clinicId, companyName, logo) {
+    if (!logo) {
+        return;
+    }
+    const key = clinicId ? clinicId : companyName;
+    await cacheFileIn(logoLabel, key, logo);
+}
+///////////////////////////////////////////////////////////////
 async function defaultServiceCodes(userId, clinicId) {
     let empty = false
     try {
