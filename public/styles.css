@@ -97,3 +97,14 @@ input {
 .button:hover {
     background-color: #3b82f6;
 }
+
+.logo-upload-container {
+    margin-top: 20px;
+}
+
+.logo-preview {
+    width: 80px; /* Set the width to 80px */
+    height: 80px; /* Set the height to 80px */
+    display: block;
+    margin-bottom: 20px;
+}
