@@ -213,10 +213,7 @@ submitButton.addEventListener('click', async (e) => {
             //
             // If there was a previous logo stored under this id, it has to be deleted
             // 
-            const { data: storedLogo, error } = getLogo(docIds[i], "");
-            if (error) {
-                console.error(`Error retrieving stored logo for ${companyNames[i]}: ${error}`);
-            }
+            const { data: storedLogo } = getLogo(docIds[i], "");
 
             const newLogoUrl = URL.createObjectURL(logoFiles[i]);
             if (storedLogo && newLogoUrl !== URL.createObjectURL(storedLogo)) {

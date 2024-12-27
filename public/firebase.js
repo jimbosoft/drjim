@@ -167,11 +167,11 @@ function cacheFileOut(key, id) {
         const old = Date.now() - 5 * 60 * 1000
         if (val.timestamp > old) {
             console.log('Found in cache:', key);
-            return base64ToFile(val.data, val.name);
+            return {file: base64ToFile(val.data, val.name), buffer: val.data};
         }
         clearStore(key);
     }
-    return null;
+    return {file: null, buffer: null};
 }
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {
@@ -356,17 +356,9 @@ export async function setClinics(userId, clinicList, userEmail) {
 export async function getFileFromCacheAndStore(clinicId, companyName) {
     // Is there a file stored under the clinicId
     let logo = getLogo(clinicId, "")
-    if (logo.error) {
-        console.log(logo.error)
-        return "";
-    }
     // If no, check under company name as new records do not have an id
     if (!logo.data) {
         logo = getLogo("", companyName);
-        if (logo.error) {
-            console.log(logo.error)
-            return "";
-        }
     }
     if (logo.data) {
         // check if it has changed
@@ -430,9 +422,9 @@ export async function getFile(clinicId, fileUrl) {
 export const logoLabel = 'logoLabel';
 export function getLogo(clinicId, companyName) {
     const key = clinicId ? clinicId : companyName;
-    const logo = cacheFileOut(logoLabel, key);
-    if (logo) { return { data: logo, error: "" }; }
-    return { data: "", error: "" };
+    const {file: fileKind, buffer: bufferKind} = cacheFileOut(logoLabel, key);
+    if (fileKind) { return { data: fileKind, buffer: bufferKind }; }
+    return { data: "", buffer: "" };
 }
 
 export async function setLogo(clinicId, companyName, logo) {

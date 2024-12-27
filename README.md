@@ -35,7 +35,19 @@ Used **Remote Config** key **env** to know if it is running locally against emul
  ## Secret 
  you need the secret: **config.js** in order to run
 
- ### What I learnt
+## Structure Explanation
+### Logo
+The logo is uploaded on the Company Details screen. <br>
+It is stored in cache and when commit is pressed on the page the comapny details are written to firestore <br>
+and the default service codes and the logo are written to the firestore separately <br>
 
+### Company email
+The email entered on the company page needs to be verified<br>
+This happens when the commit button is pressed and the email address is sent to the backend, <br>
+which in turn sends it to mailjet, which will send a activation email to the address<br>
+The user of that email address has to "Activate" the account <br>
+Any attempt to send email from a non activated email address will be rejected <br>
+
+### What I learnt
 [What I learnt](./public/MyJourney.md)
 

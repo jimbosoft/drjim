@@ -4,7 +4,8 @@ import {
     missingProvidersKey, missingItemsKey, missingServiceCodes, noItemNrs,
     fileContentsKey, fileNameKey, adjustmentKey, startTrace, stopTrace,
     storeAdjustments, getAdjustments, removeAdjustment,
-    getClinics
+    getClinics,
+    getLogo
 } from './firebase.js';
 import { cloudServiceConfig } from './config.js';
 import { displayErrors, clearErrors } from './dashboard.js';
@@ -78,12 +79,14 @@ async function getCompanyDetails(userId) {
 
     for (const clinic of clinics.data) {
         if (clinic.id === selectedOption.dataset.id) {
+            const logo = getLogo(clinic.id, "")
             return {
                 Name: clinic.name,
                 StreetAddress: clinic.address,
                 City: clinic.postcode,
                 ABN: clinic.abn,
-                Email: ""
+                Email: "",
+                Logo: logo.buffer
             };
         }
     }
