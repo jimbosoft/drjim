@@ -108,3 +108,36 @@ input {
     display: block;
     margin-bottom: 20px;
 }
+
+.verify-text {
+    font-size: 14px;
+    /* Increase the font size */
+    color: #ff0000;
+    /* Change the text color to red */
+    background-color: #ffffcc;
+    /* Add a light yellow background color */
+    padding: 5px;
+    /* Add some padding around the text */
+    margin-left: 10px;
+    /* Add some margin to the left */
+    font-weight: bold;
+    /* Make the text bold */
+    border-radius: 5px;
+    /* Optional: Add rounded corners */
+    display: inline-block;
+    /* Ensure the background color wraps the text */
+}
+
+.email-active {
+    color: green;
+}
+
+/* Force pasted text to be neutral */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    -webkit-text-fill-color: inherit !important;
+    transition: background-color 5000s ease-in-out 0s;
+}

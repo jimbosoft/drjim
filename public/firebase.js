@@ -254,7 +254,7 @@ export function createEntryField(parent, fieldName, labelText, fieldValue, addLe
     if (parent) {
         parent.appendChild(container)
     }
-    return container;
+    return { container, input };
 }
 
 //-------------------- firestore from here --------------------
@@ -322,6 +322,7 @@ export async function setClinics(userId, clinicList, userEmail) {
                 postcode: clinic.postcode,
                 accountingLine: clinic.accountingLine,
                 email: clinic.email,
+                emailActive: clinic.emailActive,
                 logoUrl: ""
             }, { merge: true });
         }));
