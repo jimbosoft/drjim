@@ -333,13 +333,6 @@ async function registerNewEmail(name, email) {
     return { active: false, error: null }
 }
 
-const isEmailActive = "isEmailActive";
-function checkEmailActive(email) {
-    const apiCallTrace = startTrace(isEmailActive);
-
-    stopTrace(apiCallTrace, isEmailActive);
-}
-
 async function httpCall(url, payload) {
     let response = { ok: true };
     try {
