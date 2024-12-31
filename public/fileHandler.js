@@ -139,7 +139,7 @@ async function processFile(fileContents) {
     progressBar.style.display = 'none';
 }
 
-const APICall = "APICall";
+const APICall = "SubmitFileAPICall";
 
 async function callDataProcessor(fileContents) {
     return await getProviderDetails(currentUser.email, localStorage.getItem(clinicId))
