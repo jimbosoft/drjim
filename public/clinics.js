@@ -1,7 +1,8 @@
 import {
     auth, setUser, currentUser, getClinics, setClinics,
     createEntryField, leftMargin, bottomMargin,
-    getLogo, setLogo, deleteStoreFile, startTrace, stopTrace
+    getLogo, setLogo, deleteStoreFile, startTrace, stopTrace,
+    isEmailEnabled
 } from './firebase.js';
 import {
     islogoutButtonPressed,
@@ -152,21 +153,24 @@ function addEmail(section, index, email, active) {
 
     const emailContainer = document.createElement('div');
     const { input: emailInput } = createEntryField(emailContainer, "email", "Email", email, false)
-    const verifyButton = document.createElement('button');
-    verifyButton.type = 'button';
-    verifyButton.textContent = 'Verify';
-    verifyButton.classList.add('verify', leftMargin, bottomMargin, 'button');
-    emailContainer.appendChild(verifyButton);
-    const verifyText = document.createElement('span');
-    verifyText.classList.add('verify-text', leftMargin);
-    emailContainer.appendChild(verifyText);
-    setEmailText(active, verifyButton, verifyText, emailInput)
-    addVerifyButtonHandler(verifyButton, verifyText, index);
+ 
+    if (isEmailEnabled()) {
+        const verifyButton = document.createElement('button');
+        verifyButton.type = 'button';
+        verifyButton.textContent = 'Verify';
+        verifyButton.classList.add('verify', leftMargin, bottomMargin, 'button');
+        emailContainer.appendChild(verifyButton);
+        const verifyText = document.createElement('span');
+        verifyText.classList.add('verify-text', leftMargin);
+        emailContainer.appendChild(verifyText);
+        setEmailText(active, verifyButton, verifyText, emailInput)
+        addVerifyButtonHandler(verifyButton, verifyText, index);
+ 
+        emailInput.addEventListener('input', () => {
+            setEmailText(false, verifyButton, verifyText, emailInput)
+        });
+    }
     section.appendChild(emailContainer);
-
-    emailInput.addEventListener('input', () => {
-        setEmailText(false, verifyButton, verifyText, emailInput)
-    });
 }
 
 function setEmailText(active, verifyButton, verifyText, emailInput) {
@@ -251,7 +255,7 @@ submitButton.addEventListener('click', async (e) => {
         // Check for duplicate company names and cache the logos
         if (nameSet.has(companyNames[i])) {
             alert(`Duplicate company name found: ${companyNames[i]}`);
-            return; 
+            return;
         }
         nameSet.add(companyNames[i]);
 
@@ -272,7 +276,7 @@ submitButton.addEventListener('click', async (e) => {
     // Create an array of company and address objects
     const companies = companyNames.map((name, i) => ({
         docId: docIds[i], name: companyNames[i], address: addresses[i], abn: companyAbn[i],
-        postcode: companyPostcode[i], accountingLine: accountingLine[i], 
+        postcode: companyPostcode[i], accountingLine: accountingLine[i],
         email: email[i], emailActive: emailActiveStatus[i],
         logoUrl: ""
     }));

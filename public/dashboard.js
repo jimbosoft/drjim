@@ -115,10 +115,17 @@ function companySelected(companyId) {
 }
 
 export function displayErrors(error) {
-    const messageOutput = document.getElementById("messageOutput")
-    messageOutput.innerHTML = error
+    const messageOutput = document.getElementById("messageOutput");
+    messageOutput.innerHTML = `
+        <span>${error}</span>
+        <button id="closeErrorButton" style="background: none; border: none; color: red; font-size: 16px; cursor: pointer;">&times;</button>
+    `;
     messageOutput.style.color = 'red';
-    messageOutput.style.diplay = 'block';
+    messageOutput.style.display = 'block';
+
+    // Add event listener to the close button
+    const closeErrorButton = document.getElementById("closeErrorButton");
+    closeErrorButton.addEventListener('click', clearErrors);
 }
 export function clearErrors() {
     document.getElementById("messageOutput").innerText = '';

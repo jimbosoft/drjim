@@ -256,7 +256,16 @@ export function createEntryField(parent, fieldName, labelText, fieldValue, addLe
     }
     return { container, input };
 }
-
+//
+// Future work. Currently implements verifying emails 
+// during configuration, but sending is still a huge problem
+// as if the sender has its domain not configured to allow 
+// mailjet to send on it's behalf, it will fail the DKIM authentication
+// This means I had to remove all email related code
+//
+export function isEmailEnabled() {
+    return false;
+}
 //-------------------- firestore from here --------------------
 const getClinicsLabel = 'getClinics'
 export async function getClinics(userId) {
