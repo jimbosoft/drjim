@@ -1,7 +1,8 @@
 import {
     auth, setUser, currentUser, getClinics, setClinics,
-    createEntryField, leftMargin, bottomMargin, storeFile,
-    getLogo, setLogo, deleteStoreFile
+    createEntryField, leftMargin, bottomMargin,
+    getLogo, setLogo, deleteStoreFile, startTrace, stopTrace,
+    isEmailEnabled
 } from './firebase.js';
 import {
     islogoutButtonPressed,
@@ -11,6 +12,7 @@ import {
 } from './footer.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { clinicId } from './storage.js';
+import { cloudServiceConfig } from './config.js';
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -38,7 +40,7 @@ function populateClinic() {
         if (clinics) {
             for (const [index, clinic] of clinics.entries()) {
                 createCompanyAddressSection(index, clinic.id, clinic.name, clinic.address, clinic.abn,
-                    clinic.postcode, clinic.email);
+                    clinic.postcode, clinic.email, clinic.emailActive);
             }
         }
         addBlankClinicAtBottom()
@@ -53,7 +55,7 @@ function addBlankClinicAtBottom() {
 }
 
 // Function to create a new company and address section
-function createCompanyAddressSection(index, id, name, address, abn, postcode, email) {
+function createCompanyAddressSection(index, id, name, address, abn, postcode, email, emailActive) {
     const section = document.createElement('div');
     section.classList.add(addressSection, 'row');
 
@@ -79,16 +81,7 @@ function createCompanyAddressSection(index, id, name, address, abn, postcode, em
     createEntryField(section, "postcode", "Suburb, State, Postcode", postcode)
     createEntryField(section, "abn", "ABN", abn)
 
-    const emailContainer = document.createElement('div');
-    createEntryField(emailContainer, "email", "Email", email, false)
-    const verifyButton = document.createElement('button');
-    verifyButton.type = 'button';
-    verifyButton.textContent = 'Verify';
-    verifyButton.classList.add('verify', leftMargin, bottomMargin, 'button');
-    emailContainer.appendChild(verifyButton);
-    addDeleteButtonHandler(verifyButton, index, id);
-    section.appendChild(emailContainer)
-
+    addEmail(section, index, email, emailActive)
     section.appendChild(addLogo(id));
     const div = document.getElementById('company-form');
     div.appendChild(section);
@@ -101,7 +94,6 @@ function createCompanyAddressSection(index, id, name, address, abn, postcode, em
             rows[i].classList.add('odd-row');
         }
     }
-    
     const blankLine = document.createElement('div');
     blankLine.classList.add(bottomMargin);
     div.appendChild(blankLine);
@@ -157,6 +149,62 @@ function addLogo(id) {
     return logoContainer;
 }
 
+function addEmail(section, index, email, active) {
+
+    const emailContainer = document.createElement('div');
+    const { input: emailInput } = createEntryField(emailContainer, "email", "Email", email, false)
+ 
+    if (isEmailEnabled()) {
+        const verifyButton = document.createElement('button');
+        verifyButton.type = 'button';
+        verifyButton.textContent = 'Verify';
+        verifyButton.classList.add('verify', leftMargin, bottomMargin, 'button');
+        emailContainer.appendChild(verifyButton);
+        const verifyText = document.createElement('span');
+        verifyText.classList.add('verify-text', leftMargin);
+        emailContainer.appendChild(verifyText);
+        setEmailText(active, verifyButton, verifyText, emailInput)
+        addVerifyButtonHandler(verifyButton, verifyText, index);
+ 
+        emailInput.addEventListener('input', () => {
+            setEmailText(false, verifyButton, verifyText, emailInput)
+        });
+    }
+    section.appendChild(emailContainer);
+}
+
+function setEmailText(active, verifyButton, verifyText, emailInput) {
+    if (active) {
+        verifyButton.style.display = 'none';
+        verifyText.textContent = 'Verified';
+        verifyText.classList.replace('verify-text', 'email-active');
+        emailInput.setAttribute('data-verified', 'true');
+    } else {
+        verifyButton.style.display = 'inline-block';
+        verifyText.textContent = "No invoices can be sent till the email is verified. Press verify and go to the inbox and activate the mailjet account.";
+        verifyText.classList.replace('email-active', 'verify-text');
+        emailInput.setAttribute('data-verified', 'false');
+    }
+}
+
+async function addVerifyButtonHandler(verifyButton, verifyText, index) {
+    verifyButton.addEventListener('click', async () => {
+        const sections = Array.from(form.getElementsByClassName(addressSection));
+        const emailInput = sections[index].querySelector('.email');
+        const emailValue = emailInput ? emailInput.value.trim() : '';
+        const companyNameInput = sections[index].querySelector('.companyName');
+        const companyNameValue = companyNameInput ? companyNameInput.value.trim() : '';
+        if (emailValue && companyNameValue) {
+            const res = await registerNewEmail(companyNameValue, emailValue);
+            if (res.active) {
+                setEmailText(true, verifyButton, verifyText, emailInput)
+            }
+        } else {
+            alert('Please fill in company name and email to verify');
+        }
+    });
+}
+
 function addDeleteButtonHandler(deleteButton, index, id) {
     deleteButton.addEventListener('click', async () => {
         const sections = Array.from(form.getElementsByClassName(addressSection));
@@ -198,14 +246,16 @@ submitButton.addEventListener('click', async (e) => {
     const companyAbn = Array.from(form.getElementsByClassName('abn'), input => input.value.trim()).filter(value => value !== '');
     const companyPostcode = Array.from(form.getElementsByClassName('postcode'), input => input.value.trim()).filter(value => value !== '');
     const accountingLine = Array.from(form.getElementsByClassName('accountingLine'), input => input.value.trim()).filter(value => value !== '');
-    const email = Array.from(form.getElementsByClassName('email'), input => input.value.trim()).filter(value => value !== '');
+    const emailInputs = Array.from(form.getElementsByClassName('email'));
+    const email = emailInputs.map(input => input.value.trim()).filter(value => value !== '');
+    const emailActiveStatus = emailInputs.map(input => input.getAttribute('data-verified') === 'true');
     const logoFiles = Array.from(form.querySelectorAll('input[type="file"]')).map(input => input.files[0]);
-    // Check for duplicate company names and cache the logos
     const nameSet = new Set();
     for (let i = 0; i < companyNames.length; i++) {
+        // Check for duplicate company names and cache the logos
         if (nameSet.has(companyNames[i])) {
             alert(`Duplicate company name found: ${companyNames[i]}`);
-            return; // Stop form submission
+            return;
         }
         nameSet.add(companyNames[i]);
 
@@ -219,14 +269,15 @@ submitButton.addEventListener('click', async (e) => {
             if (storedLogo && newLogoUrl !== URL.createObjectURL(storedLogo)) {
                 deleteStoreFile(storedLogo, docIds[i])
             }
-         }
-         await setLogo(docIds[i], companyNames[i], logoFiles[i]);
+        }
+        await setLogo(docIds[i], companyNames[i], logoFiles[i]);
     }
 
     // Create an array of company and address objects
     const companies = companyNames.map((name, i) => ({
         docId: docIds[i], name: companyNames[i], address: addresses[i], abn: companyAbn[i],
-        postcode: companyPostcode[i], accountingLine: accountingLine[i], email: email[i],
+        postcode: companyPostcode[i], accountingLine: accountingLine[i],
+        email: email[i], emailActive: emailActiveStatus[i],
         logoUrl: ""
     }));
     let companiesArray = companies.map(company => ({
@@ -237,6 +288,7 @@ submitButton.addEventListener('click', async (e) => {
         accountingLine: company.accountingLine || "",
         address: company.address || "",
         email: company.email || "",
+        emailActive: company.emailActive || false,
         logoUrl: company.logo || ""
     }));
 
@@ -259,4 +311,52 @@ cancelButton.addEventListener('click', async (e) => {
 
 function entryComplete() {
     window.location.href = '/dashboard.html';
+}
+
+const registerEmailAPICall = "registerEmailAPICall";
+async function registerNewEmail(name, email) {
+    const apiCallTrace = startTrace(registerEmailAPICall);
+    const mailAddress = {
+        Email: email,
+        Name: name
+    }
+    const payload = JSON.stringify(mailAddress)
+    const res = await httpCall(cloudServiceConfig.registerEmail, payload)
+    stopTrace(apiCallTrace, registerEmailAPICall);
+    if (res.error) {
+        console.log("Register email " + email + " failed with: " + res.error);
+    }
+    else {
+        if (res.resp.status == 202) {
+            return { active: true, error: null }
+        }
+        else if (!res.resp.ok) {
+            console.log("Register email " + email + " returned code: " + res.resp);
+        }
+    }
+    return { active: false, error: null }
+}
+
+async function httpCall(url, payload) {
+    let response = { ok: true };
+    try {
+        response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: payload
+        });
+        if (!response.ok) {
+            let errorMessage = "HTTP error: " + response.status + " " + response.statusText;
+            const errorText = await response.text();
+            if (errorText) {
+                errorMessage += " " + errorText;
+            }
+            return { resp: null, error: errorMessage }
+        }
+        return { resp: response, error: null }
+    } catch (error) {
+        return { resp: null, error: error.message }
+    }
 }

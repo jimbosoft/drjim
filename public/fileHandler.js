@@ -4,8 +4,7 @@ import {
     missingProvidersKey, missingItemsKey, missingServiceCodes, noItemNrs,
     fileContentsKey, fileNameKey, adjustmentKey, startTrace, stopTrace,
     storeAdjustments, getAdjustments, removeAdjustment,
-    getClinics,
-    getLogo
+    getClinics, getLogo, isEmailEnabled
 } from './firebase.js';
 import { cloudServiceConfig } from './config.js';
 import { displayErrors, clearErrors } from './dashboard.js';
@@ -85,7 +84,8 @@ async function getCompanyDetails(userId) {
                 StreetAddress: clinic.address,
                 City: clinic.postcode,
                 ABN: clinic.abn,
-                Email: "",
+                Email: clinic.email,
+                Active: clinic.emailActive,
                 Logo: logo.buffer
             };
         }
@@ -139,7 +139,7 @@ async function processFile(fileContents) {
     progressBar.style.display = 'none';
 }
 
-const APICall = "APICall";
+const APICall = "SubmitFileAPICall";
 
 async function callDataProcessor(fileContents) {
     return await getProviderDetails(currentUser.email, localStorage.getItem(clinicId))
@@ -224,7 +224,7 @@ async function callDataProcessor(fileContents) {
                 const data = fileResult.chargeDetail
                 let dataMap = new Map(Object.entries(data));
                 if (dataMap instanceof Map && dataMap.size > 0) {
-                    generateProviderList(dataMap, fileResult.invoicePackage, stuffMissing);
+                    generateProviderList(dataMap, fileResult.invoicePackage, stuffMissing, companyDetails, result.pracDetails);
                 }
             }
             return ""
@@ -281,7 +281,7 @@ async function getProviderDetails(userId, clinicId) {
 }
 const wrapSection = 'flex-wrap-section';
 const bottomMargin = 'bottom-margin';
-function generateProviderList(data, zipFile, stuffMissing) {
+function generateProviderList(data, zipFile, stuffMissing, companyDetails, pracDetails) {
     const providerListElement = document.getElementById('providerList');
 
     const providerContainer = document.createElement('div');
@@ -306,11 +306,13 @@ function generateProviderList(data, zipFile, stuffMissing) {
             };
             providerContainer.appendChild(downloadAll);
         }
-        const emailAll = document.createElement('button');
-        emailAll.innerText = 'Email All';
-        emailAll.className = 'button';
-        providerContainer.appendChild(emailAll);
-        providerListElement.appendChild(providerContainer);
+        if (isEmailEnabled()) {
+            const emailAll = document.createElement('button');
+            emailAll.innerText = 'Email All';
+            emailAll.className = 'button';
+            providerContainer.appendChild(emailAll);
+            providerListElement.appendChild(providerContainer);
+        }
 
         const blankline = document.createElement('div');
         blankline.style.height = '20px';
@@ -348,11 +350,14 @@ function generateProviderList(data, zipFile, stuffMissing) {
             adjustmentsContainer.style.width = '100%';
             providerContainer.appendChild(adjustmentsContainer);
             addAdjustmentsButtonHandler(key, adjustmentsButton, adjustmentsContainer, viewPdfLink);
-            const mailButton = document.createElement('button');
-            mailButton.innerText = 'Email';
-            mailButton.className = 'button';
-            providerContainer.appendChild(mailButton);
-            addEmailButtonHandler(mailButton);
+
+            if (isEmailEnabled()) {
+                const mailButton = document.createElement('button');
+                mailButton.innerText = 'Email';
+                mailButton.className = 'button';
+                providerContainer.appendChild(mailButton);
+                addEmailButtonHandler(mailButton, companyDetails, pracDetails[key]);
+            }
         }
         else if (!stuffMissing) {
             displayErrors("Error: No invoice pdf returned");
@@ -360,6 +365,7 @@ function generateProviderList(data, zipFile, stuffMissing) {
         providerListElement.appendChild(providerContainer);
     });
 }
+
 function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfLink) {
     const newRow = document.createElement('div');
     newRow.style.display = 'block';
@@ -473,7 +479,14 @@ function addAdjustmentsButtonHandler(provider, detailsButton, detailsContainer, 
     });
 }
 
-function addEmailButtonHandler(mailButton) {
+function addEmailButtonHandler(mailButton, companyDetails, pracDetails) {
     mailButton.addEventListener('click', function () {
+        console.log("Found " + companyDetails.Email + " " + companyDetails.Active + " " + pracDetails.Email)
+        if (!companyDetails.Active) {
+            displayErrors("Can not email as company email address " + companyDetails.Email + " has not been verified")
+        }
+        else if (!pracDetails.Email.trim()) {
+            displayErrors("Can not email as provider email is blank")
+        }
     });
 }
