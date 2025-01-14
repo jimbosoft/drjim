@@ -256,6 +256,7 @@ async function getProviderDetails(userId, clinicId) {
         practitioners.forEach(practitioner => {
             PracDetails[practitioner.name] = {
                 Name: practitioner.name,
+                Entity: practitioner.entity,
                 StreetAddress: practitioner.street,
                 City: practitioner.burb,
                 ABN: practitioner.abn,

@@ -634,6 +634,7 @@ export async function setProviders(userId, clinicId, practitioners) {
             try {
                 await setDoc(providerDetails, {
                     name: practitioner.name,
+                    entity: practitioner.entity,
                     street: practitioner.street,
                     burb: practitioner.burb,
                     email: practitioner.email,
@@ -717,6 +718,7 @@ export async function getPractitioners(userId, clinicId) {
             return {
                 id: doc.id,
                 name: doc.name,
+                entity: doc.entity,
                 street: doc.street,
                 burb: doc.burb,
                 email: doc.email,
