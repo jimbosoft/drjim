@@ -233,15 +233,16 @@ function addAddressEntry(details, showAddress) {
         section.style.display = 'none'; // Initially hidden
     }
     if (details) {
-        addAddressDetail(section, details.street, details.burb, details.email, details.abn)
+        addAddressDetail(section, details.entity, details.street, details.burb, details.email, details.abn)
     } else {
-        addAddressDetail(section, '', '', '', '')
+        addAddressDetail(section, '', '', '', '', '')
     }
     return section
 }
 
-function addAddressDetail(parent, street, suburb, email, abn) {
-    createEntryField(parent, "street", "Street Nr and Name", street, false)
+function addAddressDetail(parent, entity, street, suburb, email, abn) {
+    createEntryField(parent, "entity", "Invoicing Entity", entity, false)
+    createEntryField(parent, "street", "Street Nr and Name", street)
     createEntryField(parent, "burb", "Suburb, State, Postcode", suburb)
     createEntryField(parent, "email", "Email", email)
     createEntryField(parent, "abn", "ABN", abn)
@@ -274,6 +275,7 @@ submitButton.addEventListener('click', async (e) => {
         const nameInput = providerRows[i].getElementsByClassName('name-input')[0];
         let idValue = nameInput.getAttribute('data-id');
         idValue = (idValue === 'null' || idValue === null) ? '' : idValue;
+        const entity = providerRows[i].getElementsByClassName('entity')[0];
         const street = providerRows[i].getElementsByClassName('street')[0];
         const burb = providerRows[i].getElementsByClassName('burb')[0];
         const email = providerRows[i].getElementsByClassName('email')[0];
@@ -285,6 +287,7 @@ submitButton.addEventListener('click', async (e) => {
             const providerData = {
                 id: idValue,
                 name: nameInput.value,
+                entity: entity.value,
                 street: street.value,
                 burb: burb.value,
                 email: email.value,
