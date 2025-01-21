@@ -22,6 +22,7 @@ import {
     getDocs,
     getDoc,
     deleteDoc,
+    updateDoc,
     collection,
     collectionGroup,
     where,
@@ -50,7 +51,7 @@ export const fileContentsKey = 'fileContents';
 export const fileNameKey = 'fileName';
 export const adjustmentKey = 'adjustments';
 
-export function storeStuff(key, value) {
+export function setStore(key, value) {
     sessionStorage.setItem(key, value);
 }
 export function clearStore(key) {
@@ -121,7 +122,7 @@ export function cacheIn(key, userId, clinicId, value) {
         timestamp: Date.now()
     };
     const jsonString = JSON.stringify(dataToStore);
-    storeStuff(key, jsonString);
+    setStore(key, jsonString);
 }
 
 export function cacheOut(key, userId, clinicId) {
@@ -156,7 +157,7 @@ async function cacheFileIn(key, id, file) {
     };
     const jsonString = JSON.stringify(dataToStore);
     key = key + id.replace(/\s+/g, '_');;
-    storeStuff(key, jsonString);
+    setStore(key, jsonString);
 
 }
 function cacheFileOut(key, id) {
@@ -167,11 +168,11 @@ function cacheFileOut(key, id) {
         const old = Date.now() - 5 * 60 * 1000
         if (val.timestamp > old) {
             console.log('Found in cache:', key);
-            return {file: base64ToFile(val.data, val.name), buffer: val.data};
+            return { file: base64ToFile(val.data, val.name), buffer: val.data };
         }
         clearStore(key);
     }
-    return {file: null, buffer: null};
+    return { file: null, buffer: null };
 }
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {
@@ -230,7 +231,8 @@ export function parseValidFloat(value, decimalPlaces, lowerLimit, upperLimit) {
 }
 export const leftMargin = 'left-margin';
 export const bottomMargin = 'bottom-margin'
-export function createEntryField(parent, fieldName, labelText, fieldValue, addLeftMargin = true) {
+export function createEntryField(parent, fieldName, labelText, fieldValue,
+    addLeftMargin = true, inputType = 'text') {
     const container = document.createElement('div');
     container.style.display = 'inline-block';
 
@@ -243,7 +245,7 @@ export function createEntryField(parent, fieldName, labelText, fieldValue, addLe
     container.appendChild(label);
 
     const input = document.createElement('input');
-    input.type = 'text';
+    input.type = inputType;
     input.name = fieldName;
     if (fieldValue) {
         input.value = fieldValue;
@@ -332,7 +334,10 @@ export async function setClinics(userId, clinicList, userEmail) {
                 accountingLine: clinic.accountingLine,
                 email: clinic.email,
                 emailActive: clinic.emailActive,
-                logoUrl: ""
+                logoUrl: "",
+                invoicePrefix: clinic.invoicePrefix || "",
+                invoiceNumber: clinic.invoiceNumber || 1,
+                invoicePostfix: clinic.invoicePostfix || ""
             }, { merge: true });
         }));
         //
@@ -361,6 +366,13 @@ export async function setClinics(userId, clinicList, userEmail) {
     } catch (error) {
         return error.message;
     }
+}
+export async function updateClinicInvoiceNr(userId, clinicId, invoiceNr) {
+    clearCache(getClinicsLabel);
+    const clinicDocRef = doc(db, "users", userId, "companyDetails", clinicId);
+    await updateDoc(clinicDocRef, {
+        invoiceNumber: invoiceNr
+    });
 }
 ////////////// logo file handling //////////////////////////
 export async function getFileFromCacheAndStore(clinicId, companyName) {
@@ -432,7 +444,7 @@ export async function getFile(clinicId, fileUrl) {
 export const logoLabel = 'logoLabel';
 export function getLogo(clinicId, companyName) {
     const key = clinicId ? clinicId : companyName;
-    const {file: fileKind, buffer: bufferKind} = cacheFileOut(logoLabel, key);
+    const { file: fileKind, buffer: bufferKind } = cacheFileOut(logoLabel, key);
     if (fileKind) { return { data: fileKind, buffer: bufferKind }; }
     return { data: "", buffer: "" };
 }

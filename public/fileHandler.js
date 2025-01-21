@@ -1,15 +1,13 @@
 import {
     getServiceCodes, currentUser, clinicId, getPractitioners,
-    storeStuff, getStore, clearStore, clearAllFileDetails,
+    setStore, getStore, clearStore, clearAllFileDetails,
     missingProvidersKey, missingItemsKey, missingServiceCodes, noItemNrs,
-    fileContentsKey, fileNameKey, adjustmentKey, startTrace, stopTrace,
+    fileContentsKey, fileNameKey, startTrace, stopTrace,
     storeAdjustments, getAdjustments, removeAdjustment,
-    getClinics, getLogo, isEmailEnabled
+    getClinics, getLogo, isEmailEnabled, updateClinicInvoiceNr
 } from './firebase.js';
 import { cloudServiceConfig } from './config.js';
 import { displayErrors, clearErrors } from './dashboard.js';
-
-var clinicDropdown = document.getElementById('clinicDropdown');
 
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('csvFile');
@@ -55,7 +53,7 @@ document.getElementById('rerunButton').addEventListener('click', function () {
     }
 });
 
-export function showLastLoad() {
+export async function showLastLoad() {
     const fileContents = getStore(fileContentsKey);
     const fileName = getStore(fileNameKey);
     if (fileContents && fileContents !== 'null'
@@ -66,10 +64,22 @@ export function showLastLoad() {
         && fileName.length > 0 && fileName !== 'undefined') {
         document.getElementById('fileName').textContent = fileName;
     }
+    const clinic = await getCompanyDetails(currentUser.email);
+    const invoiceNr = clinic.InvoicePrefix + clinic.InvoiceNumber + clinic.InvoicePostfix
+    if (invoiceNr && invoiceNr !== 'null'
+        && invoiceNr.length > 0 && invoiceNr !== 'undefined') {
+        const invoicePreElement = document.getElementById('invoicePrefix');
+        invoicePreElement.textContent = clinic.InvoicePrefix;
+        const invoiceNrElement = document.getElementById('invoiceNr');
+        invoiceNrElement.value = clinic.InvoiceNumber;
+        invoiceNrElement.style.width = `${invoiceNrElement.value.length + 1}ch`;
+        const invoicePostElement = document.getElementById('invoicePostfix');
+        invoicePostElement.textContent = clinic.InvoicePostfix;
+   }
 }
 
 async function getCompanyDetails(userId) {
-    const selectedOption = clinicDropdown.options[clinicDropdown.selectedIndex];
+    const lastSelected = getStore(clinicId)
     const clinics = await getClinics(userId);
     if (clinics.error) {
         displayErrors("Retrieving company details failed: " + result.error.message);
@@ -77,7 +87,7 @@ async function getCompanyDetails(userId) {
     }
 
     for (const clinic of clinics.data) {
-        if (clinic.id === selectedOption.dataset.id) {
+        if (clinic.id === lastSelected) {
             const logo = getLogo(clinic.id, "")
             return {
                 Name: clinic.name,
@@ -86,7 +96,10 @@ async function getCompanyDetails(userId) {
                 ABN: clinic.abn,
                 Email: clinic.email,
                 Active: clinic.emailActive,
-                Logo: logo.buffer
+                Logo: logo.buffer,
+                InvoicePrefix: clinic.invoicePrefix,
+                InvoiceNumber: clinic.invoiceNumber,
+                InvoicePostfix: clinic.invoicePostfix
             };
         }
     }
@@ -117,8 +130,8 @@ async function handleInputFile(file) {
         const reader = new FileReader();
         reader.onload = async function (e) {
             const fileContents = e.target.result;
-            storeStuff(fileContentsKey, fileContents);
-            storeStuff(fileNameKey, file.name);
+            setStore(fileContentsKey, fileContents);
+            setStore(fileNameKey, file.name);
             showLastLoad();
             processFile(fileContents);
         };
@@ -148,6 +161,7 @@ async function callDataProcessor(fileContents) {
                 return result.error;
             }
             const companyDetails = await getCompanyDetails(currentUser.email)
+            companyDetails.InvoiceNumber = parseInt(document.getElementById('invoiceNr').value, 10)
             if (result.codeMap && result.procMap) {
                 const paymentFile = {
                     FileContent: fileContents,
@@ -198,16 +212,16 @@ async function callDataProcessor(fileContents) {
                     document.getElementById('missingProvidersTxt').textContent = 'There are missing providers in the file';
                     document.getElementById('missingProviders').classList.remove('hidden');
                     const storeVal = fileResult.missingProviders
-                    storeStuff(missingProvidersKey, JSON.stringify(storeVal));
+                    setStore(missingProvidersKey, JSON.stringify(storeVal));
                     stuffMissing = true;
                 }
                 if (Object.keys(fileResult.noItemNrs).length > 0) {
                     const storeVal = fileResult.noItemNrs
-                    storeStuff(noItemNrs, JSON.stringify(storeVal));
+                    setStore(noItemNrs, JSON.stringify(storeVal));
                 }
                 if (Object.keys(fileResult.missingItemNrs).length > 0) {
                     const storeVal = fileResult.missingItemNrs
-                    storeStuff(missingItemsKey, JSON.stringify(storeVal));
+                    setStore(missingItemsKey, JSON.stringify(storeVal));
                 }
                 if (Object.keys(fileResult.missingItemNrs).length > 0 || Object.keys(fileResult.noItemNrs).length > 0) {
                     document.getElementById('missingItemsTxt').textContent = 'There are missing items in the file';
@@ -218,10 +232,13 @@ async function callDataProcessor(fileContents) {
                     document.getElementById('missingServiceCodesTxt').textContent = 'There are missing service code cuts in the file';
                     document.getElementById('missingServiceCodes').classList.remove('hidden');
                     const storeVal = fileResult.missingServiceCodes
-                    storeStuff(missingServiceCodes, JSON.stringify(storeVal));
+                    setStore(missingServiceCodes, JSON.stringify(storeVal));
                     stuffMissing = true;
                 }
                 const data = fileResult.chargeDetail
+                const nextSeqNr = fileResult.invoiceNr
+                updateClinicInvoiceNr(currentUser.email, localStorage.getItem(clinicId), nextSeqNr)
+                showLastLoad()
                 let dataMap = new Map(Object.entries(data));
                 if (dataMap instanceof Map && dataMap.size > 0) {
                     generateProviderList(dataMap, fileResult.invoicePackage, stuffMissing, companyDetails, result.pracDetails);
@@ -285,10 +302,10 @@ const bottomMargin = 'bottom-margin';
 function generateProviderList(data, zipFile, stuffMissing, companyDetails, pracDetails) {
     const providerListElement = document.getElementById('providerList');
 
-    const providerContainer = document.createElement('div');
-    providerContainer.classList.add(wrapSection, bottomMargin);
-
     if (!stuffMissing) {
+        const allContainer = document.createElement('div');
+        allContainer.classList.add(wrapSection, bottomMargin);
+
         if (zipFile) {
             const downloadAll = document.createElement('button');
             downloadAll.innerText = 'Download All';
@@ -305,15 +322,15 @@ function generateProviderList(data, zipFile, stuffMissing, companyDetails, pracD
                     URL.revokeObjectURL(link.href);
                 });
             };
-            providerContainer.appendChild(downloadAll);
+            allContainer.appendChild(downloadAll);
         }
         if (isEmailEnabled()) {
             const emailAll = document.createElement('button');
             emailAll.innerText = 'Email All';
             emailAll.className = 'button';
-            providerContainer.appendChild(emailAll);
-            providerListElement.appendChild(providerContainer);
+            allContainer.appendChild(emailAll);
         }
+        providerListElement.appendChild(allContainer);
 
         const blankline = document.createElement('div');
         blankline.style.height = '20px';

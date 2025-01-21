@@ -46,17 +46,18 @@ a.invoiceLink {
     display: inline-block;
     min-width: 100px;
     max-width: 200px;
-    width: 100%; 
-    color: #0000FF; /* Blue color for the link */
-    text-decoration: underline; /* Underline to indicate it's a link */
-    cursor: pointer; /* Change cursor to pointer on hover */
+    width: 100%;
+    color: #0000FF;
+    text-decoration: underline;
+    cursor: pointer;
 }
 
 a.invoiceLink.disabled {
-    color: #000000; /* Black color for disabled state */
-    text-decoration: none; /* Remove underline */
-    cursor: default; /* Change cursor back to default */
-    pointer-events: none; /* Prevent clicking */
+    color: #000000;
+    text-decoration: none;
+    cursor: default;
+    pointer-events: none;
+    /* Prevent clicking */
 }
 
 .bottom-margin {
@@ -69,6 +70,18 @@ a.invoiceLink.disabled {
 
 .abn {
     width: 100px;
+}
+
+.invoicePrefix, .invoiceNumber, .invoicePostfix{
+    width: 50px;
+}
+
+#invoiceNr {
+    color: blue;
+}
+
+.invoice-part {
+    font-weight: bold;
 }
 
 .even-row {
@@ -103,8 +116,8 @@ input {
 }
 
 .logo-preview {
-    width: 80px; /* Set the width to 80px */
-    height: 80px; /* Set the height to 80px */
+    width: 80px;
+    height: 80px;
     display: block;
     margin-bottom: 20px;
 }

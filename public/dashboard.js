@@ -1,5 +1,7 @@
 
-import { auth, setUser, getClinics, getOnlyServiceCodes, currentUser, clinicId } from './firebase.js';
+import { auth, setUser, getClinics, currentUser, clinicId,
+    setStore, getStore, clearStore,
+ } from './firebase.js';
 import { islogoutButtonPressed, resetlogoutButtonPressed, showLoginScreen, showUser } from './footer.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { showLastLoad, clearFileDetails } from './fileHandler.js';
@@ -55,7 +57,7 @@ function initClinics() {
             populateClinic(clinics);
         } else {
             clinicDropdown.classList.add("hidden");
-            localStorage.removeItem(clinicId);
+            clearStore(clinicId);
         }
     })
 }
@@ -65,10 +67,10 @@ function populateClinic(clinics) {
     // If there is only one = auto selection
     //
     if (clinics.length == 1) {
-        localStorage.setItem(clinicId, clinics[0].id);
+        setStore(clinicId, clinics[0].id);
     }
 
-    const lastSelected = localStorage.getItem(clinicId);
+    const lastSelected = getStore(clinicId);
 
     // Add default option
     const defaultOption = document.createElement('option');
@@ -99,7 +101,7 @@ function populateClinic(clinics) {
         let selectedIndex = clinicDropdown.selectedIndex;
         let selectedOption = clinicDropdown.options[selectedIndex];
         let selectedId = selectedOption.dataset.id;
-        localStorage.setItem(clinicId, selectedId);
+        setStore(clinicId, selectedId);
         companySelected(selectedId);
     });
 }
