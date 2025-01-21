@@ -30,7 +30,7 @@ onAuthStateChanged(auth, (user) => {
 
 let serviceCodes
 function populatePracs() {
-    const cId = localStorage.getItem(clinicId);
+    const cId = getStore(clinicId);
     const userId = currentUser.email;
     getPractitioners(userId, cId).then((lstProviders) => {
         if (lstProviders.error) {
@@ -320,7 +320,7 @@ submitButton.addEventListener('click', async (e) => {
             providers.push(providerData);
         }
     }
-    const cId = localStorage.getItem(clinicId);
+    const cId = getStore(clinicId);
     const userId = currentUser.email;
     setProviders(userId, cId, providers)
         .then(() => { if (clearToClear) { entryComplete() } })

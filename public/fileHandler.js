@@ -155,7 +155,7 @@ async function processFile(fileContents) {
 const APICall = "SubmitFileAPICall";
 
 async function callDataProcessor(fileContents) {
-    return await getProviderDetails(currentUser.email, localStorage.getItem(clinicId))
+    return await getProviderDetails(currentUser.email, getStore(clinicId))
         .then(async (result) => {
             if (result.error) {
                 return result.error;
@@ -237,7 +237,7 @@ async function callDataProcessor(fileContents) {
                 }
                 const data = fileResult.chargeDetail
                 const nextSeqNr = fileResult.invoiceNr
-                updateClinicInvoiceNr(currentUser.email, localStorage.getItem(clinicId), nextSeqNr)
+                updateClinicInvoiceNr(currentUser.email, getStore(clinicId), nextSeqNr)
                 showLastLoad()
                 let dataMap = new Map(Object.entries(data));
                 if (dataMap instanceof Map && dataMap.size > 0) {

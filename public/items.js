@@ -39,7 +39,7 @@ function populateItems() {
     ({ isMissing: noItemNrsMissing, items: noItemNrsItems } = checkForMissingStuff(noItemNrs));
 
     if (itemMissing || noItemNrsMissing) {
-        const cId = localStorage.getItem(clinicId);
+        const cId = getStore(clinicId);
         getServiceCodes(currentUser.email, cId).then((lstServiceCodes) => {
             if (lstServiceCodes.error) {
                 alert(lstServiceCodes.error);
@@ -139,7 +139,7 @@ submitButton.addEventListener('click', function (e) {
         }
     }).filter(Boolean); // Remove undefined values
 
-    const cId = localStorage.getItem(clinicId);
+    const cId = getStore(clinicId);
     updateItemNumbers(currentUser.email, cId, serviceCodes)
         .then(() => entryComplete())
         .catch(error => alert(`Error setting practitioners: ${error}`));
