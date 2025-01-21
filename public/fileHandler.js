@@ -414,7 +414,7 @@ function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfLi
     const amountInput = document.createElement('input');
     amountInput.type = 'number';
     if (amount) {
-        amountInput.value = amount;
+        amountInput.value = (amount / 100).toFixed(2);
         amountInput.readOnly = true;
         amountInput.classList.add('readOnly');
     }
