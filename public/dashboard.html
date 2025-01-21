@@ -109,11 +109,15 @@
                     <input type="file" id="csvFile" accept=".csv" style="display:none;" />
                     <label for="csvFile" class="button">Upload</label>
                 </div>
-                <div id="rerunContainer" class="hidden flex items-center gap-4">
-                    <label id="fileName" class="mr-2"></label>
-                    <button id="rerunButton" class="button" style="padding-top: 0.5rem; padding-bottom: 0.5rem;">
+                <div id="rerunContainer" class="hidden flex items-center">
+                    <label id="fileName" class="mr-2 gap-4"></label>
+                    <button id="rerunButton" class="button gap-4" style="padding-top: 0.5rem; padding-bottom: 0.5rem;">
                         Process
                     </button>
+                    <label class="left-margin">Next Invoice Nr:</label>
+                    <label id="invoicePrefix" class="invoice-part left-margin"></label>
+                    <input id="invoiceNr" type="number" class="invoice-part">
+                    <label id="invoicePostfix" class="invoice-part"></label>
                 </div>
                 <div id="progress-bar" style="display: none;">
                     <div id="progress"></div>

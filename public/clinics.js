@@ -40,7 +40,8 @@ function populateClinic() {
         if (clinics) {
             for (const [index, clinic] of clinics.entries()) {
                 createCompanyAddressSection(index, clinic.id, clinic.name, clinic.address, clinic.abn,
-                    clinic.postcode, clinic.email, clinic.emailActive);
+                    clinic.postcode, clinic.email, clinic.emailActive,
+                    clinic.invoicePrefix, clinic.invoiceNumber, clinic.invoicePostfix);
             }
         }
         addBlankClinicAtBottom()
@@ -51,11 +52,13 @@ const addressSection = 'company-address-section'
 function addBlankClinicAtBottom() {
     const currentSections = form.getElementsByClassName(addressSection);
     const nextIndex = currentSections.length;
-    createCompanyAddressSection(nextIndex, null, null);
+    createCompanyAddressSection(nextIndex);
 }
 
 // Function to create a new company and address section
-function createCompanyAddressSection(index, id, name, address, abn, postcode, email, emailActive) {
+function createCompanyAddressSection(index, id, name, address, abn, postcode, email, emailActive,
+                                    invoicePrefix, invoiceNumber, invoicePostfix
+) {
     const section = document.createElement('div');
     section.classList.add(addressSection, 'row');
 
@@ -80,6 +83,17 @@ function createCompanyAddressSection(index, id, name, address, abn, postcode, em
     createEntryField(section, "address", "Street Nr and Name", address, false)
     createEntryField(section, "postcode", "Suburb, State, Postcode", postcode)
     createEntryField(section, "abn", "ABN", abn)
+
+    // Add Invoice Number fields
+    const invoiceContainer = document.createElement('div');
+    invoiceContainer.classList.add('invoice-number-container');
+    createEntryField(invoiceContainer, "invoicePrefix", "Invoice Prefix", invoicePrefix, false);
+    if (!invoiceNumber) {
+        invoiceNumber = 1;
+    }
+    createEntryField(invoiceContainer, "invoiceNumber", "Invoice Number", invoiceNumber, true, 'number');
+    createEntryField(invoiceContainer, "invoicePostfix", "Invoice Postfix", invoicePostfix, true);
+    section.appendChild(invoiceContainer);
 
     addEmail(section, index, email, emailActive)
     section.appendChild(addLogo(id));
@@ -250,6 +264,9 @@ submitButton.addEventListener('click', async (e) => {
     const email = emailInputs.map(input => input.value.trim()).filter(value => value !== '');
     const emailActiveStatus = emailInputs.map(input => input.getAttribute('data-verified') === 'true');
     const logoFiles = Array.from(form.querySelectorAll('input[type="file"]')).map(input => input.files[0]);
+    const invoicePrefix = Array.from(form.getElementsByClassName('invoicePrefix'), input => input.value.trim()).filter(value => value !== '');
+    const invoiceNumber = Array.from(form.getElementsByClassName('invoiceNumber'), input => input.value.trim()).filter(value => value !== '');
+    const invoicePostfix = Array.from(form.getElementsByClassName('invoicePostfix'), input => input.value.trim()).filter(value => value !== '');
     const nameSet = new Set();
     for (let i = 0; i < companyNames.length; i++) {
         // Check for duplicate company names and cache the logos
@@ -278,7 +295,8 @@ submitButton.addEventListener('click', async (e) => {
         docId: docIds[i], name: companyNames[i], address: addresses[i], abn: companyAbn[i],
         postcode: companyPostcode[i], accountingLine: accountingLine[i],
         email: email[i], emailActive: emailActiveStatus[i],
-        logoUrl: ""
+        logoUrl: "", 
+        invoicePrefix: invoicePrefix[i], invoiceNumber: invoiceNumber[i], invoicePostfix: invoicePostfix[i]
     }));
     let companiesArray = companies.map(company => ({
         id: company.docId,
@@ -289,7 +307,10 @@ submitButton.addEventListener('click', async (e) => {
         address: company.address || "",
         email: company.email || "",
         emailActive: company.emailActive || false,
-        logoUrl: company.logo || ""
+        logoUrl: company.logo || "",
+        invoicePrefix: company.invoicePrefix || "",
+        invoiceNumber: company.invoiceNumber || "1",
+        invoicePostfix: company.invoicePostfix || ""
     }));
 
     const errorMsg = await setClinics(currentUser.email, companiesArray, currentUser.email);
