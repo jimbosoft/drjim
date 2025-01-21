@@ -1,4 +1,4 @@
-import { auth, setUser, clinicId, currentUser } from './firebase.js';
+import { auth, setUser, clinicId, currentUser, getStore} from './firebase.js';
 import {
     islogoutButtonPressed,
     resetlogoutButtonPressed,
@@ -55,7 +55,7 @@ table.addEventListener('click', function (event) {
 });
 
 async function populateServiceCodes() {
-    let cId = localStorage.getItem(clinicId);
+    let cId = getStore(clinicId);
     const result = await getServiceCodes(currentUser.email, cId);
     if (result.error) {
         alert(`Error getting service codes: ${result.error}`);
@@ -226,7 +226,7 @@ submitButton.addEventListener('click', async (e) => {
             }
         });
 
-        let cId = localStorage.getItem(clinicId);
+        let cId = getStore(clinicId);
         const userId = currentUser.email;
         const errorMsg = await setServiceCodes(userId, cId, serviceCodesMap)
         if (errorMsg) {

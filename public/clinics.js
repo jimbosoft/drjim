@@ -2,7 +2,7 @@ import {
     auth, setUser, currentUser, getClinics, setClinics,
     createEntryField, leftMargin, bottomMargin,
     getLogo, setLogo, deleteStoreFile, startTrace, stopTrace,
-    isEmailEnabled
+    isEmailEnabled, getStore, clearStore, clinicId
 } from './firebase.js';
 import {
     islogoutButtonPressed,
@@ -11,7 +11,6 @@ import {
     showUser
 } from './footer.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-import { clinicId } from './storage.js';
 import { cloudServiceConfig } from './config.js';
 
 onAuthStateChanged(auth, (user) => {
@@ -224,8 +223,8 @@ function addDeleteButtonHandler(deleteButton, index, id) {
         const sections = Array.from(form.getElementsByClassName(addressSection));
         if (index < sections.length - 1) {
             sections[index].parentElement.removeChild(sections[index]);
-            if (localStorage.getItem(clinicId) === id) {
-                localStorage.removeItem(clinicId)
+            if (getStore(clinicId) === id) {
+                clearStore(clinicId)
             }
         } else {
             alert('Please select a filled in clinic to delete');

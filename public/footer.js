@@ -16,7 +16,7 @@ export function showLoginScreen() {
 }
 export function logout() {
     setUser(null)
-    localStorage.removeItem(clinicId);
+    clearStore(clinicId);
     clearAllCache();
     auth.signOut().then(() => {
         showLoginScreen()

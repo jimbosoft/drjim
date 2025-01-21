@@ -1,7 +1,5 @@
 import { firebaseConfig, isLocal } from './config.js'
 
-export { currentUser, setUser } from './storage.js';
-
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 export const app = initializeApp(firebaseConfig);
 
@@ -50,6 +48,12 @@ export const missingServiceCodes = 'missingServiceCodes'
 export const fileContentsKey = 'fileContents';
 export const fileNameKey = 'fileName';
 export const adjustmentKey = 'adjustments';
+
+export let currentUser = null
+export const userKey = 'user'
+export function setUser(user) {
+    return currentUser = user;
+}
 
 export function setStore(key, value) {
     sessionStorage.setItem(key, value);
