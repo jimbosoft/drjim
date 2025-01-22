@@ -103,6 +103,7 @@ function highlightMissingServiceCodes() {
 const providerRow = 'providerRow';
 const serviceCodeEntry = 'service-code-entry';
 const providerForm = 'provider-form';
+const idField = 'data-id';
 const submitButton = document.getElementById('submitButton');
 const cancelButton = document.getElementById('cancelButton');
 
@@ -122,7 +123,7 @@ function fillPracs(pid, pname, details, servicesMap, showAddress) {
             nameInput.style.backgroundColor = 'yellow';
         }
     }
-    nameInput.setAttribute('data-id', pid);
+    nameInput.setAttribute(idField, pid);
     section.appendChild(nameInput);
 
     // Create a new input element for service code
@@ -133,7 +134,7 @@ function fillPracs(pid, pname, details, servicesMap, showAddress) {
     const buttonElement = document.createElement('button');
     buttonElement.textContent = 'Delete';
     buttonElement.classList.add('delete', 'button', leftMargin, bottomMargin);
-    addDeleteButtonHandler(buttonElement, form.childElementCount);
+    addDeleteButtonHandler(buttonElement, pid);
     section.appendChild(buttonElement);
 
     // show address details
@@ -151,17 +152,23 @@ function fillPracs(pid, pname, details, servicesMap, showAddress) {
 
     // Apply alternating background colors
     const rows = nameEntry.getElementsByClassName('row');
+    alternatingBackgroundColours(rows)
+ 
+    const blankLine = document.createElement('div');
+    blankLine.classList.add(bottomMargin);
+    nameEntry.appendChild(blankLine);
+}
+
+function alternatingBackgroundColours(rows)
+{
     for (let i = 0; i < rows.length; i++) {
+        rows[i].classList.remove('even-row', 'odd-row');
         if (i % 2 === 0) {
             rows[i].classList.add('even-row');
         } else {
             rows[i].classList.add('odd-row');
         }
     }
-
-    const blankLine = document.createElement('div');
-    blankLine.classList.add(bottomMargin);
-    nameEntry.appendChild(blankLine);
 }
 
 function addDetailsButtonHandler(detailsButton, addressDetailsContainer) {
@@ -176,11 +183,18 @@ function addDetailsButtonHandler(detailsButton, addressDetailsContainer) {
     });
 }
 
-function addDeleteButtonHandler(deleteButton, index) {
+function addDeleteButtonHandler(deleteButton, id) {
     deleteButton.addEventListener('click', async () => {
-        const sections = Array.from(document.getElementById(providerForm).children);
-        if (index < sections.length - 1) {
-            sections[index].parentElement.removeChild(sections[index]);
+        const sections = Array.from(form.getElementsByClassName(providerRow));
+        const sectionToDelete = sections.find(section => {
+            const nameInput = section.querySelector('.name-input');
+            return nameInput && nameInput.getAttribute(idField) === id;
+        });
+        if (sectionToDelete) {
+            sectionToDelete.parentElement.removeChild(sectionToDelete);
+            const rows = form.getElementsByClassName(providerRow);
+            alternatingBackgroundColours(rows)
+
         } else {
             alert('Please select valid provider to delete');
         }
@@ -270,28 +284,36 @@ submitButton.addEventListener('click', async (e) => {
     const providerRows = document.getElementsByClassName(providerRow);
     const providers = [];
 
+    const nameSet = new Set();
     let clearToClear = true;
     for (let i = 0; i < providerRows.length; i++) {
         const nameInput = providerRows[i].getElementsByClassName('name-input')[0];
-        let idValue = nameInput.getAttribute('data-id');
-        idValue = (idValue === 'null' || idValue === null) ? '' : idValue;
-        const entity = providerRows[i].getElementsByClassName('entity')[0];
-        const street = providerRows[i].getElementsByClassName('street')[0];
-        const burb = providerRows[i].getElementsByClassName('burb')[0];
-        const email = providerRows[i].getElementsByClassName('email')[0];
-        const abn = providerRows[i].getElementsByClassName('abn')[0];
+        const pracName = nameInput.value.trim();
+        // The last row will always be empty
+        if (pracName !== '') {
+            const noSpaceName = pracName.replace(/\s+/g, '');
+            if (nameSet.has(noSpaceName)) {
+                alert(`Duplicate provider name found: ${pracName}`);
+                return;
+            }
+            nameSet.add(noSpaceName);
 
-        console.log(street.value + " " + burb.value + " " + abn.value)
+            let idValue = nameInput.getAttribute('data-id');
+            idValue = (idValue === 'null' || idValue === null) ? '' : idValue;
+            const entity = providerRows[i].getElementsByClassName('entity')[0].value.trim();
+            const street = providerRows[i].getElementsByClassName('street')[0].value.trim();
+            const burb = providerRows[i].getElementsByClassName('burb')[0].value.trim();
+            const email = providerRows[i].getElementsByClassName('email')[0].value.trim();
+            const abn = providerRows[i].getElementsByClassName('abn')[0].value.trim();
 
-        if (nameInput.value !== '') {
             const providerData = {
                 id: idValue,
-                name: nameInput.value,
-                entity: entity.value,
-                street: street.value,
-                burb: burb.value,
-                email: email.value,
-                abn: abn.value,
+                name: pracName,
+                entity: entity,
+                street: street,
+                burb: burb,
+                email: email,
+                abn: abn,
                 services: []
             };
 
