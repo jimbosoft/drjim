@@ -227,6 +227,16 @@ function addServiceCode(servicesMap) {
                 event.preventDefault();
             }
         });
+        // 2 decimal places limit
+        newServiceNumber.addEventListener('input', (event) => {
+            const value = event.target.value;
+            if (value.includes('.')) {
+                const parts = value.split('.');
+                if (parts[1].length > 2) {
+                    event.target.value = `${parts[0]}.${parts[1].slice(0, 2)}`;
+                }
+            }
+        });
         inputContainer.appendChild(newServiceNumber);
 
         const percentageSymbol = document.createElement('span');
