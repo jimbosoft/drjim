@@ -76,7 +76,7 @@ function createCompanyAddressSection(index, id, name, address, abn, postcode, em
     deleteButton.textContent = 'Delete';
     deleteButton.classList.add('delete', leftMargin, bottomMargin, 'button');
     companyNameContainer.appendChild(deleteButton);
-    addDeleteButtonHandler(deleteButton, index, id);
+    addDeleteButtonHandler(deleteButton, id);
     section.appendChild(companyNameContainer)
 
     createEntryField(section, "address", "Street Nr and Name", address, false)
@@ -100,18 +100,23 @@ function createCompanyAddressSection(index, id, name, address, abn, postcode, em
     div.appendChild(section);
     // Apply alternating background colors
     const rows = div.getElementsByClassName('row');
+    alternatingBackgroundColours(rows)
+    const blankLine = document.createElement('div');
+    blankLine.classList.add(bottomMargin);
+    div.appendChild(blankLine);
+    return section;
+}
+
+function alternatingBackgroundColours(rows)
+{
     for (let i = 0; i < rows.length; i++) {
+        rows[i].classList.remove('even-row', 'odd-row');
         if (i % 2 === 0) {
             rows[i].classList.add('even-row');
         } else {
             rows[i].classList.add('odd-row');
         }
     }
-    const blankLine = document.createElement('div');
-    blankLine.classList.add(bottomMargin);
-    div.appendChild(blankLine);
-
-    return section;
 }
 
 function addLogo(id) {
@@ -218,14 +223,17 @@ async function addVerifyButtonHandler(verifyButton, verifyText, index) {
     });
 }
 
-function addDeleteButtonHandler(deleteButton, index, id) {
+function addDeleteButtonHandler(deleteButton, id) {
     deleteButton.addEventListener('click', async () => {
         const sections = Array.from(form.getElementsByClassName(addressSection));
-        if (index < sections.length - 1) {
-            sections[index].parentElement.removeChild(sections[index]);
+        const sectionToDelete = sections.find(section => section.querySelector('.docId').textContent === id);
+        if (sectionToDelete) {
+            sectionToDelete.parentElement.removeChild(sectionToDelete);
             if (getStore(clinicId) === id) {
-                clearStore(clinicId)
+                clearStore(clinicId);
             }
+            const rows = form.getElementsByClassName('row');
+            alternatingBackgroundColours(rows)
         } else {
             alert('Please select a filled in clinic to delete');
         }
@@ -269,11 +277,12 @@ submitButton.addEventListener('click', async (e) => {
     const nameSet = new Set();
     for (let i = 0; i < companyNames.length; i++) {
         // Check for duplicate company names and cache the logos
-        if (nameSet.has(companyNames[i])) {
+        const noSpaceCompany = companyNames[i].replace(/\s+/g, '');
+        if (nameSet.has(noSpaceCompany)) {
             alert(`Duplicate company name found: ${companyNames[i]}`);
             return;
         }
-        nameSet.add(companyNames[i]);
+        nameSet.add(noSpaceCompany);
 
         if (docIds[i] && logoFiles[i]) {
             //

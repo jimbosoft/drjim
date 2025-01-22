@@ -65,17 +65,19 @@ export async function showLastLoad() {
         document.getElementById('fileName').textContent = fileName;
     }
     const clinic = await getCompanyDetails(currentUser.email);
-    const invoiceNr = clinic.InvoicePrefix + clinic.InvoiceNumber + clinic.InvoicePostfix
-    if (invoiceNr && invoiceNr !== 'null'
-        && invoiceNr.length > 0 && invoiceNr !== 'undefined') {
-        const invoicePreElement = document.getElementById('invoicePrefix');
-        invoicePreElement.textContent = clinic.InvoicePrefix;
-        const invoiceNrElement = document.getElementById('invoiceNr');
-        invoiceNrElement.value = clinic.InvoiceNumber;
-        invoiceNrElement.style.width = `${invoiceNrElement.value.length + 1}ch`;
-        const invoicePostElement = document.getElementById('invoicePostfix');
-        invoicePostElement.textContent = clinic.InvoicePostfix;
-   }
+    if (clinic) {
+        const invoiceNr = clinic.InvoicePrefix + clinic.InvoiceNumber + clinic.InvoicePostfix
+        if (invoiceNr && invoiceNr !== 'null'
+            && invoiceNr.length > 0 && invoiceNr !== 'undefined') {
+            const invoicePreElement = document.getElementById('invoicePrefix');
+            invoicePreElement.textContent = clinic.InvoicePrefix;
+            const invoiceNrElement = document.getElementById('invoiceNr');
+            invoiceNrElement.value = clinic.InvoiceNumber;
+            invoiceNrElement.style.width = `${invoiceNrElement.value.length + 1}ch`;
+            const invoicePostElement = document.getElementById('invoicePostfix');
+            invoicePostElement.textContent = clinic.InvoicePostfix;
+        }
+    }
 }
 
 async function getCompanyDetails(userId) {
