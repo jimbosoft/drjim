@@ -40,7 +40,8 @@ function populateClinic() {
             for (const [index, clinic] of clinics.entries()) {
                 createCompanyAddressSection(index, clinic.id, clinic.name, clinic.address, clinic.abn,
                     clinic.postcode, clinic.email, clinic.emailActive,
-                    clinic.invoicePrefix, clinic.invoiceNumber, clinic.invoicePostfix);
+                    clinic.invoicePrefix, clinic.invoiceNumber, clinic.invoicePostfix, 
+                    clinic.accountCode, clinic.daysDue);
             }
         }
         addBlankClinicAtBottom()
@@ -56,7 +57,7 @@ function addBlankClinicAtBottom() {
 
 // Function to create a new company and address section
 function createCompanyAddressSection(index, id, name, address, abn, postcode, email, emailActive,
-                                    invoicePrefix, invoiceNumber, invoicePostfix
+    invoicePrefix, invoiceNumber, invoicePostfix, accountCode, daysDue
 ) {
     const section = document.createElement('div');
     section.classList.add(addressSection, 'row');
@@ -94,6 +95,13 @@ function createCompanyAddressSection(index, id, name, address, abn, postcode, em
     createEntryField(invoiceContainer, "invoicePostfix", "Invoice Postfix", invoicePostfix, true);
     section.appendChild(invoiceContainer);
 
+    const xeroContainer = document.createElement('div');
+    createEntryField(xeroContainer, "accountCode", "Xero Account Code", accountCode, false);
+    if (!daysDue) { daysDue = 30 } 
+    createEntryField(xeroContainer, "daysDue", "Invoice Due, Days", daysDue, true, 'number');
+    section.appendChild(xeroContainer);
+
+
     addEmail(section, index, email, emailActive)
     section.appendChild(addLogo(id));
     const div = document.getElementById('company-form');
@@ -107,8 +115,7 @@ function createCompanyAddressSection(index, id, name, address, abn, postcode, em
     return section;
 }
 
-function alternatingBackgroundColours(rows)
-{
+function alternatingBackgroundColours(rows) {
     for (let i = 0; i < rows.length; i++) {
         rows[i].classList.remove('even-row', 'odd-row');
         if (i % 2 === 0) {
@@ -171,7 +178,7 @@ function addEmail(section, index, email, active) {
 
     const emailContainer = document.createElement('div');
     const { input: emailInput } = createEntryField(emailContainer, "email", "Email", email, false)
- 
+
     if (isEmailEnabled()) {
         const verifyButton = document.createElement('button');
         verifyButton.type = 'button';
@@ -183,7 +190,7 @@ function addEmail(section, index, email, active) {
         emailContainer.appendChild(verifyText);
         setEmailText(active, verifyButton, verifyText, emailInput)
         addVerifyButtonHandler(verifyButton, verifyText, index);
- 
+
         emailInput.addEventListener('input', () => {
             setEmailText(false, verifyButton, verifyText, emailInput)
         });
@@ -272,8 +279,12 @@ submitButton.addEventListener('click', async (e) => {
     const emailActiveStatus = emailInputs.map(input => input.getAttribute('data-verified') === 'true');
     const logoFiles = Array.from(form.querySelectorAll('input[type="file"]')).map(input => input.files[0]);
     const invoicePrefix = Array.from(form.getElementsByClassName('invoicePrefix'), input => input.value.trim()).filter(value => value !== '');
-    const invoiceNumber = Array.from(form.getElementsByClassName('invoiceNumber'), input => input.value.trim()).filter(value => value !== '');
+    const invoiceNumber = Array.from(form.getElementsByClassName('invoiceNumber'), input => input.value.trim())
+        .filter(value => value !== '').map(value => parseInt(value, 10));
     const invoicePostfix = Array.from(form.getElementsByClassName('invoicePostfix'), input => input.value.trim()).filter(value => value !== '');
+    const daysDue = Array.from(form.getElementsByClassName('daysDue'), input => input.value.trim())
+        .filter(value => value !== '').map(value => parseInt(value, 10));
+    const accountCode = Array.from(form.getElementsByClassName('accountCode'), input => input.value.trim()).filter(value => value !== '');
     const nameSet = new Set();
     for (let i = 0; i < companyNames.length; i++) {
         // Check for duplicate company names and cache the logos
@@ -297,28 +308,22 @@ submitButton.addEventListener('click', async (e) => {
         }
         await setLogo(docIds[i], companyNames[i], logoFiles[i]);
     }
-
     // Create an array of company and address objects
-    const companies = companyNames.map((name, i) => ({
-        docId: docIds[i], name: companyNames[i], address: addresses[i], abn: companyAbn[i],
-        postcode: companyPostcode[i], accountingLine: accountingLine[i],
-        email: email[i], emailActive: emailActiveStatus[i],
-        logoUrl: "", 
-        invoicePrefix: invoicePrefix[i], invoiceNumber: invoiceNumber[i], invoicePostfix: invoicePostfix[i]
-    }));
-    let companiesArray = companies.map(company => ({
-        id: company.docId,
-        name: company.name || "",
-        abn: company.abn || "",
-        postcode: company.postcode || "",
-        accountingLine: company.accountingLine || "",
-        address: company.address || "",
-        email: company.email || "",
-        emailActive: company.emailActive || false,
-        logoUrl: company.logo || "",
-        invoicePrefix: company.invoicePrefix || "",
-        invoiceNumber: company.invoiceNumber || "1",
-        invoicePostfix: company.invoicePostfix || ""
+    const companiesArray = companyNames.map((name, i) => ({
+        id: docIds[i],
+        name: name || "unknown",
+        abn: companyAbn[i] || "",
+        postcode: companyPostcode[i] || "",
+        accountingLine: accountingLine[i] || "",
+        address: addresses[i] || "",
+        email: email[i] || "",
+        emailActive: emailActiveStatus[i] || false,
+        logoUrl: "",
+        invoicePrefix: invoicePrefix[i] || "",
+        invoiceNumber: invoiceNumber[i] || 1,
+        invoicePostfix: invoicePostfix[i] || "",
+        accountCode: accountCode[i] || "",
+        daysDue: daysDue[i] || 30
     }));
 
     const errorMsg = await setClinics(currentUser.email, companiesArray, currentUser.email);
@@ -327,10 +332,6 @@ submitButton.addEventListener('click', async (e) => {
     } else {
         entryComplete();
     }
-
-    // Clear the form
-    //form.innerHTML = '';
-    //form.appendChild(createCompanyAddressSection());
 });
 
 cancelButton.addEventListener('click', async (e) => {

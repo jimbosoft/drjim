@@ -101,7 +101,9 @@ async function getCompanyDetails(userId) {
                 Logo: logo.buffer,
                 InvoicePrefix: clinic.invoicePrefix,
                 InvoiceNumber: clinic.invoiceNumber,
-                InvoicePostfix: clinic.invoicePostfix
+                InvoicePostfix: clinic.invoicePostfix,
+                DaysDue: clinic.daysDue,
+                AccountCode: clinic.accountCode
             };
         }
     }
@@ -163,7 +165,6 @@ async function callDataProcessor(fileContents) {
                 return result.error;
             }
             const companyDetails = await getCompanyDetails(currentUser.email)
-            companyDetails.InvoiceNumber = parseInt(document.getElementById('invoiceNr').value, 10)
             if (result.codeMap && result.procMap) {
                 const paymentFile = {
                     FileContent: fileContents,
@@ -243,7 +244,7 @@ async function callDataProcessor(fileContents) {
                 showLastLoad()
                 let dataMap = new Map(Object.entries(data));
                 if (dataMap instanceof Map && dataMap.size > 0) {
-                    generateProviderList(dataMap, fileResult.invoicePackage, stuffMissing, companyDetails, result.pracDetails);
+                    generateProviderList(dataMap, fileResult.invoicePackage, fileResult.xeroFile, stuffMissing, companyDetails, result.pracDetails);
                 }
             }
             return ""
@@ -301,30 +302,21 @@ async function getProviderDetails(userId, clinicId) {
 }
 const wrapSection = 'flex-wrap-section';
 const bottomMargin = 'bottom-margin';
-function generateProviderList(data, zipFile, stuffMissing, companyDetails, pracDetails) {
+function generateProviderList(data, zipFile, xeroFile, stuffMissing, companyDetails, pracDetails) {
     const providerListElement = document.getElementById('providerList');
 
     if (!stuffMissing) {
         const allContainer = document.createElement('div');
         allContainer.classList.add(wrapSection, bottomMargin);
 
-        if (zipFile) {
-            const downloadAll = document.createElement('button');
-            downloadAll.innerText = 'Download All';
-            downloadAll.className = 'button';
-            downloadAll.onclick = () => {
-                const dataUrl = 'data:application/zip;base64,' + zipFile;
-                fetch(dataUrl).then(res => res.blob()).then(blob => {
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = 'invoices.zip';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(link.href);
-                });
-            };
-            allContainer.appendChild(downloadAll);
+        let but = downloadButton(zipFile, 'Download All', 'invoices.zip')
+        if (but) {
+            allContainer.appendChild(but);
+        }
+        const companyName = companyDetails.Name.replace(/\s+/g, '_');
+        but = downloadButton(xeroFile, 'Xero File', companyName + "_xero.csv")
+        if (but) {
+            allContainer.appendChild(but);
         }
         if (isEmailEnabled()) {
             const emailAll = document.createElement('button');
@@ -384,6 +376,28 @@ function generateProviderList(data, zipFile, stuffMissing, companyDetails, pracD
         }
         providerListElement.appendChild(providerContainer);
     });
+}
+
+function downloadButton(file, buttonName, downloadFileName) {
+    if (file) {
+        const downloadAll = document.createElement('button');
+        downloadAll.innerText = buttonName;
+        downloadAll.className = 'button';
+        downloadAll.onclick = () => {
+            const dataUrl = 'data:application/zip;base64,' + file;
+            fetch(dataUrl).then(res => res.blob()).then(blob => {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = downloadFileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            });
+        };
+        return downloadAll;
+    }
+    return null;
 }
 
 function fillAdjustments(adjustmentsContainer, provider, desc, amount, viewPdfLink) {

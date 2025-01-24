@@ -339,9 +339,11 @@ export async function setClinics(userId, clinicList, userEmail) {
                 email: clinic.email,
                 emailActive: clinic.emailActive,
                 logoUrl: "",
-                invoicePrefix: clinic.invoicePrefix || "",
-                invoiceNumber: clinic.invoiceNumber || 1,
-                invoicePostfix: clinic.invoicePostfix || ""
+                invoicePrefix: clinic.invoicePrefix,
+                invoiceNumber: clinic.invoiceNumber,
+                invoicePostfix: clinic.invoicePostfix,
+                accountCode: clinic.accountCode,
+                daysDue: clinic.daysDue
             }, { merge: true });
         }));
         //

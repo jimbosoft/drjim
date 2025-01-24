@@ -72,8 +72,12 @@ a.invoiceLink.disabled {
     width: 100px;
 }
 
-.invoicePrefix, .invoiceNumber, .invoicePostfix{
+.invoicePrefix, .invoiceNumber, .invoicePostfix {
     width: 50px;
+}
+
+.daysDue {
+    width: 30px;
 }
 
 #invoiceNr {
