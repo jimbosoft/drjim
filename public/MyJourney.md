@@ -43,6 +43,9 @@ Implementing an email facility in our SaaS application was not feasible for the 
 
 These challenges make it difficult to implement a reliable and secure email facility within our SaaS application without exposing ourselves to significant risks.
 
+## File storage
+Files, such as the logo are stored in cloud store which is a bucket storage. The URL to the file is then stored in firestore against the clinic details. <br>
+In order to deal with CORS problems when accessing the file store the cors.json has to be run in **gsutil cors set cors.json gs://your-bucket-name**
 ## Some thoughts on firebase:
 
 ### Running firebase

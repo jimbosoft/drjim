@@ -19,7 +19,9 @@ From the dashboard.js you can navigate to the other pages<br>
 All pages check if the user is logged in. If yes, the page is rendered
 
 ## Config
-Used **Remote Config** key **env** to know if it is running locally against emulators, with value **"local"** or is deployed in the cloud (not "local")<br><br>
+Config is stored in config.js. It also contains secret keys and can not be stored in the repo and is only available on request.<br>
+you need the secret: **config.js** in order to run
+
 ## Running firebase
 
  firebase login:use <email>   set the default account to use for this project<br>
@@ -31,9 +33,6 @@ Used **Remote Config** key **env** to know if it is running locally against emul
 ### Start the emulator, after login
  firebase emulators:start      run locally <br>
  firebase deploy               --only hosting <br>
-
- ## Secret 
- you need the secret: **config.js** in order to run
 
 ## Structure Explanation
 ### Logo

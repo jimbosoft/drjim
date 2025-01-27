@@ -3,7 +3,7 @@ import { firebaseConfig, isLocal } from './config.js'
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 export const app = initializeApp(firebaseConfig);
 
-import { getStorage, ref, uploadBytes, getDownloadURL, getMetadata, deleteObject, connectStorageEmulator }
+import { getStorage, ref, uploadBytes, getDownloadURL, getMetadata, deleteObject, connectStorageEmulator, listAll }
     from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 export const storage = getStorage(app);
 
@@ -339,9 +339,11 @@ export async function setClinics(userId, clinicList, userEmail) {
                 email: clinic.email,
                 emailActive: clinic.emailActive,
                 logoUrl: "",
-                invoicePrefix: clinic.invoicePrefix || "",
-                invoiceNumber: clinic.invoiceNumber || 1,
-                invoicePostfix: clinic.invoicePostfix || ""
+                invoicePrefix: clinic.invoicePrefix,
+                invoiceNumber: clinic.invoiceNumber,
+                invoicePostfix: clinic.invoicePostfix,
+                accountCode: clinic.accountCode,
+                daysDue: clinic.daysDue
             }, { merge: true });
         }));
         //
@@ -387,7 +389,7 @@ export async function getFileFromCacheAndStore(clinicId, companyName) {
         logo = getLogo("", companyName);
     }
     if (logo.data) {
-        // check if it has changed
+        await deleteAllStoreFile(clinicId)
         const res = await storeFile(logo.data, clinicId)
         if (res.error) {
             console.log(res.error)
@@ -403,10 +405,10 @@ export async function storeFile(file, companyId) {
     }
     try {
         const fname = file.name.replace(/\s+/g, '_');
-        const storageRef = ref(storage, `user/${companyId}/${fname}`);
+        const storeUrl = `user/${companyId}/${fname}`
+        const storageRef = ref(storage, storeUrl);
         await uploadBytes(storageRef, file);
-        const url = await getDownloadURL(storageRef);
-        return { link: url, error: null };
+        return { link: storeUrl, error: null };
     } catch (error) {
         return { link: "", error: error.message };
     }
@@ -421,18 +423,30 @@ export async function deleteStoreFile(file, clinicId) {
         }
     }
 }
+export async function deleteAllStoreFile(clinicId) {
+    const storageRef = ref(storage, `user/${clinicId}`);
+    try {
+        const res = await listAll(storageRef);
+        const deletePromises = res.items.map(itemRef => deleteObject(itemRef));
+        await Promise.all(deletePromises);
+    } catch (error) {
+        if (error.code !== 'storage/object-not-found') {
+            console.log(`Error deleting stored file: ${error.message}`);
+        }
+    }
+}
+
 export async function getFile(clinicId, fileUrl) {
     if (!fileUrl) {
         return { file: "", error: "" };
     }
     try {
         const storageRef = ref(storage, fileUrl);
-
-        // Fetch the file metadata to get the filename
         const metadata = await getMetadata(storageRef);
         const fileName = metadata.name;
+        const url = await getDownloadURL(storageRef);
 
-        const response = await fetch(fileUrl);
+        const response = await fetch(url);
         if (!response.ok) {
             return { file: "", error: new Error(`Failed to fetch file: ${response.statusText}`) };
         }
@@ -880,27 +894,3 @@ async function deleteQueryBatch(db, query, batchSize, resolve, reject) {
         deleteQueryBatch(db, query, batchSize, resolve, reject);
     });
 }
-
-///////////////////////////////////////////////////////////////
-// import {
-//     connectStorageEmulator,
-//     getStorage,
-//     ref,
-//     uploadString
-// } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js'
-//const storage = getStorage(app)
-//connectStorageEmulator(storage, '127.0.0.1', 9199)
-// function uploadFile() {
-//     try {
-//         const storageRef = ref(storage, `user/${currentUser.email}/test.txt`)
-//         const content = `Hello, World! by ${currentUser.email} on ${new Date().toISOString()}`
-//         uploadString(storageRef, content).then((snapshot) => {
-//             console.log('File uploaded')
-//         }).catch((error) => {
-//             alert(error.message)
-//         });
-//         writeToFirestore()
-//     } catch (error) {
-//         alert(error.message)
-//     }
-// }
