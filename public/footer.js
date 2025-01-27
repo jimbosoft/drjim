@@ -1,5 +1,5 @@
 
-import { auth, setUser, clinicId, clearAllCache } from './firebase.js';
+import { auth, setUser, clinicId, clearStore, clearAllCache } from './firebase.js';
 
 let logoutButtonPressed = false;
 export function islogoutButtonPressed() {
