@@ -40,7 +40,7 @@ function populateClinic() {
             for (const [index, clinic] of clinics.entries()) {
                 createCompanyAddressSection(index, clinic.id, clinic.name, clinic.address, clinic.abn,
                     clinic.postcode, clinic.email, clinic.emailActive,
-                    clinic.invoicePrefix, clinic.invoiceNumber, clinic.invoicePostfix, 
+                    clinic.invoicePrefix, clinic.invoiceNumber, clinic.invoicePostfix,
                     clinic.accountCode, clinic.daysDue);
             }
         }
@@ -97,7 +97,7 @@ function createCompanyAddressSection(index, id, name, address, abn, postcode, em
 
     const xeroContainer = document.createElement('div');
     createEntryField(xeroContainer, "accountCode", "Xero Account Code", accountCode, false);
-    if (!daysDue) { daysDue = 30 } 
+    if (!daysDue) { daysDue = 30 }
     createEntryField(xeroContainer, "daysDue", "Invoice Due, Days", daysDue, true, 'number');
     section.appendChild(xeroContainer);
 
@@ -263,7 +263,11 @@ form.addEventListener('input', (e) => {
         }
     }
 });
-
+//
+// On submit the data is written to the DB, no  matter what
+// as it is too difficult to asses if any data has changed,
+// this include re-writing the logo file to bucket storage
+//
 submitButton.addEventListener('click', async (e) => {
     e.preventDefault();
 
@@ -295,17 +299,6 @@ submitButton.addEventListener('click', async (e) => {
         }
         nameSet.add(noSpaceCompany);
 
-        if (docIds[i] && logoFiles[i]) {
-            //
-            // If there was a previous logo stored under this id, it has to be deleted
-            // 
-            const { data: storedLogo } = getLogo(docIds[i], "");
-
-            const newLogoUrl = URL.createObjectURL(logoFiles[i]);
-            if (storedLogo && newLogoUrl !== URL.createObjectURL(storedLogo)) {
-                deleteStoreFile(storedLogo, docIds[i])
-            }
-        }
         await setLogo(docIds[i], companyNames[i], logoFiles[i]);
     }
     // Create an array of company and address objects
